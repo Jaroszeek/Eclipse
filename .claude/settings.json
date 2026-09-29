@@ -1,0 +1,1 @@
+{ "permissions": { "deny": ["Read(./librus-dev.properties)", "Edit(./librus-dev.properties)"] } }

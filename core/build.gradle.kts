@@ -15,6 +15,8 @@ kotlin {
 }
 
 dependencies {
+    implementation(libs.okhttp)
+    implementation(libs.kotlinx.serialization.json)
     testImplementation(platform(libs.junit.bom))
     testImplementation(kotlin("test"))
     testRuntimeOnly(libs.junit.platform.launcher)

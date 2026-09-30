@@ -21,7 +21,7 @@ Eclipse to prywatna aplikacja na Androida (.apk) jednego ucznia: kalendarz z pla
 - Interfejs rozwijaj w trybie demo (`DemoSource`), żeby nie obciążać Librusa.
 
 ## Bezpieczeństwo i prywatność — zawsze
-- Hasło do Librusa użytkownik wpisuje tylko w aplikacji (ekran logowania) oraz — na czas rekonesansu na komputerze — w pliku `librus-dev.properties`. Nie czytaj, nie wyświetlaj i nie edytuj tego pliku. Nie proś o hasło w czacie.
+- Hasło do Librusa użytkownik wpisuje tylko w aplikacji (ekran logowania; rekonesans też działa w aplikacji). Nie proś o hasło w czacie. Gdyby na komputerze pojawił się plik `librus-dev.properties`, nie czytaj go, nie wyświetlaj i nie edytuj.
 - W aplikacji dane logowania są zaszyfrowane (DataStore + Tink, klucz w Android Keystore) i wyłączone z kopii zapasowej. Nie używaj przestarzałego `EncryptedSharedPreferences`.
 - Do gita nie trafiają: `librus-dev.properties`, `local.properties`, klucze podpisu (`*.jks`, `*.keystore`) i ich hasła, surowe odpowiedzi z Librusa. Sprawdź `.gitignore` przed pierwszym commitem.
 - Nie loguj (Logcat, pliki) haseł, tokenów ani ciasteczek sesji. W release wyłącz logi debug.
@@ -50,7 +50,6 @@ Eclipse to prywatna aplikacja na Androida (.apk) jednego ucznia: kalendarz z pla
 eclipse/
 ├── CLAUDE.md, SPEC.md, PROGRESS.md, README.md
 ├── .claude/settings.json
-├── librus-dev.properties (nie commitować), librus-dev.properties.example
 ├── settings.gradle.kts, build.gradle.kts, gradle/libs.versions.toml
 ├── core/   src/main/kotlin/ (model, source/librus, source/demo, calc, recon), src/test/
 ├── app/    src/main/ (ui, data, sync, notify, security), res/
@@ -60,7 +59,7 @@ eclipse/
 ## Komendy
 Na Windowsie `gradlew.bat` zamiast `./gradlew`. W terminalu poza Android Studio ustaw `JAVA_HOME` na JDK z Android Studio (`C:\Program Files\Android\Android Studio\jbr`). Uzupełnij, gdy powstaną:
 - Testy logiki: `./gradlew :core:test`
-- Rekonesans Librusa: `./gradlew :core:recon` (czyta `librus-dev.properties`, wypisuje tylko strukturę)
+- Rekonesans Librusa: w aplikacji debug, ekran „Rekonesans Librusa” (użytkownik kopiuje raport i wkleja go do czatu; raport ma tylko strukturę)
 - Build debug: `./gradlew :app:assembleDebug` → `app/build/outputs/apk/debug/`
 - Instalacja na podłączonym telefonie lub emulatorze: `./gradlew :app:installDebug`
 - Lint: `./gradlew lint`

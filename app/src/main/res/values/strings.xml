@@ -1,3 +1,13 @@
 <resources>
     <string name="app_name">Eclipse</string>
+    <string name="recon_title">Rekonesans Librusa</string>
+    <string name="recon_info">Zaloguj się, żeby sprawdzić, jakie dane udostępnia Librus. Login i hasło są tylko w pamięci aplikacji i nigdzie się nie zapisują. Raport pokazuje wyłącznie strukturę danych — bez treści i nazwisk.</string>
+    <string name="login_label">Login do Librus Synergia</string>
+    <string name="password_label">Hasło</string>
+    <string name="show_password">Pokaż</string>
+    <string name="hide_password">Ukryj</string>
+    <string name="recon_start">Zaloguj i sprawdź dane</string>
+    <string name="recon_running">Sprawdzam dane, to potrwa ok. pół minuty…</string>
+    <string name="recon_copy">Kopiuj raport</string>
+    <string name="recon_copied">Skopiowano raport</string>
 </resources>

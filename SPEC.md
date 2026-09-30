@@ -60,7 +60,7 @@ Telefon z Androidem
 ```
 
 - Wszystkie dane zostają na telefonie (baza Room). Aplikacja działa bez internetu, pokazując ostatnie dane z godziną synchronizacji.
-- Komputer służy tylko do pracy w Android Studio i do rekonesansu (`./gradlew :core:recon`). Nic nie działa na nim na stałe.
+- Komputer służy tylko do pracy w Android Studio. Nic nie działa na nim na stałe.
 - Instalacja: z Android Studio przez kabel USB (debugowanie USB) albo na emulatorze. Taka instalacja idzie przez ADB, którego nie obejmuje nowa weryfikacja deweloperów Google (od 30.09.2026 tylko w kilku krajach, globalnie od 2027 roku). Plik .apk instalowany bez kabla może wtedy wymagać dodatkowych kroków.
 
 ## 4. Dane z Librusa
@@ -76,7 +76,7 @@ Telefon z Androidem
 - Librus w przeszłości zablokował publikację zewnętrznej aplikacji w Google Play. Eclipse jest prywatny i nie trafia do żadnego sklepu.
 
 ### 4.2 Rekonesans (Etap 1a)
-Program `recon` w module `:core`, uruchamiany na komputerze: `./gradlew :core:recon`. Dane logowania czyta z `librus-dev.properties` (użytkownik tworzy go sam na podstawie `librus-dev.properties.example`; plik jest w `.gitignore` i zablokowany dla Claude). Wypisuje strukturę i liczby, nigdy treść ani nazwiska. Sprawdza:
+Kod rekonesansu leży w `:core` (`recon/`), a uruchamia go tymczasowy ekran „Rekonesans Librusa” w aplikacji (zmiana z 30.09.2026 zamiast programu na komputerze i pliku `librus-dev.properties`). Użytkownik wpisuje login i hasło — trzymane tylko w pamięci, nigdzie niezapisywane — a aplikacja pokazuje raport z przyciskiem „Kopiuj raport”; użytkownik wkleja go Claude. Raport zawiera strukturę i liczby, nigdy treść ani nazwiska. Sprawdza:
 1. Czy logowanie działa (bez wypisywania tokenów i ciasteczek).
 2. Każdy zasób: czy odpowiada, ile rekordów, jakie pola, jeden przykładowy rekord z zamaskowanymi danymi osobowymi.
 3. Oceny: symbole (1–6 z plusami i minusami, np, bz, „+”, „−” itp.), oceny punktowe i ich postać (punkty, maksimum), czy przedmioty się dublują, czy jest informacja „licz do średniej”, oceny proponowane, śródroczne i roczne, czy opisy ocen zawierają procenty albo punkty, czy Librus podaje własną średnią lub procent przedmiotu.
@@ -250,7 +250,7 @@ Nazwa zakładki: „Important”. Trzy poziomy: Krytyczne (czerwony), Uwaga (pom
   - `source/librus/` — `LibrusSource`: HTTP (OkHttp z obsługą ciasteczek), JSON (kotlinx.serialization), HTML w razie potrzeby (Jsoup), mapowanie na modele;
   - `source/demo/` — `DemoSource` (patrz Etap 1);
   - `calc/` — obliczenia z sekcji 6–8;
-  - `recon/` — program rekonesansu.
+  - `recon/` — rekonesans (raport ze struktury odpowiedzi Librusa).
 - `:app` — Android:
   - `ui/` — motyw (`EclipseTheme`, tokeny, szkło), wspólne komponenty, ekrany z sekcji 12, logowanie;
   - `data/` — Room (encje, DAO), repozytoria, DataStore z ustawieniami;
@@ -488,7 +488,7 @@ Zakładki Wiadomości, Ogłoszenia, Uwagi. Lista z podglądem, nieprzeczytane wy
   ```
   Po utworzeniu poproś użytkownika o ponowne uruchomienie Claude Code.
 - Uruchom pustą aplikację na emulatorze albo na telefonie, żeby od początku działała cała ścieżka: budowanie → instalacja → start.
-- Użytkownik sam tworzy `librus-dev.properties` i wpisuje dane logowania.
+- Dane logowania użytkownik wpisuje tylko w aplikacji (od 30.09.2026 także na potrzeby rekonesansu, patrz 4.2).
 
 ### Etap 1 — logika i dane
 - 1a: rekonesans (4.2) i akceptacja mapowania przez użytkownika.

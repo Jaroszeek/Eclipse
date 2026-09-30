@@ -6,15 +6,15 @@ Aktualizowane po każdym kroku. Szczegóły etapów: `SPEC.md`, sekcja 14.
 - [x] Sprawdzenie projektu i narzędzi (Android Studio 2026.1.1, JDK 21 z Android Studio, git 2.51, emulator „gympixel” z Androidem 15)
 - [x] Moduł `:core` (czysty Kotlin/JVM, JUnit 5 + kotlin.test)
 - [x] Katalog wersji uporządkowany, biblioteki w najnowszych stabilnych wersjach
-- [x] `.gitignore`, `librus-dev.properties.example`, `.claude/settings.json`
+- [x] `.gitignore`, `.claude/settings.json`
 - [x] `PROGRESS.md`, szkic `README.md`
 - [x] Repozytorium git i pierwszy commit
 - [ ] Prywatne repozytorium na GitHubie (Jaroszeek/Eclipse) i wysłanie kodu
 - [x] Pusta aplikacja uruchomiona na emulatorze („gympixel”, Android 15)
-- [ ] Użytkownik utworzył `librus-dev.properties`
 
 ## Etap 1 — logika i dane
-- [ ] 1a: program `./gradlew :core:recon`
+- [x] 1a: rekonesans w aplikacji: ekran logowania + raport z przyciskiem „Kopiuj raport” (logowanie sprawdzone na emulatorze zmyślonym loginem — Librus odpowiada „Nieprawidłowy login i/lub hasło”)
+- [ ] 1a: użytkownik uruchamia rekonesans na telefonie i wkleja raport
 - [ ] 1a: `docs/librus-rekonesans.md` i akceptacja mapowania
 - [ ] 1b: modele i `DataSource`
 - [ ] 1b: `DemoSource`
@@ -54,6 +54,8 @@ Aktualizowane po każdym kroku. Szczegóły etapów: `SPEC.md`, sekcja 14.
 - 2026-09-29: usunięte przykładowe testy z szablonu i ich biblioteki (JUnit 4, Espresso). Testy logiki są w `:core` (JUnit 5).
 - 2026-09-29: biblioteki `:core` (OkHttp, kotlinx.serialization, coroutines) dochodzą do katalogu wersji w kroku, który ich używa.
 - 2026-09-29: logowanie do Librusa loginem Synergii, bez weryfikacji dwuetapowej — znana droga OAuth z SPEC 4.1 powinna działać.
+- 2026-09-30: rekonesans działa w aplikacji zamiast `./gradlew :core:recon` z plikiem `librus-dev.properties` (prośba użytkownika — nie był przy komputerze; hasło nie leży w pliku). SPEC 4.2 zaktualizowana. Plik wzoru usunięty; wpis w `.gitignore` i blokada w `.claude/settings.json` zostają na wszelki wypadek.
+- 2026-09-30: `LibrusClient` ma własny prosty magazyn ciasteczek w pamięci; zapisywanie sesji dojdzie w `LibrusSource`.
 - 2026-09-29: kod trafia do prywatnego repozytorium na GitHubie (konto Jaroszeek), autor commitów: Jaroszek.
 
 ## Otwarte kwestie

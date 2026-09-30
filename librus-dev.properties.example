@@ -1,6 +1,0 @@
-# Wzór pliku z danymi logowania do rekonesansu (./gradlew :core:recon).
-# 1. Skopiuj ten plik w tym samym folderze i nazwij kopię: librus-dev.properties
-# 2. Wpisz po znaku = swój login do Librus Synergia i hasło (bez cudzysłowów).
-# Plik librus-dev.properties jest w .gitignore — nie trafi do gita ani na GitHuba.
-login=
-password=

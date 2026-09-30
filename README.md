@@ -21,8 +21,8 @@ Na Windowsie zamiast `./gradlew` wpisz `gradlew.bat`.
 | Budowanie wersji debug | `./gradlew :app:assembleDebug` → `app/build/outputs/apk/debug/` |
 | Instalacja na telefonie lub emulatorze | `./gradlew :app:installDebug` |
 
-## Dane logowania do rekonesansu
-Skopiuj `librus-dev.properties.example` jako `librus-dev.properties` i wpisz login i hasło. Plik jest w `.gitignore` i nie trafia do repozytorium.
+## Dane logowania
+Login i hasło do Librusa wpisuje się tylko w aplikacji. Na razie aplikacja ma jeden ekran: „Rekonesans Librusa”, który sprawdza, jakie dane udostępnia Librus, i pokazuje raport bez treści i nazwisk.
 
 ## Dokumenty
 - `SPEC.md` — specyfikacja

@@ -52,7 +52,8 @@ class LibrusClient {
         if (code !in 200..299) throw LibrusException("Nie udało się zalogować do Librusa (HTTP $code).")
         loginResponseKeys = json?.keys.orEmpty()
         goTo = runCatching { json?.get("goTo")?.jsonPrimitive?.content }.getOrNull()
-        val (grantCode, _) = fetch(GRANT_URL)
+        // Librus wskazuje kolejny krok w `goTo` (dziś /OAuth/Authorization/2FA); bez niego — Grant.
+        val (grantCode, _) = fetch(goTo?.let(::apiUrl) ?: GRANT_URL)
         if (grantCode !in 200..299) throw LibrusException("Librus nie dokończył logowania (HTTP $grantCode).")
     }
 

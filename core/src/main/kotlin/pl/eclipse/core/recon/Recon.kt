@@ -46,40 +46,34 @@ object Recon {
             call("Wiadomości: inbox/messages") { client.fetch("https://wiadomosci.librus.pl/api/inbox/messages?page=1&limit=10") }
         }
 
-    /** Sprawdza, czy dziennik odpowiada; jeśli nie, próbuje znanych sposobów dokończenia logowania. */
+    /** Sprawdza, czy po logowaniu odpowiada API (gateway) i czy działają zwykłe strony dziennika. */
     private fun StringBuilder.gatewayWorks(client: LibrusClient): Boolean {
-        val attempts = listOf<Pair<String, () -> Unit>>(
-            "bez dodatkowych kroków" to {},
-            "przejście pod goTo" to { client.goTo?.let { client.fetch(client.apiUrl(it)) } },
-            "strona ucznia" to { page(client, "https://synergia.librus.pl/uczen/index") },
-            "strona przeniesienia z portalu" to { page(client, "https://synergia.librus.pl/loguj/przenies") },
-        )
-        for ((name, step) in attempts) {
+        appendLine("\nPrzebieg logowania:")
+        client.trace.forEach { appendLine("  $it") }
+        appendLine("Ciasteczka: ${client.cookieNames()}")
+        appendLine()
+        var works = false
+        for (path in listOf("Me", "Auth/TokenInfo")) {
+            Thread.sleep(PAUSE_MS)
+            val (code, _) = client.gateway(path)
+            appendLine("gateway $path → HTTP $code")
+            if (path == "Me" && code in 200..299) works = true
+        }
+        for (path in HTML_PAGES) {
+            Thread.sleep(PAUSE_MS)
             val before = client.trace.size
             try {
-                step()
-                Thread.sleep(PAUSE_MS)
-                val (code, _) = client.gateway("Me")
-                appendLine("\nPróba „$name”: gateway Me → HTTP $code")
-                client.trace.drop(before).forEach { appendLine("  $it") }
-                if (code in 200..299) {
-                    appendLine("Ciasteczka: ${client.cookieNames()}")
-                    return true
-                }
+                val (code, body) = client.fetch("https://synergia.librus.pl/$path")
+                val title = TITLE.find(body)?.groupValues?.get(1)?.trim()?.take(80)
+                val loggedIn = body.contains("wyloguj", ignoreCase = true)
+                appendLine("Strona /$path → HTTP $code, ${body.length} znaków, tytuł: $title, jest „Wyloguj”: $loggedIn")
+                client.trace.drop(before).dropLast(1).forEach { appendLine("    przekierowanie: $it") }
             } catch (e: IOException) {
-                appendLine("\nPróba „$name”: błąd połączenia (${e.javaClass.simpleName})")
+                appendLine("Strona /$path: błąd połączenia (${e.javaClass.simpleName})")
             }
         }
-        appendLine("\nDziennik nie odpowiada. Przebieg logowania:")
-        client.trace.take(12).forEach { appendLine("  $it") }
-        appendLine("Ciasteczka: ${client.cookieNames()}")
-        return false
-    }
-
-    private fun StringBuilder.page(client: LibrusClient, url: String) {
-        val (code, body) = client.fetch(url)
-        val title = TITLE.find(body)?.groupValues?.get(1)?.trim()?.take(80)
-        appendLine("Strona $url → HTTP $code, ${body.length} znaków, tytuł: $title")
+        if (!works) appendLine("\nAPI gateway nie odpowiada — dalsze zasoby pominięte.")
+        return works
     }
 
     private fun StringBuilder.call(name: String, request: () -> Pair<Int, String>) {
@@ -202,6 +196,10 @@ private fun sampleOf(v: JsonElement): JsonElement? = when (v) {
     else -> null
 }
 
+private val HTML_PAGES = listOf(
+    "uczen/index", "przegladaj_oceny/uczen", "przegladaj_plan_lekcji", "terminarz",
+    "przegladaj_nb/uczen", "moje_zadania", "uwagi", "ogloszenia",
+)
 private val TITLE = Regex("""<title>(.*?)</title>""", setOf(RegexOption.IGNORE_CASE, RegexOption.DOT_MATCHES_ALL))
 private const val PAUSE_MS = 400L
 private const val MAX_VALUES = 25

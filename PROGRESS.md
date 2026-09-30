@@ -16,6 +16,7 @@ Aktualizowane po każdym kroku. Szczegóły etapów: `SPEC.md`, sekcja 14.
 - [x] 1a: rekonesans w aplikacji: ekran logowania + raport z przyciskiem „Kopiuj raport” (logowanie sprawdzone na emulatorze zmyślonym loginem — Librus odpowiada „Nieprawidłowy login i/lub hasło”)
 - [ ] 1a: użytkownik uruchamia rekonesans na telefonie i wkleja raport
   - 2026-09-30, próba 1: logowanie OK, ale każdy zasób gateway → 401 „Request is denied”. Wersja 2 rekonesansu pokazuje przebieg logowania i próbuje dokończyć sesję (goTo, strona ucznia, /loguj/przenies).
+  - Próba 2: logowanie każe iść pod goTo = /OAuth/Authorization/2FA (krok logowania, nie weryfikacja dwuetapowa); wejście od razu pod Grant odsyła do portalu. Gateway nadal 401. Wersja 3: logowanie idzie pod goTo, rekonesans sprawdza też strony HTML dziennika (plan B z SPEC 4.1).
 - [ ] 1a: `docs/librus-rekonesans.md` i akceptacja mapowania
 - [ ] 1b: modele i `DataSource`
 - [ ] 1b: `DemoSource`

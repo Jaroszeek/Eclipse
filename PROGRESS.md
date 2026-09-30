@@ -65,6 +65,7 @@ Aktualizowane po każdym kroku. Szczegóły etapów: `SPEC.md`, sekcja 14.
 - [x] Wydanie v2.0: rekonesans nr 5 — odbiorcy dostępni dla ucznia i fragmenty kodu wysyłania
 - [x] Odczyt wiadomości potwierdzony na telefonie (użytkownik: „wiadomości są i wyglądają dobrze”)
 - [x] Wydanie v2.1: wysyłanie wiadomości z aplikacji (starszy moduł Librusa, wzorzec szkolny-android)
+- [x] Wydanie v2.2: ekran pisania w układzie pocztowym (wiersz „Do” otwiera osobny ekran odbiorców)
 - [ ] Potwierdzenie na telefonie: czy lista odbiorców się wczytuje i czy wysyłanie działa
 - [ ] Wiadomości krok 2: wysyłanie z ekranem potwierdzenia (wymaga zmiany SPEC 12.7 „tylko odczyt” — za zgodą użytkownika)
 - [ ] Instalacja na telefonie przez USB (instrukcja w README; czeka na użytkownika)
@@ -127,6 +128,7 @@ Aktualizowane po każdym kroku. Szczegóły etapów: `SPEC.md`, sekcja 14.
   - Ekran „Napisz wiadomość”: odbiorcy z Librusa (szukanie, wybór wielu), temat, treść, obowiązkowe potwierdzenie z nazwiskiem i tematem.
   - Osobna, zalogowana sesja (`Messaging`) — nie przerywa synchronizacji w tle; jedno zapytanie naraz.
   - Sprawdzone na emulatorze w trybie demo (demo niczego nie wysyła): lista, wybór, potwierdzenie, komunikat o wysłaniu, powrót do Skrzynki. Na prawdziwym koncie **niesprawdzone** — starszy moduł może już nie działać; wtedy lista odbiorców się nie wczyta i nic nie zostanie wysłane.
+  - v2.2: układ jak w poczcie — wiersz „Do” z żetonami odbiorców otwiera osobny ekran (`RecipientsRoute`) z szukaniem i listą pogrupowaną jak w Librusie; temat i treść bez ramek, treść wypełnia ekran. Oba ekrany dzielą jeden `ComposeViewModel` (`nav.getBackStackEntry(ComposeRoute)`), więc wybór odbiorców wraca do wiadomości.
   - SPEC 12.7 zmieniona: Skrzynka nie jest już „tylko odczyt” (zgoda użytkownika: „wolę abyś zrobił tak, że mogę wysłać wiadomość z tej aplikacji”).
 - 2026-09-29: kod trafia do prywatnego repozytorium na GitHubie (konto Jaroszeek), autor commitów: Jaroszek.
 

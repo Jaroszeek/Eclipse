@@ -92,6 +92,7 @@ import pl.eclipse.app.ui.home.HomeScreen
 import pl.eclipse.app.ui.login.FirstSyncScreen
 import pl.eclipse.app.ui.login.LoginScreen
 import pl.eclipse.app.ui.login.NotificationPermissionScreen
+import pl.eclipse.app.ui.stats.StatsScreen
 import pl.eclipse.app.ui.style.StyleScreen
 import pl.eclipse.app.ui.tests.TestsScreen
 import pl.eclipse.app.ui.theme.Eclipse
@@ -216,7 +217,7 @@ private fun MainShell(state: ShellState, viewModel: ShellViewModel, initialRoute
                         val route = back.toRoute<SubjectRoute>()
                         SubjectScreen(route.key, contentPadding, onTitle = { subjectTitle = it })
                     }
-                    composable<StatsRoute> { ComingSoon(contentPadding) }
+                    composable<StatsRoute> { StatsScreen(contentPadding) }
                     composable<ImportantRoute> { ComingSoon(contentPadding) }
                     composable<InboxRoute> { ComingSoon(contentPadding) }
                     composable<SettingsRoute> { ComingSoon(contentPadding) }

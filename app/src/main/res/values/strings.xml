@@ -210,6 +210,35 @@
     <string name="method_hint">„Suma punktów” działa tylko, gdy wszystkie oceny przedmiotu są punktowe; inaczej liczymy średnią z procentów.</string>
     <string name="mark_difficult">Oznacz jako trudny</string>
 
+    <!-- Statystyki (SPEC 12.5) -->
+    <string name="stats_attendance">Frekwencja</string>
+    <string name="stats_no_attendance">Brak wpisów frekwencji w tym okresie.</string>
+    <string name="stats_present">obecności</string>
+    <string name="stats_late">spóźnienia</string>
+    <string name="stats_excused">usprawiedliwione</string>
+    <string name="stats_unexcused">nieusprawiedliwione</string>
+    <string name="stats_by_subject">Frekwencja z przedmiotów</string>
+    <string name="stats_rule_hint">Nieobecność przekraczająca połowę zajęć z przedmiotu może oznaczać nieklasyfikowanie. Pionowa kreska to 50%, pomarańczowa strefa — do 60%.</string>
+    <string name="stats_unexcused_title">Nieusprawiedliwione nieobecności</string>
+    <string name="stats_unexcused_none">Brak nieusprawiedliwionych nieobecności.</string>
+    <string name="show_all">Pokaż wszystkie (%1$d)</string>
+    <string name="show_less">Pokaż mniej</string>
+    <string name="stats_late_title">Spóźnienia (%1$d)</string>
+    <string name="stats_chart_empty">Za mało ocen, żeby narysować wykres.</string>
+    <string name="stats_chart_hint">Linia w kolorze akcentu to średnia ogólna. Dotknij przedmiotu, żeby dodać go do wykresu. Pasy w tle to progi ocen.</string>
+    <string name="stats_load">Obciążenie sprawdzianami</string>
+    <string name="stats_load_hint">Sprawdziany i kartkówki w kolejnych tygodniach: 4 wstecz i 8 naprzód. Tygodnie z co najmniej 3 sprawdzianami są czerwone.</string>
+    <string name="stats_reserve">Zapas nieobecności</string>
+    <string name="reserve_none">brak zapasu</string>
+    <string name="reserve_left">możesz opuścić jeszcze ok. %1$d %2$s</string>
+    <plurals name="lessons">
+        <item quantity="one">lekcję</item>
+        <item quantity="few">lekcje</item>
+        <item quantity="many">lekcji</item>
+        <item quantity="other">lekcji</item>
+    </plurals>
+    <string name="reserve_estimate">To szacunek do końca półrocza: połowa planowanych lekcji minus nieobecności liczone do limitu.</string>
+
     <!-- Próbnik stylu (Etap 2a) -->
     <string name="style_theme">Motyw i akcent</string>
     <string name="less_transparency">Mniej przezroczystości</string>

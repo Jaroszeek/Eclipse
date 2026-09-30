@@ -116,7 +116,10 @@ fun WeekColumns(values: List<Int>, labels: List<String>, highlight: (Int) -> Boo
                     ),
                     mergeMode = { ColumnCartesianLayer.MergeMode.Stacked },
                 ),
-                startAxis = VerticalAxis.rememberStart(valueFormatter = remember { CartesianValueFormatter.decimal(decimalCount = 0) }),
+                startAxis = VerticalAxis.rememberStart(
+                    valueFormatter = remember { CartesianValueFormatter.decimal(decimalCount = 0) },
+                    itemPlacer = remember { VerticalAxis.ItemPlacer.step({ 1.0 }) },
+                ),
                 bottomAxis = HorizontalAxis.rememberBottom(
                     valueFormatter = remember(labels) { CartesianValueFormatter { _, x, _ -> labels.getOrElse(x.toInt()) { "" } } },
                 ),

@@ -21,59 +21,45 @@ import java.time.temporal.TemporalAdjusters
  * a wartości pokazujemy tylko dla pól bez danych osobowych (symbole ocen, kategorie, dzwonki).
  */
 object Recon {
-    fun run(login: String, password: String, today: LocalDate = LocalDate.now(ZoneId.of("Europe/Warsaw"))): String =
+    fun run(email: String, password: String, today: LocalDate = LocalDate.now(ZoneId.of("Europe/Warsaw"))): String =
         buildString {
             appendLine("Rekonesans Librusa, $today")
             val client = LibrusClient()
             try {
-                client.login(login, password)
+                client.login(email, password)
             } catch (e: LibrusException) {
                 appendLine("Logowanie: nie udało się. ${e.message}")
+                appendTrace(client)
                 return@buildString
             } catch (e: IOException) {
                 appendLine("Logowanie: brak połączenia z Librusem (${e.javaClass.simpleName}).")
+                appendTrace(client)
                 return@buildString
             }
             appendLine("Logowanie: OK")
-            appendLine("Odpowiedź na logowanie, klucze: ${client.loginResponseKeys}; goTo: ${client.goTo?.substringBefore('?')}")
-            if (!gatewayWorks(client)) return@buildString
+            appendTrace(client)
+            appendLine("Konta w Koncie LIBRUS: ${client.accounts.size}")
+            client.accounts.forEach { appendLine("  grupa: ${it.group}, stan: ${it.state}, ma token: ${it.accessToken != null}") }
 
             val monday = today.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
+            val first = "Me"
+            call(first) { client.gateway(first) }
+            if (!lastOk) {
+                appendLine("\nAPI nie odpowiada — dalsze zasoby pominięte.")
+                return@buildString
+            }
             for (resource in GATEWAY_RESOURCES + "Timetables?weekStart=$monday") {
                 call(resource) { client.gateway(resource) }
             }
-            call("Wiadomości: wejście przez Synergię") { client.fetch("https://synergia.librus.pl/wiadomosci3") }
-            call("Wiadomości: inbox/messages") { client.fetch("https://wiadomosci.librus.pl/api/inbox/messages?page=1&limit=10") }
+            appendLine("\nWiadomości (wiadomosci.librus.pl) sprawdzimy osobno, gdy API działa.")
         }
 
-    /** Sprawdza, czy po logowaniu odpowiada API (gateway) i czy działają zwykłe strony dziennika. */
-    private fun StringBuilder.gatewayWorks(client: LibrusClient): Boolean {
+    private var lastOk = false
+
+    private fun StringBuilder.appendTrace(client: LibrusClient) {
         appendLine("\nPrzebieg logowania:")
         client.trace.forEach { appendLine("  $it") }
         appendLine("Ciasteczka: ${client.cookieNames()}")
-        appendLine()
-        var works = false
-        for (path in listOf("Me", "Auth/TokenInfo")) {
-            Thread.sleep(PAUSE_MS)
-            val (code, _) = client.gateway(path)
-            appendLine("gateway $path → HTTP $code")
-            if (path == "Me" && code in 200..299) works = true
-        }
-        for (path in HTML_PAGES) {
-            Thread.sleep(PAUSE_MS)
-            val before = client.trace.size
-            try {
-                val (code, body) = client.fetch("https://synergia.librus.pl/$path")
-                val title = TITLE.find(body)?.groupValues?.get(1)?.trim()?.take(80)
-                val loggedIn = body.contains("wyloguj", ignoreCase = true)
-                appendLine("Strona /$path → HTTP $code, ${body.length} znaków, tytuł: $title, jest „Wyloguj”: $loggedIn")
-                client.trace.drop(before).dropLast(1).forEach { appendLine("    przekierowanie: $it") }
-            } catch (e: IOException) {
-                appendLine("Strona /$path: błąd połączenia (${e.javaClass.simpleName})")
-            }
-        }
-        if (!works) appendLine("\nAPI gateway nie odpowiada — dalsze zasoby pominięte.")
-        return works
     }
 
     private fun StringBuilder.call(name: String, request: () -> Pair<Int, String>) {
@@ -84,6 +70,7 @@ object Recon {
             appendLine("\n## $name: błąd połączenia (${e.javaClass.simpleName})")
             return
         }
+        lastOk = code in 200..299
         append(describe(name, code, body))
     }
 }
@@ -196,11 +183,6 @@ private fun sampleOf(v: JsonElement): JsonElement? = when (v) {
     else -> null
 }
 
-private val HTML_PAGES = listOf(
-    "uczen/index", "przegladaj_oceny/uczen", "przegladaj_plan_lekcji", "terminarz",
-    "przegladaj_nb/uczen", "moje_zadania", "uwagi", "ogloszenia",
-)
-private val TITLE = Regex("""<title>(.*?)</title>""", setOf(RegexOption.IGNORE_CASE, RegexOption.DOT_MATCHES_ALL))
 private const val PAUSE_MS = 400L
 private const val MAX_VALUES = 25
 private val SKIPPED_KEYS = setOf("Resources", "Url")
@@ -216,7 +198,7 @@ private val PERCENT = Regex("""\d\s*%""")
 private val POINTS = Regex("""\d+([.,]\d+)?\s*/\s*\d+|pkt|punkt""", RegexOption.IGNORE_CASE)
 
 private val GATEWAY_RESOURCES = listOf(
-    "Auth/TokenInfo", "Me", "Classes", "Schools", "Subjects", "Lessons", "Users", "Classrooms",
+    "Classes", "Schools", "Subjects", "Lessons", "Users", "Classrooms",
     "Grades", "Grades/Categories", "Grades/Comments", "Grades/Averages",
     "PointGrades", "PointGrades/Categories", "PointGrades/Averages",
     "DescriptiveGrades", "TextGrades", "BehaviourGrades",

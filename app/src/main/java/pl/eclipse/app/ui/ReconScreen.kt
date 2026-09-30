@@ -63,6 +63,7 @@ fun ReconScreen(modifier: Modifier = Modifier) {
             onValueChange = { login = it },
             label = { Text(stringResource(R.string.login_label)) },
             singleLine = true,
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
             modifier = Modifier.fillMaxWidth(),
         )
         OutlinedTextField(

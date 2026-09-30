@@ -9,6 +9,7 @@ import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.booleanOrNull
 import pl.eclipse.core.source.librus.LibrusClient
 import pl.eclipse.core.source.librus.LibrusException
+import pl.eclipse.core.source.librus.messageText
 import java.io.IOException
 import java.time.DayOfWeek
 import java.time.LocalDate
@@ -87,30 +88,56 @@ object Recon {
 
                 val origin = landing.url.substringBefore("://") + "://" + landing.url.substringAfter("://").substringBefore('/')
                 // Kod strony wiadomości to aplikacja Librusa (bez danych ucznia) — szukamy w nim adresów wysyłania i odbiorców.
+                // Główny plik doczytuje w trakcie mniejsze części kodu; adresy wysyłania są pewnie w nich.
                 val endpoints = sortedSetOf<String>()
+                var parts = 0
                 SCRIPT_SRC.findAll(landing.body).map { it.groupValues[1] }
                     .filter { !it.startsWith("http") && !it.startsWith("//") || "librus.pl" in it }.take(MAX_SCRIPTS).forEach { src ->
                     pause()
                     val script = client.page(resolve(landing.url, src))
-                    appendLine("Skrypt ${script.url.substringAfterLast('/').substringBefore('?').take(40)}: HTTP ${script.code}, ${script.body.length} znaków")
+                    appendLine("Skrypt ${fileName(script.url)}: HTTP ${script.code}, ${script.body.length} znaków")
                     endpoints += endpointStrings(script.body)
+                    val folder = script.url.substringBefore('?').substringBeforeLast('/')
+                    chunkNames(script.body).take(MAX_CHUNKS).forEach { chunk ->
+                        pause()
+                        val part = client.page("$folder/$chunk")
+                        parts++
+                        val found = endpointStrings(part.body)
+                        if (found.isNotEmpty()) appendLine("  część $chunk: HTTP ${part.code}, adresów: ${found.size}")
+                        endpoints += found
+                    }
                 }
+                appendLine("Przejrzane części kodu: $parts")
                 appendLine("\nAdresy w kodzie strony (${endpoints.size}):")
                 endpoints.take(MAX_ENDPOINTS).forEach { appendLine("  $it") }
 
-                // Postać treści (długość, HTML, base64) — bez samej treści.
                 pause()
                 val list = client.page("$origin/api/inbox/messages?page=1&limit=5")
                 val items = runCatching { (Json.parseToJsonElement(list.body) as JsonObject)["data"] as JsonArray }.getOrNull()
                     .orEmpty().filterIsInstance<JsonObject>()
                 appendLine("\n## Lista wiadomości: HTTP ${list.code}, ${items.size} el.")
-                items.firstOrNull()?.let { appendLine("Treść na liście: ${contentShape(it.text("content"))}") }
+                // Podgląd z listy i pełna treść z szczegółów tej samej wiadomości — tylko długości i postać, bez treści.
                 // Szczegóły tylko przeczytanej wiadomości — otwarcie nieprzeczytanej mogłoby ją w Librusie oznaczyć jako przeczytaną.
-                items.firstOrNull { it.text("readDate") != null }?.text("messageId")?.let { id ->
+                val read = items.firstOrNull { it.text("readDate") != null }
+                if (read == null) appendLine("Na pierwszej stronie nie ma przeczytanej wiadomości — szczegóły pominięte.")
+                read?.text("messageId")?.let { id ->
                     pause()
                     val detail = client.page("$origin/api/inbox/messages/$id")
-                    append(describe("/api/inbox/messages/{id}", detail.code, detail.body))
-                    appendLine("Treść w szczegółach: ${contentShape(detailContent(detail.body))}")
+                    val data = runCatching { (Json.parseToJsonElement(detail.body) as JsonObject)["data"] as JsonObject }.getOrNull()
+                    val preview = read.text("content")
+                    val full = data?.text("Message")
+                    appendLine("Szczegóły: HTTP ${detail.code}")
+                    appendLine("Podgląd z listy (content): ${contentShape(preview)}")
+                    appendLine("Pełna treść (Message): ${contentShape(full)}")
+                    appendLine("Oryginał (originalMessage): ${contentShape(data?.text("originalMessage"))}")
+                    if (preview != null && full != null) {
+                        val short = plain(preview).trimEnd('.', '…', ' ')
+                        val long = plain(full)
+                        appendLine(
+                            "Po odkodowaniu: podgląd ${short.length} znaków, pełna treść ${long.length} znaków, " +
+                                "podgląd to początek pełnej treści: ${yes(long.startsWith(short))}",
+                        )
+                    }
                 }
 
                 // Odbiorcy: tylko odczyt (GET) adresów z kodu strony, które na to wyglądają. Nic nie jest wysyłane.
@@ -287,15 +314,26 @@ private fun contentShape(raw: String?): String {
     if (raw == null) return "brak"
     val base64 = raw.length % 4 == 0 && BASE64.matches(raw)
     val decoded = if (base64) runCatching { String(Base64.getDecoder().decode(raw), Charsets.UTF_8) }.getOrNull() else null
-    fun yes(value: Boolean) = if (value) "tak" else "nie"
     return "długość ${raw.length}, HTML: ${yes('<' in raw && '>' in raw)}, base64: ${yes(base64)}" +
-        (decoded?.let { ", po odkodowaniu HTML: ${yes('<' in it)}" } ?: "") + ", wierszy: ${raw.lines().size}"
+        (decoded?.let { ", po odkodowaniu HTML: ${yes('<' in it)}, wierszy po odkodowaniu: ${it.lines().size}" } ?: "") +
+        ", wierszy: ${raw.lines().size}"
 }
 
-private fun detailContent(body: String): String? = runCatching {
-    val json = Json.parseToJsonElement(body) as JsonObject
-    ((json["data"] as? JsonObject) ?: json).text("content")
-}.getOrNull()
+private fun yes(value: Boolean) = if (value) "tak" else "nie"
+
+/** Treść jako zwykły tekst z pojedynczymi spacjami — do porównania podglądu z pełną treścią. */
+private fun plain(raw: String) = messageText(raw).replace(Regex("""\s+"""), " ").trim()
+
+private fun fileName(url: String) = url.substringAfterLast('/').substringBefore('?').take(40)
+
+/** Nazwy doczytywanych części kodu (np. „Compose-AbC12xYz.js”) z głównego pliku; najpierw te, które brzmią jak pisanie wiadomości. */
+internal fun chunkNames(text: String): List<String> = CHUNK.findAll(text).map { it.groupValues[1] }
+    .filter { !it.startsWith("index-") }.distinct()
+    .sortedByDescending { name -> CHUNK_WORDS.count { it in name.lowercase() } }.toList()
+
+private val CHUNK = Regex("""["'`(](?:\./|/nowy/assets/|assets/)?([A-Za-z0-9_\-]+-[A-Za-z0-9_\-]{8}\.js)["'`)]""")
+private val CHUNK_WORDS = listOf("message", "compose", "new", "write", "send", "receiver", "reply", "outbox", "draft", "nowa", "napisz", "odbior")
+private const val MAX_CHUNKS = 30
 
 private fun JsonObject.text(key: String) = (this[key] as? JsonPrimitive)?.takeIf { it !is JsonNull }?.content
 

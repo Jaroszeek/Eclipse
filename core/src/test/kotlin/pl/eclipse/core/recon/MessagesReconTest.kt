@@ -30,4 +30,10 @@ class MessagesReconTest {
         val script = """a.get("/inbox/messages");b.post(`/outbox/messages/${'$'}{e}`);c="Wyślij wiadomość";d="application/json";g='receivers/groups'"""
         assertEquals(setOf("/inbox/messages", "/outbox/messages/${'$'}{e}", "receivers/groups"), endpointStrings(script))
     }
+
+    @Test
+    fun chunkNamesAreFoundAndComposeGoesFirst() {
+        val script = """m=["assets/Inbox-Qw3rT5yU.js","assets/index-C2RJQZaC.js"];x=()=>import("./Compose-AbC12xYz.js")"""
+        assertEquals(listOf("Compose-AbC12xYz.js", "Inbox-Qw3rT5yU.js"), chunkNames(script))
+    }
 }

@@ -83,4 +83,8 @@ Pola wiadomości w `data[]`: `messageId` (tekst), `senderFirstName`, `senderLast
 
 **Mapowanie → `Message`:** `messageId` → `sourceKey` („message-{id}”), `senderName` (albo imię + nazwisko) → `sender`, `topic` → `title`, `content` → `content` (base64 odkodowywane, HTML → zwykły tekst), `sendDate` → `sentAt`, `readDate` → `readAt` (czas polski), `isAnyFileAttached` → `hasAttachment`. Jedna strona po 50 najnowszych przy każdej synchronizacji. Eclipse niczego w Librusie nie zmienia — otwarcie wiadomości w aplikacji nie oznacza jej w Librusie jako przeczytanej.
 
-**Do sprawdzenia (rekonesans nr 3):** postać `content` (tekst / HTML / base64), szczegóły `GET /api/inbox/messages/{id}`, adresy odbiorców i wysyłania w kodzie strony (`/nowy/assets/index-*.js` — ścieżki nie zawierają „api/”).
+**Rekonesans nr 3 (30.09.2026):**
+- `content` na liście to **base64 zwykłego tekstu** (bez HTML, jedna linia, 112 znaków) — najpewniej tylko podgląd.
+- `GET /api/inbox/messages/{id}` → 200, `data` z 36 polami, m.in. `Message` (pełna treść), `originalMessage`, `originalTopic`, `receiver`, `senderId`, `senderGroup`, `senderGroupId`, `myMessage`, `spam`, `state`, `noReply` (0/1), `archive`, `attachementInfo`, `attachments[]`, `receivers[]`, `receiversCount`, `readedCount`, `isMessageWithdrawn`, a także imię, nazwisko i klasa ucznia (`userFirstName`, `userLastName`, `userClass` — nie zapisujemy).
+- Otwarcie szczegółów w Librusie prawdopodobnie oznacza wiadomość jako przeczytaną — szczegóły pobieramy tylko dla wiadomości już przeczytanych.
+- W głównym pliku strony (`/nowy/assets/index-*.js`) jest tylko `receivers/crossed-out-students` (GET → `crossOuts[].studentId`). Reszta kodu jest w doczytywanych częściach — sprawdza je rekonesans nr 4.

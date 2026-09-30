@@ -59,7 +59,9 @@ Aktualizowane po każdym kroku. Szczegóły etapów: `SPEC.md`, sekcja 14.
 - [x] Wydanie v1.6: Diagnostyka (z rekonesansem) widoczna też w wersji release — wcześniej tylko w debug, a instrukcje odsyłały do niej użytkownika
 - [x] Wydanie v1.7: rekonesans wiadomości — przekierowania http:// w Librusie idą przez https, login ukryty w raporcie
 - [x] Wiadomości krok 1: raporty nr 1 i 2 → mapowanie w `docs/librus-rekonesans.md` → odczyt w Skrzynce (v1.8)
-- [ ] Potwierdzenie na telefonie, że wiadomości są w Skrzynce, i raport nr 3 (wysyłanie)
+- [x] Raport nr 3: treść na liście to base64 zwykłego tekstu (podgląd), pełna treść w szczegółach (`data.Message`)
+- [x] Wydanie v1.9: rekonesans nr 4 — doczytywane części kodu strony (adresy wysyłania i odbiorców), porównanie podglądu z pełną treścią
+- [ ] Potwierdzenie na telefonie, że wiadomości są w Skrzynce (i czy treść jest urwana), raport nr 4
 - [ ] Wiadomości krok 2: wysyłanie z ekranem potwierdzenia (wymaga zmiany SPEC 12.7 „tylko odczyt” — za zgodą użytkownika)
 - [ ] Instalacja na telefonie przez USB (instrukcja w README; czeka na użytkownika)
 - [ ] Całodniowy test synchronizacji w tle i powiadomień z godzinami ciszy (czeka na użytkownika)

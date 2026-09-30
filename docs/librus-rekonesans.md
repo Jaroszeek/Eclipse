@@ -38,7 +38,7 @@ Wykonany 30.09.2026 z telefonu (ekran „Rekonesans Librusa”, SPEC 4.2). Bez d
 | Ogłoszenia | `SchoolNotices` (15) | `StartDate`, `EndDate`, `Subject` → tytuł, `Content`, `AddedBy.Id`, `WasRead` | — |
 | Wiadomości | `wiadomosci.librus.pl` | — | Osobny serwis z własnym logowaniem — nie sprawdzony. Do zbadania przy `LibrusSource`. |
 
-## Proponowane mapowanie typów frekwencji (SPEC 7)
+## Mapowanie typów frekwencji (SPEC 7) — zaakceptowane 30.09.2026
 
 | Typ (skrót) | Kategoria | Do limitu nieobecności |
 |---|---|---|
@@ -50,9 +50,9 @@ Wykonany 30.09.2026 z telefonu (ekran „Rekonesans Librusa”, SPEC 4.2). Bez d
 | zwolniony usprawiedliwiony (zu) | `RELEASED` | nie |
 | wf zwolnienie (wf) | `RELEASED` | nie |
 | uroczystość obecność (uo) | `PRESENT` | nie |
-| uroczystość nieobecność (un) | `ABSENT` | tak (do potwierdzenia) |
+| uroczystość nieobecność (un) | `OTHER` | nie (decyzja użytkownika) |
 
-## Proponowane mapowanie kategorii terminarza (SPEC 11.3)
+## Mapowanie kategorii terminarza (SPEC 11.3) — zaakceptowane 30.09.2026
 
 | Kategoria w Librusie | Typ |
 |---|---|

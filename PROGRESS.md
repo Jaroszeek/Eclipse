@@ -9,7 +9,7 @@ Aktualizowane po każdym kroku. Szczegóły etapów: `SPEC.md`, sekcja 14.
 - [x] `.gitignore`, `.claude/settings.json`
 - [x] `PROGRESS.md`, szkic `README.md`
 - [x] Repozytorium git i pierwszy commit
-- [ ] Prywatne repozytorium na GitHubie (Jaroszeek/Eclipse) i wysłanie kodu
+- [x] Prywatne repozytorium na GitHubie (Jaroszeek/Eclipse) i wysłanie kodu
 - [x] Pusta aplikacja uruchomiona na emulatorze („gympixel”, Android 15)
 
 ## Etap 1 — logika i dane
@@ -20,7 +20,7 @@ Aktualizowane po każdym kroku. Szczegóły etapów: `SPEC.md`, sekcja 14.
   - Próba 3: po poprawce Synergia i tak odsyła do portalu (konto połączone z Kontem LIBRUS). Decyzja użytkownika: logowanie e-mailem przez Konto LIBRUS (SPEC 4.1 zaktualizowana). Wersja 4 sprawdzona na emulatorze zmyślonym e-mailem: portal odpowiada, błędne dane dają czytelny komunikat.
   - Próba 2: logowanie każe iść pod goTo = /OAuth/Authorization/2FA (krok logowania, nie weryfikacja dwuetapowa); wejście od razu pod Grant odsyła do portalu. Gateway nadal 401. Wersja 3: logowanie idzie pod goTo, rekonesans sprawdza też strony HTML dziennika (plan B z SPEC 4.1).
 - [x] 1a: `docs/librus-rekonesans.md`
-- [ ] 1a: akceptacja mapowania przez użytkownika
+- [x] 1a: akceptacja mapowania przez użytkownika
 - [ ] 1b: modele i `DataSource`
 - [ ] 1b: `DemoSource`
 - [ ] 1b: obliczenia z testami (sekcje 6–8)
@@ -60,6 +60,7 @@ Aktualizowane po każdym kroku. Szczegóły etapów: `SPEC.md`, sekcja 14.
 - 2026-09-29: biblioteki `:core` (OkHttp, kotlinx.serialization, coroutines) dochodzą do katalogu wersji w kroku, który ich używa.
 - 2026-09-29: logowanie do Librusa loginem Synergii, bez weryfikacji dwuetapowej — znana droga OAuth z SPEC 4.1 powinna działać.
 - 2026-09-30: rekonesans działa w aplikacji zamiast `./gradlew :core:recon` z plikiem `librus-dev.properties` (prośba użytkownika — nie był przy komputerze; hasło nie leży w pliku). SPEC 4.2 zaktualizowana. Plik wzoru usunięty; wpis w `.gitignore` i blokada w `.claude/settings.json` zostają na wszelki wypadek.
+- 2026-09-30: mapowanie z `docs/librus-rekonesans.md` zaakceptowane; „uroczystość nieobecność” nie liczy się do limitu nieobecności.
 - 2026-09-30: `LibrusClient` ma własny prosty magazyn ciasteczek w pamięci; zapisywanie sesji dojdzie w `LibrusSource`.
 - 2026-09-29: kod trafia do prywatnego repozytorium na GitHubie (konto Jaroszeek), autor commitów: Jaroszek.
 

@@ -22,7 +22,7 @@ Aktualizowane po każdym kroku. Szczegóły etapów: `SPEC.md`, sekcja 14.
 - [x] 1a: `docs/librus-rekonesans.md`
 - [x] 1a: akceptacja mapowania przez użytkownika
 - [x] 1b: modele i `DataSource` (`core/model/Models.kt`, `core/source/DataSource.kt`; funkcje blokujące, wołane w tle)
-- [ ] 1b: `DemoSource`
+- [x] 1b: `DemoSource` (uczeń technikum, dzwonki jak w szkole użytkownika, rok szkolny demo zaczyna się 10 tygodni przed dziś; scenariusze Important: chemia < 40%, fizyka 40–50%, historia ze spadkiem, biologia z frekwencją ok. 53%, świeża jedynka z matematyki, geografia 53%)
 - [ ] 1b: obliczenia z testami (sekcje 6–8)
 - [ ] 1b: `LibrusSource` według mapowania
 - [ ] 1b: Room i repozytoria

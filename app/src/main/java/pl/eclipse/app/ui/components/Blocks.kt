@@ -130,14 +130,14 @@ fun ScheduleBlock(
                 labelColors.take(3).forEach { Box(Modifier.size(6.dp).clip(CircleShape).background(it)) }
             }
             if (!compact) subtitle?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = c.textSecondary, maxLines = 2) }
-            tag?.let { Tag(it, if (status == BlockStatus.NORMAL || status == BlockStatus.CHANGED) typeColor else c.text, compact) }
+            tag?.let { Tag(it, if (status == BlockStatus.NORMAL || status == BlockStatus.CHANGED) typeColor else c.text, compact = compact) }
         }
     }
 }
 
 /** Mały znacznik słowny, np. „za 3 dni”, „zastępstwo”, „odwołana”. */
 @Composable
-fun Tag(text: String, color: Color, compact: Boolean = false, modifier: Modifier = Modifier) {
+fun Tag(text: String, color: Color, modifier: Modifier = Modifier, compact: Boolean = false) {
     val c = Eclipse.colors
     Text(
         text,
@@ -204,7 +204,7 @@ fun PercentBar(average: Double?, thresholds: Collection<Double>, modifier: Modif
 
 /** Plakietka z liczbą (np. nowe oceny, ostrzeżenia krytyczne). */
 @Composable
-fun CountBadge(count: Int, color: Color = Palette.Critical, modifier: Modifier = Modifier) {
+fun CountBadge(count: Int, modifier: Modifier = Modifier, color: Color = Palette.Critical) {
     if (count <= 0) return
     Text(
         count.toString(),

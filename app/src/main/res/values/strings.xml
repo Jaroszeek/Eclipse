@@ -330,7 +330,7 @@
     <string name="imp_drop">Spadek średniej w 28 dni — od</string>
     <string name="rule_below_2">Średnia poniżej progu oceny 2</string>
     <string name="rule_proposed_one">Proponowana ocena 1</string>
-    <string name="rule_attendance_critical">Frekwencja poniżej 50% albo brak zapasu</string>
+    <string name="rule_attendance_critical" formatted="false">Frekwencja poniżej 50% albo brak zapasu</string>
     <string name="rule_in_2">Średnia w przedziale oceny 2</string>
     <string name="rule_fresh">Świeża ocena 1 lub 2 do poprawy</string>
     <string name="rule_attendance_near">Frekwencja blisko granicy</string>

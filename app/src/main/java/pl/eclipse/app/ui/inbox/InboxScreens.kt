@@ -116,7 +116,7 @@ fun InboxScreen(contentPadding: PaddingValues, viewModel: InboxViewModel = viewM
                         selected = tab == value,
                         onClick = { tab = value },
                         label = { Text(stringResource(label)) },
-                        trailingIcon = if (unread > 0) ({ CountBadge(unread, Eclipse.colors.accent) }) else null,
+                        trailingIcon = if (unread > 0) ({ CountBadge(unread, color = Eclipse.colors.accent) }) else null,
                     )
                 }
             }

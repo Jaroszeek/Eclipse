@@ -11,6 +11,7 @@ import android.os.Build
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
+import androidx.core.content.edit
 import androidx.work.CoroutineWorker
 import androidx.work.ExistingWorkPolicy
 import androidx.work.OneTimeWorkRequestBuilder
@@ -73,7 +74,7 @@ class Notifier(private val context: Context, private val db: EclipseDatabase) {
         outcome.events?.let { scheduleReminders(it.items.values, it.changes.removed, settings, ::subject) }
         val critical = criticalSubjects(settings, today)
         val previousCritical = state.getStringSet(KEY_CRITICAL, null)
-        state.edit().putStringSet(KEY_CRITICAL, critical).apply()
+        state.edit { putStringSet(KEY_CRITICAL, critical) }
         if (outcome.firstSync) return // pierwsza synchronizacja tylko zapisuje stan (SPEC 4.3)
 
         outcome.grades?.let { r ->
@@ -124,7 +125,7 @@ class Notifier(private val context: Context, private val db: EclipseDatabase) {
 
         outcome.luckyNumber?.let { lucky ->
             if (lucky.date == today && lucky.number == settings.myDiaryNumber && state.getString(KEY_LUCKY, null) != today.toString()) {
-                state.edit().putString(KEY_LUCKY, today.toString()).apply()
+                state.edit { putString(KEY_LUCKY, today.toString()) }
                 post(NotificationType.LUCKY_NUMBER, context.getString(R.string.notif_lucky, lucky.number), "", ROUTE_HOME, settings)
             }
         }

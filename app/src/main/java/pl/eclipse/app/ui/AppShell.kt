@@ -426,7 +426,7 @@ private fun DrawerItem(label: String, @DrawableRes icon: Int, selected: Boolean,
     ) {
         Icon(painterResource(icon), null, tint = if (selected) c.accentText else c.textSecondary)
         Text(label, style = MaterialTheme.typography.titleSmall, color = if (selected) c.text else c.text, modifier = Modifier.weight(1f))
-        CountBadge(badge, badgeColor)
+        CountBadge(badge, color = badgeColor)
     }
 }
 

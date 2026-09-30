@@ -229,6 +229,9 @@ interface UserDao {
     @Upsert
     suspend fun setFlag(flag: UserFlagEntity)
 
+    @Upsert
+    suspend fun setFlags(flags: List<UserFlagEntity>)
+
     @Query("DELETE FROM user_flags WHERE kind = :kind AND `key` = :key")
     suspend fun clearFlag(kind: String, key: String)
 }

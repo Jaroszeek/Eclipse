@@ -16,6 +16,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -88,6 +89,12 @@ class InboxViewModel(application: Application) : AndroidViewModel(application) {
     fun markRead(key: String) {
         viewModelScope.launch { container.database.user().setFlag(UserFlagEntity(Flags.READ, key)) }
     }
+
+    /** Wszystko w Skrzynce jako przeczytane — tylko w Eclipse, w Librusie nic się nie zmienia. */
+    fun markAllRead() {
+        val unread = state.value.let { it.messages + it.announcements + it.notes }.filter { it.unread }
+        viewModelScope.launch { container.database.user().setFlags(unread.map { UserFlagEntity(Flags.READ, it.key) }) }
+    }
 }
 
 /** Skrzynka (SPEC 12.7): tylko odczyt. */
@@ -118,6 +125,12 @@ fun InboxScreen(contentPadding: PaddingValues, viewModel: InboxViewModel = viewM
                         label = { Text(stringResource(label)) },
                         trailingIcon = if (unread > 0) ({ CountBadge(unread, color = Eclipse.colors.accent) }) else null,
                     )
+                }
+            }
+            if (tabs.any { it.second.second > 0 }) {
+                TextButton(onClick = viewModel::markAllRead) {
+                    Icon(painterResource(R.drawable.ic_check), null, Modifier.size(18.dp), tint = Eclipse.colors.accentText)
+                    Text(stringResource(R.string.inbox_mark_all_read), color = Eclipse.colors.accentText, modifier = Modifier.padding(start = 8.dp))
                 }
             }
         }

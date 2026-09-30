@@ -17,15 +17,17 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import pl.eclipse.app.data.AppSettings
 import pl.eclipse.app.notify.Notifier
 import pl.eclipse.app.ui.EclipseRoot
+import pl.eclipse.app.ui.RouteRequest
 import pl.eclipse.app.ui.theme.EclipseTheme
 import pl.eclipse.app.ui.theme.isDarkTheme
 
 class MainActivity : ComponentActivity() {
-    private var route by mutableStateOf<String?>(null)
+    /** Żądanie otwarcia ekranu z powiadomienia; nowy obiekt przy każdym kliknięciu, nawet tej samej trasy. */
+    private var route by mutableStateOf<RouteRequest?>(null)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        route = intent.getStringExtra(Notifier.EXTRA_ROUTE)
+        route = intent.getStringExtra(Notifier.EXTRA_ROUTE)?.let(::RouteRequest)
         enableEdgeToEdge()
         setContent {
             val settings by container.settings.settings.collectAsStateWithLifecycle(AppSettings())
@@ -50,6 +52,6 @@ class MainActivity : ComponentActivity() {
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
-        route = intent.getStringExtra(Notifier.EXTRA_ROUTE)
+        route = intent.getStringExtra(Notifier.EXTRA_ROUTE)?.let(::RouteRequest)
     }
 }

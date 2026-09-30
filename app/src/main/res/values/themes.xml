@@ -1,5 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <style name="Theme.Eclipse" parent="android:Theme.Material.Light.NoActionBar" />
+    <!-- Ekran startowy (Android 12+): tarcza zaćmienia na nocnym tle (SPEC 11.7, Etap 3). -->
+    <style name="Theme.Eclipse" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowSplashScreenBackground">#FF0D1230</item>
+        <item name="android:windowSplashScreenAnimatedIcon">@drawable/ic_launcher_foreground</item>
+    </style>
 </resources>

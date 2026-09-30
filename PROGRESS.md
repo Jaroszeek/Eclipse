@@ -44,12 +44,13 @@ Aktualizowane po każdym kroku. Szczegóły etapów: `SPEC.md`, sekcja 14.
 - [x] 2b: Important (karty z poziomem, powodami, podpowiedziami z szablonów; „Oznacz jako trudny”, „Ukryj ten powód”, przejście do ocen)
 - [x] 2b: Skrzynka (wiadomości, ogłoszenia, uwagi; nieprzeczytane wyróżnione) + centrum powiadomień (dzwonek)
 - [x] 2b: Ustawienia (konto, wygląd, kolory typów, etykiety i szablony, zasady oceniania, frekwencja, Important, powiadomienia, synchronizacja, dane)
-- [ ] Kryteria akceptacji Etapu 2
+- [x] Kryteria akceptacji Etapu 2 — na emulatorze (demo): oba motywy i akcent na żywo, szkło i wersja matowa, 360 dp + czcionka 130%, przeciąganie z Przybornika i alternatywa, brak błędów w Logcat, `assembleDebug` i `lintDebug` przechodzą. Do potwierdzenia na telefonie: praca na prawdziwych danych.
 
 ## Etap 3 — telefon na co dzień
-- [ ] Ikona aplikacji i ekran startowy
-- [ ] Podpisana wersja release
-- [ ] Instalacja na telefonie przez USB
+- [x] Ikona aplikacji (adaptacyjna + monochromatyczna, wektor) i ekran startowy (systemowy Android 12+, bez dodatkowej biblioteki)
+- [x] Podpisana wersja release (klucz w `~/.eclipse-signing/`, poza repozytorium; R8 włączony; release przetestowany na emulatorze — wszystkie ekrany bez błędów)
+- [ ] Instalacja na telefonie przez USB (instrukcja w README; czeka na użytkownika)
+- [ ] Całodniowy test synchronizacji w tle i powiadomień z godzinami ciszy (czeka na użytkownika)
 - [ ] Kryteria akceptacji Etapu 3
 
 ## Decyzje
@@ -73,6 +74,9 @@ Aktualizowane po każdym kroku. Szczegóły etapów: `SPEC.md`, sekcja 14.
 - 2026-09-30: przyciski segmentowe zastąpione wspólnym wyborem z chipów (`ChoiceChips`) — przy 360 dp i czcionce 130% segmenty ucinały napisy; chipy zawijają się i mają znacznik ✓.
 - 2026-09-30: Frekwencja w ustawieniach — mapowanie typów z Librusa na kategorie jest stałe (z rekonesansu, pokazane w ustawieniach); edytowalne jest, które kategorie liczą się do limitu. Pełna edycja mapowania — gdy okaże się potrzebna.
 - 2026-09-30: „Nowe od ostatniej wizyty” — przy pierwszej wizycie ekranu nic nie jest oznaczane jako nowe.
+- 2026-09-30: Etap 3 — ekran startowy przez atrybuty motywu `android:windowSplashScreen*` (minSdk 31), bez `core-splashscreen`. Stare bitmapy ikony (mipmap-*dpi) usunięte — przy minSdk 31 zawsze działa ikona adaptacyjna.
+- 2026-09-30: Etap 3 — klucz release wygenerowany skryptem z losowym hasłem zapisanym wyłącznie w `~/.eclipse-signing/keystore.properties` (hasło nie pojawiło się w czacie ani w logach). R8 w AGP 9 wymaga flagi `android.r8.gradual.support=true`.
+- 2026-09-30: trasy z powiadomień jako jednorazowe żądania (`RouteRequest`) — wcześniej drugie kliknięcie tej samej trasy przy otwartej aplikacji nic nie robiło.
 - 2026-09-30: `LibrusClient` ma własny prosty magazyn ciasteczek w pamięci; zapisywanie sesji dojdzie w `LibrusSource`.
 - 2026-09-29: kod trafia do prywatnego repozytorium na GitHubie (konto Jaroszeek), autor commitów: Jaroszek.
 

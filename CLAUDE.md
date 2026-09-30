@@ -61,8 +61,9 @@ Na Windowsie `gradlew.bat` zamiast `./gradlew`. W terminalu poza Android Studio 
 - Testy logiki: `./gradlew :core:test`
 - Rekonesans Librusa: w aplikacji debug, ekran „Rekonesans Librusa” (użytkownik kopiuje raport i wkleja go do czatu; raport ma tylko strukturę)
 - Build debug: `./gradlew :app:assembleDebug` → `app/build/outputs/apk/debug/`
+- Build release (podpisany kluczem z `~/.eclipse-signing/`, poza repo): `./gradlew :app:assembleRelease` → `app/build/outputs/apk/release/`; instalacja: `./gradlew :app:installRelease`
 - Instalacja na podłączonym telefonie lub emulatorze: `./gradlew :app:installDebug`
-- Lint: `./gradlew lint`
+- Lint: `./gradlew :app:lintDebug`
 - Zrzut ekranu do oceny wyglądu: `adb exec-out screencap -p > shot.png`
 
 ## Konwencje

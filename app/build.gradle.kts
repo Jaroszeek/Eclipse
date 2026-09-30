@@ -1,9 +1,17 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.ksp)
     alias(libs.plugins.room)
+}
+
+// Klucz podpisu wersji release leży poza repozytorium: ~/.eclipse-signing/keystore.properties (README, „Wersja release”).
+val signing = Properties().apply {
+    val file = File(System.getProperty("user.home"), ".eclipse-signing/keystore.properties")
+    if (file.exists()) file.inputStream().use(::load)
 }
 
 android {
@@ -20,11 +28,23 @@ android {
         versionName = "1.0"
     }
 
+    signingConfigs {
+        if (!signing.isEmpty) {
+            create("release") {
+                storeFile = File(signing.getProperty("storeFile"))
+                storePassword = signing.getProperty("storePassword")
+                keyAlias = signing.getProperty("keyAlias")
+                keyPassword = signing.getProperty("keyPassword")
+            }
+        }
+    }
+
     buildTypes {
         release {
             optimization {
-                enable = false
+                enable = true
             }
+            signingConfig = signingConfigs.findByName("release")
         }
     }
     compileOptions {

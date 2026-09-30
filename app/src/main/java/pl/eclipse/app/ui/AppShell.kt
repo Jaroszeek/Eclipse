@@ -103,6 +103,9 @@ import pl.eclipse.app.ui.theme.Palette
 import java.time.Instant
 import java.time.format.DateTimeFormatter
 
+/** Trasa z powiadomienia; klasa (nie data class), więc dwa kliknięcia tej samej trasy to dwa różne żądania. */
+class RouteRequest(val route: String)
+
 @Serializable data object HomeRoute
 @Serializable data object CalendarRoute
 @Serializable data object TestsRoute
@@ -137,7 +140,7 @@ fun formatSyncTime(millis: Long): String {
 
 /** Wejście do interfejsu: logowanie → pierwsza synchronizacja → zgoda na powiadomienia → aplikacja (SPEC 12.9). */
 @Composable
-fun EclipseRoot(initialRoute: String?, viewModel: ShellViewModel = viewModel()) {
+fun EclipseRoot(initialRoute: RouteRequest?, viewModel: ShellViewModel = viewModel()) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     when {
         !state.ready -> EclipseBackground()
@@ -149,7 +152,7 @@ fun EclipseRoot(initialRoute: String?, viewModel: ShellViewModel = viewModel()) 
 }
 
 @Composable
-private fun MainShell(state: ShellState, viewModel: ShellViewModel, initialRoute: String?) {
+private fun MainShell(state: ShellState, viewModel: ShellViewModel, initialRoute: RouteRequest?) {
     val nav = rememberNavController()
     val drawer = rememberDrawerState(DrawerValue.Closed)
     val scope = rememberCoroutineScope()
@@ -160,7 +163,7 @@ private fun MainShell(state: ShellState, viewModel: ShellViewModel, initialRoute
     var toolboxOpen by rememberSaveable { mutableStateOf(false) }
     var subjectTitle by remember { mutableStateOf("") }
 
-    LaunchedEffect(initialRoute) { initialRoute?.let { routeFor(it) }?.let { nav.navigateTop(it) } }
+    LaunchedEffect(initialRoute) { initialRoute?.let { routeFor(it.route) }?.let { nav.navigateTop(it) } }
 
     val title = when {
         top != null -> stringResource(top.title)

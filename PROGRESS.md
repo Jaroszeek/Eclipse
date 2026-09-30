@@ -33,11 +33,11 @@ Aktualizowane po każdym kroku. Szczegóły etapów: `SPEC.md`, sekcja 14.
 - [x] Kryteria akceptacji Etapu 1 — 30.09.2026 użytkownik potwierdził na telefonie: pełna synchronizacja z Librusem, druga bez duplikatów, czytelny błąd złego hasła, testowe powiadomienie.
 
 ## Etap 2 — interfejs
-- [ ] 2a: plan wyglądu i akceptacja
-- [ ] 2a: ekran „Próbnik stylu” i akceptacja
-- [ ] 2b: motyw i szkielet (pasek boczny, górny pasek, nawigacja, logowanie, stan synchronizacji)
-- [ ] 2b: Pulpit
-- [ ] 2b: Kalendarz z Przybornikiem
+- [x] 2a: plan wyglądu (użytkownik przeszedł dalej bez uwag — „wykonaj kolejne 2 polecenia”)
+- [x] 2a: ekran „Próbnik stylu” (debug; zrzuty wysłane użytkownikowi, praca idzie dalej, uwagi można zgłosić w każdej chwili)
+- [x] 2b: motyw i szkielet (pasek boczny, górny pasek, nawigacja, logowanie, stan synchronizacji)
+- [x] 2b: Pulpit
+- [x] 2b: Kalendarz z Przybornikiem (tydzień/dzień/miesiąc/lista, arkusz szczegółów, własne wydarzenia, etykiety i szablony przeciągane oraz bez przeciągania)
 - [ ] 2b: Sprawdziany
 - [ ] 2b: Oceny z kalkulatorem
 - [ ] 2b: Statystyki
@@ -67,6 +67,9 @@ Aktualizowane po każdym kroku. Szczegóły etapów: `SPEC.md`, sekcja 14.
 - 2026-09-30: szyfrowanie danych logowania stabilną biblioteką Tink 1.23.0 zamiast `androidx.datastore:datastore-tink` — ta jest dostępna tylko jako 1.3.0-alpha. Efekt jak w SPEC 10.3.
 - 2026-09-30: `backup_rules.xml` usunięty — przy minSdk 31 Android używa tylko `data_extraction_rules.xml`.
 - 2026-09-30: treść powiadomienia o ocenie: tytuł „Nowa ocena”, treść „matematyka: 4 (75%)” (Librus podaje nazwy w mianowniku, więc „z matematyki” wymagałoby odmiany).
+- 2026-09-30: Etap 2 — Haze 2.0.1 (`haze-blur`), Vico 3.3.1, kizitonwose Calendar 2.10.1, navigation-compose 2.10.2 (API sprawdzone w źródłach bibliotek). Rozmycie tylko na dużych panelach; Przybornik ma własne źródło szkła, bo Haze nie rozmywa warstwy, w której sam leży.
+- 2026-09-30: Kalendarz — oś czasu od pierwszego do ostatniego dzwonka (rozszerzana o własne wydarzenia); widok listy pomija zwykłe lekcje bez zmian i etykiet, żeby lista 14 dni była czytelna.
+- 2026-09-30: aplikacja wymusza polskie zasady odmiany liczebników (telefon może mieć inny język), bo jest tylko po polsku.
 - 2026-09-30: `LibrusClient` ma własny prosty magazyn ciasteczek w pamięci; zapisywanie sesji dojdzie w `LibrusSource`.
 - 2026-09-29: kod trafia do prywatnego repozytorium na GitHubie (konto Jaroszeek), autor commitów: Jaroszek.
 

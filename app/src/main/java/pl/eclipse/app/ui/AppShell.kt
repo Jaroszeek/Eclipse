@@ -75,6 +75,7 @@ import pl.eclipse.app.BuildConfig
 import pl.eclipse.app.R
 import pl.eclipse.app.data.ThemeMode
 import pl.eclipse.app.notify.Notifier
+import pl.eclipse.app.ui.calendar.CalendarScreen
 import pl.eclipse.app.ui.components.CountBadge
 import pl.eclipse.app.ui.components.EclipseBackground
 import pl.eclipse.app.ui.components.EclipseDisc
@@ -199,7 +200,9 @@ private fun MainShell(state: ShellState, viewModel: ShellViewModel, initialRoute
                             onOpenGrades = { nav.navigateTop(GradesRoute) },
                         )
                     }
-                    composable<CalendarRoute> { ComingSoon(contentPadding) }
+                    composable<CalendarRoute> {
+                        CalendarScreen(contentPadding, glass, toolboxOpen, { toolboxOpen = it }, state.syncRunning, viewModel::syncNow)
+                    }
                     composable<TestsRoute> { ComingSoon(contentPadding) }
                     composable<GradesRoute> { ComingSoon(contentPadding) }
                     composable<SubjectRoute> { back ->

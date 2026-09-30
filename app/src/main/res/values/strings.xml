@@ -239,6 +239,35 @@
     </plurals>
     <string name="reserve_estimate">To szacunek do końca półrocza: połowa planowanych lekcji minus nieobecności liczone do limitu.</string>
 
+    <!-- Important (SPEC 8) -->
+    <string name="important_empty">Nic nie wymaga uwagi.</string>
+    <string name="important_empty_next">Nic nie wymaga uwagi. Najbliższy sprawdzian: %1$s, %2$s.</string>
+    <string name="important_reasons">Powody</string>
+    <string name="important_hints">Podpowiedzi</string>
+    <string name="hide_reason">Ukryj ten powód</string>
+    <string name="unmark_difficult">Usuń oznaczenie</string>
+    <string name="open_grades">Przejdź do ocen</string>
+    <string name="reason_below_2">Średnia %1$s — poniżej progu oceny 2.</string>
+    <string name="reason_proposed_one">Proponowana ocena 1 (%1$s).</string>
+    <string name="reason_no_reserve">Brak zapasu nieobecności — przekroczenie połowy zajęć grozi nieklasyfikowaniem.</string>
+    <string name="reason_attendance_critical">Frekwencja %1$s — poniżej 50%%.</string>
+    <string name="reason_in_2">Średnia %1$s — w przedziale oceny 2.</string>
+    <string name="reason_fresh">Ocena %1$s (%2$s) z %3$s — %4$s.</string>
+    <string name="reason_attendance_near">Frekwencja %1$s — blisko granicy.</string>
+    <string name="reason_reserve_low">Zapas nieobecności jest mały.</string>
+    <string name="reason_drop">Średnia spadła o %1$s pp w ciągu 28 dni.</string>
+    <string name="reason_above_3">Średnia %1$s — tuż nad progiem oceny 3.</string>
+    <string name="reason_difficult">Oznaczony przez Ciebie jako trudny.</string>
+    <string name="reason_upcoming">%1$s %2$s (%3$s).</string>
+    <string name="hint_from_test">z najbliższego sprawdzianu (%1$s)</string>
+    <string name="hint_from_next">z następnej oceny</string>
+    <string name="hint_goal_grade">Żeby wyjść na %1$d (%2$s), %3$s potrzebujesz co najmniej %4$s — w ocenach zwykłych to %5$d.</string>
+    <string name="hint_goal">Żeby wyjść na %1$d (%2$s), %3$s potrzebujesz co najmniej %4$s.</string>
+    <string name="hint_fresh">Ocena %1$s (%2$s, %3$s) — zapytaj o termin poprawy.</string>
+    <string name="hint_no_reserve">%1$s: nie masz już zapasu nieobecności do końca półrocza.</string>
+    <string name="hint_reserve">%1$s: możesz opuścić jeszcze ok. %2$d %3$s do końca półrocza.</string>
+    <string name="hint_upcoming">%1$s za %3$d %4$s (%2$s), a to przedmiot z ostrzeżeniem.</string>
+
     <!-- Próbnik stylu (Etap 2a) -->
     <string name="style_theme">Motyw i akcent</string>
     <string name="less_transparency">Mniej przezroczystości</string>

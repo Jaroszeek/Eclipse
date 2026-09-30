@@ -40,8 +40,8 @@ Aktualizowane po każdym kroku. Szczegóły etapów: `SPEC.md`, sekcja 14.
 - [x] 2b: Kalendarz z Przybornikiem (tydzień/dzień/miesiąc/lista, arkusz szczegółów, własne wydarzenia, etykiety i szablony przeciągane oraz bez przeciągania)
 - [x] 2b: Sprawdziany (filtry, grupy, odliczanie, podpowiedź z kalkulatora, przeniesione i usunięte, minione z oceną)
 - [x] 2b: Oceny z kalkulatorem (okresy, sortowanie, średnia ogólna, karty, ekran przedmiotu z wykresem Vico, kalkulator w obu trybach, ustawienia przedmiotu, „poprawiona / pomiń”)
-- [ ] 2b: Statystyki
-- [ ] 2b: Important
+- [x] 2b: Statystyki (frekwencja ogólna i z przedmiotów, spóźnienia i nieusprawiedliwione, średnia w czasie z pasami progów, obciążenie, zapas nieobecności)
+- [x] 2b: Important (karty z poziomem, powodami, podpowiedziami z szablonów; „Oznacz jako trudny”, „Ukryj ten powód”, przejście do ocen)
 - [ ] 2b: Skrzynka
 - [ ] 2b: Ustawienia
 - [ ] Kryteria akceptacji Etapu 2

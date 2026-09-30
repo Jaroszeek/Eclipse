@@ -89,6 +89,7 @@ import pl.eclipse.app.ui.diagnostics.DiagnosticsScreen
 import pl.eclipse.app.ui.grades.GradesScreen
 import pl.eclipse.app.ui.grades.SubjectScreen
 import pl.eclipse.app.ui.home.HomeScreen
+import pl.eclipse.app.ui.important.ImportantScreen
 import pl.eclipse.app.ui.login.FirstSyncScreen
 import pl.eclipse.app.ui.login.LoginScreen
 import pl.eclipse.app.ui.login.NotificationPermissionScreen
@@ -218,7 +219,7 @@ private fun MainShell(state: ShellState, viewModel: ShellViewModel, initialRoute
                         SubjectScreen(route.key, contentPadding, onTitle = { subjectTitle = it })
                     }
                     composable<StatsRoute> { StatsScreen(contentPadding) }
-                    composable<ImportantRoute> { ComingSoon(contentPadding) }
+                    composable<ImportantRoute> { ImportantScreen(contentPadding, onOpenSubject = { nav.navigate(SubjectRoute(it)) }) }
                     composable<InboxRoute> { ComingSoon(contentPadding) }
                     composable<SettingsRoute> { ComingSoon(contentPadding) }
                     composable<NotificationsRoute> { ComingSoon(contentPadding) }

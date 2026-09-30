@@ -203,8 +203,8 @@ class SyncWorker(context: Context, params: WorkerParameters) : CoroutineWorker(c
         private val WARSAW: ZoneId = ZoneId.of("Europe/Warsaw")
         private val SYNC_LOCK = Mutex() // jedna synchronizacja naraz, także gdy ręczna nałoży się na okresową
         private const val KEY_MANUAL = "manual"
-        private const val PERIODIC = "sync-periodic"
-        private const val MANUAL = "sync-now"
+        const val PERIODIC = "sync-periodic"
+        const val MANUAL = "sync-now"
         private const val REMOVED_KEEP_DAYS = 14L
         private const val FAILURES_BEFORE_ALERT = 3
         private const val MAX_RETRIES = 3

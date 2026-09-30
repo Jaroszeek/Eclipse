@@ -272,7 +272,7 @@ class Notifier(private val context: Context, private val db: EclipseDatabase) {
         private const val KEY_CRITICAL = "critical_subjects"
         private const val KEY_LUCKY = "lucky_notified_on"
         private const val GRADES_SUMMARY_FROM = 3
-        private const val DIGEST_ID = 1
+        private const val DIGEST_ID = Int.MAX_VALUE // nie zderza się z id z tabeli notifications
 
         fun isQuiet(hour: Int, settings: AppSettings): Boolean {
             val from = settings.quietFromHour

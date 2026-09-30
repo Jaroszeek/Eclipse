@@ -129,6 +129,9 @@ interface RecordDao {
 
     @Query("DELETE FROM records")
     suspend fun clear()
+
+    @Query("DELETE FROM sync_runs")
+    suspend fun clearSyncRuns()
 }
 
 @Dao

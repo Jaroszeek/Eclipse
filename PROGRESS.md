@@ -29,7 +29,7 @@ Aktualizowane po każdym kroku. Szczegóły etapów: `SPEC.md`, sekcja 14.
 - [x] 1b: `SyncWorker` z wykrywaniem zmian (`core/sync/Changes.kt` z testem; zakresy dat jak w SPEC 4.3; usuwanie tylko w pobranym zakresie; jedna synchronizacja naraz — Mutex; okno 6–22 dla okresowej)
 - [x] 1b: magazyn danych logowania (DataStore + Tink AES-256-GCM, klucz główny w Android Keystore; wyłączony z kopii i przenosin)
 - [x] 1b: powiadomienia lokalne (8 kanałów, centrum powiadomień w tabeli `notifications`, godziny ciszy z porannym podsumowaniem, przypomnienie dzień przed sprawdzianem, > 3 oceny → jedno zbiorcze, po 3 nieudanych synchronizacjach jedno powiadomienie)
-- [ ] 1b: ekran diagnostyczny
+- [x] 1b: ekran diagnostyczny (logowanie e-mailem z zapisem zaszyfrowanym, tryb demo, liczby rekordów, historia synchronizacji, stan zadania w tle, „Synchronizuj teraz” — nie częściej niż co 2 min, „Wyślij testowe powiadomienie”, zgoda na powiadomienia, rekonesans, „Wyloguj i usuń dane”). Na emulatorze w demo: baza wypełniona, druga synchronizacja bez nowych/zmienionych, testowe powiadomienie dociera, zadanie okresowe zaplanowane.
 - [ ] Kryteria akceptacji Etapu 1
 
 ## Etap 2 — interfejs

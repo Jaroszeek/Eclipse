@@ -11,6 +11,34 @@
     <string name="recon_copy">Kopiuj raport</string>
     <string name="recon_copied">Skopiowano raport</string>
 
+    <!-- Ekran diagnostyczny -->
+    <string name="diag_title">Diagnostyka</string>
+    <string name="demo_badge">Dane przykładowe</string>
+    <string name="demo_mode">Tryb demo (dane przykładowe)</string>
+    <string name="try_demo">Wypróbuj na danych przykładowych</string>
+    <string name="login_info">Zaloguj się e-mailem i hasłem do Konta LIBRUS. Dane zostają na telefonie, a hasło jest zaszyfrowane.</string>
+    <string name="log_in">Zaloguj</string>
+    <string name="logging_in">Loguję…</string>
+    <string name="login_success">Zalogowano. Trwa pierwsza synchronizacja.</string>
+    <string name="login_error">Nie udało się zalogować do Librusa. %1$s</string>
+    <string name="login_error_network">Brak połączenia z internetem albo Librus nie odpowiada. Sprawdź internet i spróbuj ponownie.</string>
+    <string name="logout">Wyloguj i usuń dane</string>
+    <string name="logout_done">Wylogowano i usunięto dane z Librusa.</string>
+    <string name="diag_counts">Rekordy w bazie</string>
+    <string name="diag_no_data">Brak danych. Zaloguj się albo włącz tryb demo.</string>
+    <string name="diag_periodic_on">Synchronizacja w tle: zaplanowana</string>
+    <string name="diag_periodic_off">Synchronizacja w tle: niezaplanowana</string>
+    <string name="sync_now">Synchronizuj teraz</string>
+    <string name="sync_running">Synchronizuję…</string>
+    <string name="sync_too_often">Ostatnia synchronizacja była przed chwilą. Spróbuj ponownie za 2 minuty.</string>
+    <string name="send_test_notification">Wyślij testowe powiadomienie</string>
+    <string name="allow_notifications">Zezwól na powiadomienia</string>
+    <string name="diag_runs">Ostatnie synchronizacje</string>
+    <string name="diag_no_runs">Jeszcze nie było synchronizacji.</string>
+    <string name="diag_run_ok">udana</string>
+    <string name="diag_run_error">z błędami</string>
+    <string name="open_recon">Otwórz rekonesans Librusa</string>
+
     <!-- Kanały powiadomień -->
     <string name="channel_grades">Oceny</string>
     <string name="channel_tests">Sprawdziany i kartkówki</string>

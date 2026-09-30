@@ -13,12 +13,21 @@ class MessagesReconTest {
     }
 
     @Test
+    fun loginInMultiDomainLogonIsHidden() {
+        // „QUJDMTIzdQ” to zmyślony login zakodowany base64
+        val url = "https://wiadomosci.librus.pl/pobierz04/MultiDomainLogon/token/abc123def456/login/QUJDMTIzdQ/target/L25vd3k".toHttpUrl()
+        assertEquals("wiadomosci.librus.pl/pobierz04/MultiDomainLogon/token/‹…›/login/‹…›/target/L25vd3k", url.hidden())
+    }
+
+    @Test
     fun ordinaryNamesStayReadable() {
         assertEquals("portal.librus.pl/api/v3/SynergiaAccounts", "https://portal.librus.pl/api/v3/SynergiaAccounts".toHttpUrl().hidden())
+        assertEquals("portal.librus.pl/konto-librus/login/action", "https://portal.librus.pl/konto-librus/login/action".toHttpUrl().hidden())
     }
 
     @Test
     fun apiPathsAreFoundInScript() {
-        assertEquals(setOf("/api/inbox/messages", "/api/me"), apiPaths("""fetch("/api/me");x='/api/inbox/messages/';y="/static/app.js""""))
+        val script = """fetch("/api/me");x='/api/inbox/messages/';u="https://wiadomosci.librus.pl/api/receivers";r='api/outbox';y="/static/app.js""""
+        assertEquals(setOf("/api/inbox/messages", "/api/me", "/api/outbox", "/api/receivers"), apiPaths(script))
     }
 }

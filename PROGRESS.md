@@ -57,6 +57,7 @@ Aktualizowane po każdym kroku. Szczegóły etapów: `SPEC.md`, sekcja 14.
 - [x] Wydanie v1.4: „Kalkulator ocen”, kolejność kafelków Pulpitu, własne zadania domowe i korepetycje w kalendarzu
 - [x] Wydanie v1.5: rekonesans wiadomości (przycisk „Sprawdź wiadomości” w ekranie rekonesansu)
 - [x] Wydanie v1.6: Diagnostyka (z rekonesansem) widoczna też w wersji release — wcześniej tylko w debug, a instrukcje odsyłały do niej użytkownika
+- [x] Wydanie v1.7: rekonesans wiadomości — przekierowania http:// w Librusie idą przez https, login ukryty w raporcie
 - [ ] Wiadomości krok 1: raport z rekonesansu wiadomości od użytkownika → mapowanie → odczyt w Skrzynce
 - [ ] Wiadomości krok 2: wysyłanie z ekranem potwierdzenia (wymaga zmiany SPEC 12.7 „tylko odczyt” — za zgodą użytkownika)
 - [ ] Instalacja na telefonie przez USB (instrukcja w README; czeka na użytkownika)
@@ -112,6 +113,7 @@ Aktualizowane po każdym kroku. Szczegóły etapów: `SPEC.md`, sekcja 14.
   - bez odhaczania „zrobione” przy zadaniu domowym — wykonane zadanie można usunąć; odhaczanie dojdzie, jeśli będzie potrzebne.
 - 2026-09-30: wysyłanie wiadomości — użytkownik wybrał wersję etapami (z trzech: etapami / przycisk do Librusa / od razu z wysyłaniem). Najpierw rekonesans serwisu wiadomości, potem odczyt, na końcu wysyłanie z potwierdzeniem. Rekonesans (`Recon.messages`) używa zapisanego logowania: AutoLoginToken → Synergia → /wiadomosci3, wypisuje przekierowania (bez parametrów, tokeny ukryte), ścieżki „/api/…” z kodu strony i strukturę odpowiedzi (treść zamaskowana, z tytułu strony tylko znane słowa).
 - 2026-09-30: Ustawienia → „Dla programisty” → „Diagnostyka” widoczne w release (Próbnik stylu nadal tylko w debug). Diagnostyka pokazuje awarie, synchronizacje i otwiera rekonesans — potrzebne na telefonie.
+- 2026-09-30: raport wiadomości nr 1: AutoLoginToken → `synergia.librus.pl/loguj/token/…/przenies` → `/uczen/index` działa; `/wiadomosci3` → `wiadomosci.librus.pl/pobierz04/MultiDomainLogon/token/…/login/…/target/…` (ustawia DZIENNIKSID dla wiadomości) → `/nowy` → 301 na http:// → Android blokuje (UnknownServiceException). Poprawka: przekierowania zawsze przez https. W ścieżce MultiDomainLogon jest login ucznia (base64) — `hidden()` ukrywa teraz fragment po „token” i „login”. Adresy API szukane też jako pełne adresy i bez ukośnika.
 - 2026-09-29: kod trafia do prywatnego repozytorium na GitHubie (konto Jaroszeek), autor commitów: Jaroszek.
 
 ## Otwarte kwestie

@@ -79,7 +79,8 @@ class LibrusClient {
             hops += "${response.code} ${current.toHttpUrl().hidden()}"
             val next = response.header("Location")?.let { current.toHttpUrl().resolve(it) }
                 ?: return Page(response.code, current, body, hops)
-            current = next.toString()
+            // Serwis wiadomości przekierowuje czasem na http:// — zawsze idziemy dalej przez https (tylko HTTPS).
+            current = next.newBuilder().scheme("https").build().toString()
         }
         throw LibrusException("Za dużo przekierowań.")
     }
@@ -245,8 +246,17 @@ private class MemoryCookieJar : CookieJar {
         cookies.filter { it.expiresAt > System.currentTimeMillis() && it.matches(url) }
 }
 
-/** Host i ścieżka bez parametrów; długie fragmenty ścieżki (tokeny, identyfikatory sesji) ukryte. */
-internal fun HttpUrl.hidden(): String = host + encodedPathSegments.joinToString("/", prefix = "/") { if (isSecret(it)) "‹…›" else it }
+/**
+ * Host i ścieżka bez parametrów; ukryte są długie fragmenty (tokeny, identyfikatory sesji) i każdy fragment
+ * po „token” albo „login” — np. w MultiDomainLogon login ucznia jest w ścieżce (zakodowany base64).
+ */
+internal fun HttpUrl.hidden(): String = host + encodedPathSegments.withIndex().joinToString("/", prefix = "/") { (i, segment) ->
+    // po „token”/„login” zostaje tylko zwykłe słowo, np. „login/action”
+    val afterKey = i > 0 && encodedPathSegments[i - 1].lowercase() in SECRET_KEYS && !segment.all(Char::isLowerCase)
+    if (afterKey || isSecret(segment)) "‹…›" else segment
+}
+
+private val SECRET_KEYS = setOf("token", "login")
 
 /** Token albo identyfikator sesji: bardzo długi fragment albo długi z cyframi (zwykłe nazwy jak „SynergiaAccounts” zostają). */
 private fun isSecret(segment: String) = segment.length >= 24 || (segment.length >= 16 && segment.any(Char::isDigit))

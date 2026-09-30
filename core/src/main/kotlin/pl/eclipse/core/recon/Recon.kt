@@ -86,7 +86,9 @@ object Recon {
 
                 val origin = landing.url.substringBefore("://") + "://" + landing.url.substringAfter("://").substringBefore('/')
                 val paths = sortedSetOf<String>().apply { addAll(apiPaths(landing.body)) }
-                SCRIPT_SRC.findAll(landing.body).map { it.groupValues[1] }.take(MAX_SCRIPTS).forEach { src ->
+                // tylko skrypty samego Librusa (bez zewnętrznych, np. statystyk)
+                SCRIPT_SRC.findAll(landing.body).map { it.groupValues[1] }
+                    .filter { !it.startsWith("http") && !it.startsWith("//") || "librus.pl" in it }.take(MAX_SCRIPTS).forEach { src ->
                     pause()
                     val script = client.page(resolve(landing.url, src))
                     appendLine("Skrypt ${script.url.substringAfterLast('/').substringBefore('?').take(40)}: HTTP ${script.code}, ${script.body.length} znaków")
@@ -95,7 +97,9 @@ object Recon {
                 appendLine("\nAdresy API w kodzie strony (${paths.size}):")
                 paths.forEach { appendLine("  $it") }
 
-                val probes = (paths.filter { '{' !in it && ':' !in it && '$' !in it } + PROBES).distinct().take(MAX_PROBES)
+                // najpierw adresy, które wyglądają na wiadomości i odbiorców
+                val probes = (paths.filter { '{' !in it && ':' !in it && '$' !in it }.sortedByDescending { p -> PRIORITY.count { it in p } } + PROBES)
+                    .distinct().take(MAX_PROBES)
                 for (path in probes) call(path) { client.page(origin + path).let { it.code to it.body } }
             } catch (e: IOException) {
                 appendLine("\nBłąd połączenia (${e.javaClass.simpleName}).")
@@ -253,11 +257,12 @@ private fun sampleOf(v: JsonElement): JsonElement? = when (v) {
 }
 
 private const val PAUSE_MS = 400L
-private const val MAX_SCRIPTS = 3
+private const val MAX_SCRIPTS = 5
 private const val MAX_PROBES = 10
+private val PRIORITY = listOf("inbox", "message", "receiver", "me")
 
-/** Ścieżki „/api/…” zapisane w kodzie strony (bez danych — to tylko adresy). */
-internal fun apiPaths(text: String): Set<String> = API_PATH.findAll(text).map { it.groupValues[1].trimEnd('/') }.toSortedSet()
+/** Ścieżki „/api/…” zapisane w kodzie strony — także jako pełny adres albo bez ukośnika (bez danych, to tylko adresy). */
+internal fun apiPaths(text: String): Set<String> = API_PATH.findAll(text).map { "/" + it.groupValues[1].trimEnd('/') }.toSortedSet()
 
 private fun resolve(base: String, src: String): String = when {
     src.startsWith("http") -> src
@@ -266,7 +271,7 @@ private fun resolve(base: String, src: String): String = when {
     else -> base.substringBeforeLast('/') + "/" + src
 }
 
-private val API_PATH = Regex("""["'`](/api/[A-Za-z0-9_\-/{}:$.]+)["'`?]""")
+private val API_PATH = Regex("""(?:["'`]|librus\.pl)/?(api/[A-Za-z0-9_\-/{}:$.]+)["'`?]""")
 private val SCRIPT_SRC = Regex("""<script[^>]+src="([^"]+)"""")
 private val TITLE = Regex("""<title>([^<]*)</title>""", RegexOption.IGNORE_CASE)
 private val FORM_TAG = Regex("""<form\b""", RegexOption.IGNORE_CASE)

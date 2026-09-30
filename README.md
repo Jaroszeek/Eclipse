@@ -4,6 +4,9 @@ Prywatny planer szkolny na Androida na danych z Librus Synergia: plan lekcji ze 
 
 Aplikacja jest prywatna i nie trafia do żadnego sklepu.
 
+## Pobranie gotowej wersji
+Gotowy plik `.apk` jest w wydaniach repozytorium: **GitHub → Jaroszeek/Eclipse → Releases** (np. https://github.com/Jaroszeek/Eclipse/releases/tag/v1.0). Repozytorium jest prywatne, więc na telefonie trzeba być zalogowanym na GitHubie w przeglądarce. Instalacja — patrz niżej, „Bez kabla”.
+
 ## Wymagania
 - Android Studio 2026.1 lub nowsze (z dołączonym JDK 21)
 - Telefon z Androidem 12 lub nowszym albo emulator
@@ -36,6 +39,11 @@ Na Windowsie zamiast `./gradlew` wpisz `gradlew.bat`. W zwykłym terminalu (poza
 2. Skopiuj `app/build/outputs/apk/release/app-release.apk` na telefon (np. przez Dysk Google) i otwórz go w aplikacji Pliki → **Zainstaluj**. Pierwszy raz telefon poprosi o zgodę na instalowanie z tego źródła.
 
 Przed każdą nową wersją zwiększ `versionCode` w `app/build.gradle.kts` (np. 1 → 2) — telefon przyjmuje aktualizację tylko z wyższym numerem.
+
+### Nowe wydanie na GitHubie
+1. Zwiększ `versionCode` i `versionName` w `app/build.gradle.kts` (np. 2 i „1.1”) i zrób commit.
+2. `gradlew.bat :app:assembleRelease`.
+3. `gh release create v1.1 "app/build/outputs/apk/release/app-release.apk#Eclipse-1.1.apk" --title "Eclipse 1.1" --notes "Co nowego…"`
 
 ### Wersja debug a release
 Obie wersje mają ten sam identyfikator aplikacji, ale różne podpisy. Przejście z debug na release (albo odwrotnie) wymaga odinstalowania poprzedniej wersji — znikną wtedy dane na telefonie (logowanie, etykiety, własne wydarzenia); dane z Librusa pobiorą się od nowa.

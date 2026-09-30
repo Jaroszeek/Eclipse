@@ -64,6 +64,7 @@ Na Windowsie `gradlew.bat` zamiast `./gradlew`. W terminalu poza Android Studio 
 - Build release (podpisany kluczem z `~/.eclipse-signing/`, poza repo): `./gradlew :app:assembleRelease` → `app/build/outputs/apk/release/`; instalacja: `./gradlew :app:installRelease`
 - Instalacja na podłączonym telefonie lub emulatorze: `./gradlew :app:installDebug`
 - Lint: `./gradlew :app:lintDebug`
+- Nowe wydanie z plikiem .apk (prywatne repo Jaroszeek/Eclipse): podnieś `versionCode`/`versionName`, zbuduj release, potem `gh release create vX.Y "app/build/outputs/apk/release/app-release.apk#Eclipse-X.Y.apk" --title "Eclipse X.Y" --notes "…"`
 - Zrzut ekranu do oceny wyglądu: `adb exec-out screencap -p > shot.png`
 
 ## Konwencje

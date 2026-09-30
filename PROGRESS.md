@@ -49,6 +49,7 @@ Aktualizowane po każdym kroku. Szczegóły etapów: `SPEC.md`, sekcja 14.
 ## Etap 3 — telefon na co dzień
 - [x] Ikona aplikacji (adaptacyjna + monochromatyczna, wektor) i ekran startowy (systemowy Android 12+, bez dodatkowej biblioteki)
 - [x] Podpisana wersja release (klucz w `~/.eclipse-signing/`, poza repozytorium; R8 włączony; release przetestowany na emulatorze — wszystkie ekrany bez błędów)
+- [x] Wydanie v1.0 na GitHubie z plikiem `Eclipse-1.0.apk` (prywatne repo) — https://github.com/Jaroszeek/Eclipse/releases/tag/v1.0
 - [ ] Instalacja na telefonie przez USB (instrukcja w README; czeka na użytkownika)
 - [ ] Całodniowy test synchronizacji w tle i powiadomień z godzinami ciszy (czeka na użytkownika)
 - [ ] Kryteria akceptacji Etapu 3

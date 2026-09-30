@@ -107,14 +107,17 @@ class ImportantTest {
     @Test
     fun demoScenariosTriggerTheirRules() {
         val demo = DemoSource(DAY)
-        val grades = demo.grades().groupBy { it.subjectKey }
-        val warnings = importantWarnings(
-            demo.subjects().map { s ->
-                val att = demo.attendance().filter { it.subjectKey == s.sourceKey }
-                SubjectStatus(s.sourceKey, grades[s.sourceKey].orEmpty(), attendancePercent = attendancePercent(att))
-            },
-            DAY,
-        ).associateBy { it.subjectKey }
+        val monday = DAY.with(java.time.temporal.TemporalAdjusters.previousOrSame(java.time.DayOfWeek.MONDAY))
+        val statuses = subjectStatuses(
+            subjects = demo.subjects(),
+            grades = demo.grades(),
+            attendance = demo.attendance(),
+            events = demo.events(DAY.minusMonths(1), DAY.plusMonths(2)),
+            currentWeek = demo.timetable(monday),
+            student = demo.student(),
+            today = DAY,
+        )
+        val warnings = importantWarnings(statuses, DAY).associateBy { it.subjectKey }
         assertTrue(WarningRule.AVERAGE_BELOW_2 in warnings.getValue("che").reasons.map { it.rule })
         assertTrue(WarningRule.AVERAGE_IN_2 in warnings.getValue("fiz").reasons.map { it.rule })
         assertTrue(WarningRule.AVERAGE_DROP in warnings.getValue("his").reasons.map { it.rule })

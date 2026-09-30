@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "485c9445da3476a295513160ff8cfae9",
+    "identityHash": "a8493e59bb19e0eb914597867cd1c52e",
     "entities": [
       {
         "tableName": "records",
@@ -339,7 +339,7 @@
       },
       {
         "tableName": "notifications",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `type` TEXT NOT NULL, `title` TEXT NOT NULL, `body` TEXT NOT NULL, `route` TEXT, `postedAt` INTEGER NOT NULL, `readAt` INTEGER)",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `type` TEXT NOT NULL, `title` TEXT NOT NULL, `body` TEXT NOT NULL, `route` TEXT, `postedAt` INTEGER NOT NULL, `readAt` INTEGER, `deferred` INTEGER NOT NULL)",
         "fields": [
           {
             "fieldPath": "id",
@@ -380,6 +380,12 @@
             "fieldPath": "readAt",
             "columnName": "readAt",
             "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "deferred",
+            "columnName": "deferred",
+            "affinity": "INTEGER",
+            "notNull": true
           }
         ],
         "primaryKey": {
@@ -392,7 +398,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '485c9445da3476a295513160ff8cfae9')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'a8493e59bb19e0eb914597867cd1c52e')"
     ]
   }
 }

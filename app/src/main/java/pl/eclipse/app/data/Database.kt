@@ -101,6 +101,8 @@ data class NotificationEntity(
     val route: String? = null,
     val postedAt: Long,
     val readAt: Long? = null,
+    /** Powstało w godzinach ciszy — trafi do porannego podsumowania zamiast od razu na ekran. */
+    val deferred: Boolean = false,
 )
 
 data class TypeCount(val type: RecordType, val count: Int)
@@ -121,6 +123,9 @@ interface RecordDao {
 
     @Query("SELECT type, COUNT(*) AS count FROM records WHERE removedAt IS NULL GROUP BY type")
     fun counts(): Flow<List<TypeCount>>
+
+    @Query("SELECT COUNT(*) FROM records")
+    suspend fun countAll(): Int
 
     @Query("DELETE FROM records")
     suspend fun clear()
@@ -151,6 +156,15 @@ interface UserDao {
 
     @Query("SELECT * FROM notifications ORDER BY postedAt DESC LIMIT 100")
     fun notifications(): Flow<List<NotificationEntity>>
+
+    @Query("SELECT * FROM notifications WHERE deferred = 1")
+    suspend fun deferredNotifications(): List<NotificationEntity>
+
+    @Query("UPDATE notifications SET deferred = 0 WHERE deferred = 1")
+    suspend fun clearDeferred()
+
+    @Query("SELECT * FROM subject_prefs")
+    suspend fun subjectPrefsOnce(): List<SubjectPrefsEntity>
 }
 
 @Database(

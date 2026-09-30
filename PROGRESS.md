@@ -26,9 +26,9 @@ Aktualizowane po każdym kroku. Szczegóły etapów: `SPEC.md`, sekcja 14.
 - [x] 1b: obliczenia z testami (sekcje 6–8): `core/calc/Grades.kt`, `Attendance.kt`, `Important.kt`; 24 testy w `:core:test`
 - [x] 1b: `LibrusSource` według mapowania (test na zmyślonych odpowiedziach o strukturze z rekonesansu; przy 401 jedno ponowne logowanie)
 - [x] 1b: Room i repozytoria (`app/data`: jedna tabela `records` na dane z Librusa jako JSON modeli z `:core` + tabele danych użytkownika; `SettingsStore` w DataStore; `AppContainer`)
-- [ ] 1b: `SyncWorker` z wykrywaniem zmian
-- [ ] 1b: magazyn danych logowania (DataStore + Tink)
-- [ ] 1b: powiadomienia lokalne
+- [x] 1b: `SyncWorker` z wykrywaniem zmian (`core/sync/Changes.kt` z testem; zakresy dat jak w SPEC 4.3; usuwanie tylko w pobranym zakresie; jedna synchronizacja naraz — Mutex; okno 6–22 dla okresowej)
+- [x] 1b: magazyn danych logowania (DataStore + Tink AES-256-GCM, klucz główny w Android Keystore; wyłączony z kopii i przenosin)
+- [x] 1b: powiadomienia lokalne (8 kanałów, centrum powiadomień w tabeli `notifications`, godziny ciszy z porannym podsumowaniem, przypomnienie dzień przed sprawdzianem, > 3 oceny → jedno zbiorcze, po 3 nieudanych synchronizacjach jedno powiadomienie)
 - [ ] 1b: ekran diagnostyczny
 - [ ] Kryteria akceptacji Etapu 1
 
@@ -64,6 +64,9 @@ Aktualizowane po każdym kroku. Szczegóły etapów: `SPEC.md`, sekcja 14.
 - 2026-09-30: obliczenia — samodzielne „+” i „−” liczą się tylko, gdy mają własną wartość w tabeli symboli (to jest przełącznik z SPEC 12.8). Procent z opisu oceny pominięty (rekonesans: opisy nie zawierają procentów). Ustawienie „poprawy” (licz obie / tylko poprawę / lepszą) odłożone — Librus nie pokazał powiązania oceny z poprawą; na razie liczone są obie, a ręczne „poprawiona / pomiń” działa w Important.
 - 2026-09-30: reguła „zagrożenie od nauczyciela” pominięta — w API nie ma takiej informacji; zostaje „proponowana ocena 1”.
 - 2026-09-30: baza — dane z Librusa w jednej tabeli `records` (typ, klucz, JSON, czasy zmian) zamiast osobnej tabeli na każdy rodzaj: jedno miejsce wykrywania zmian, mniej kodu; danych jest mało, więc filtrujemy w pamięci. Dane użytkownika w osobnych tabelach. Ustawienia jako jeden JSON w DataStore.
+- 2026-09-30: szyfrowanie danych logowania stabilną biblioteką Tink 1.23.0 zamiast `androidx.datastore:datastore-tink` — ta jest dostępna tylko jako 1.3.0-alpha. Efekt jak w SPEC 10.3.
+- 2026-09-30: `backup_rules.xml` usunięty — przy minSdk 31 Android używa tylko `data_extraction_rules.xml`.
+- 2026-09-30: treść powiadomienia o ocenie: tytuł „Nowa ocena”, treść „matematyka: 4 (75%)” (Librus podaje nazwy w mianowniku, więc „z matematyki” wymagałoby odmiany).
 - 2026-09-30: `LibrusClient` ma własny prosty magazyn ciasteczek w pamięci; zapisywanie sesji dojdzie w `LibrusSource`.
 - 2026-09-29: kod trafia do prywatnego repozytorium na GitHubie (konto Jaroszeek), autor commitów: Jaroszek.
 

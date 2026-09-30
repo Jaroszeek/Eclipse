@@ -1,10 +1,16 @@
 package pl.eclipse.core.calc
 
 import kotlinx.serialization.Serializable
+import pl.eclipse.core.model.Attendance
+import pl.eclipse.core.model.AttendanceCategory
 import pl.eclipse.core.model.EventType
 import pl.eclipse.core.model.Grade
 import pl.eclipse.core.model.GradeKind
+import pl.eclipse.core.model.Lesson
+import pl.eclipse.core.model.LessonStatus
 import pl.eclipse.core.model.SchoolEvent
+import pl.eclipse.core.model.StudentInfo
+import pl.eclipse.core.model.Subject
 import java.time.LocalDate
 
 // Zakładka Important — reguły ostrzeżeń (SPEC 8). Kolejność poziomów: WATCH < WARNING < CRITICAL.
@@ -128,4 +134,45 @@ private fun warningFor(s: SubjectStatus, today: LocalDate, rules: GradingRules, 
         hintGrade = next,
         hint = next?.let { rules.thresholds[it] }?.let { goal(s.grades, it, s.method, rules) },
     )
+}
+
+/**
+ * Składa stan przedmiotów w bieżącym półroczu z surowych danych — wejście dla [importantWarnings].
+ * [currentWeek] — lekcje z bieżącego tygodnia (do szacunku zapasu nieobecności).
+ */
+fun subjectStatuses(
+    subjects: List<Subject>,
+    grades: List<Grade>,
+    attendance: List<Attendance>,
+    events: List<SchoolEvent>,
+    currentWeek: List<Lesson>,
+    student: StudentInfo?,
+    today: LocalDate,
+    difficult: Set<String> = emptySet(),
+    methods: Map<String, AverageMethod> = emptyMap(),
+    skippedGradeKeys: Set<String> = emptySet(),
+    counted: Set<AttendanceCategory> = DEFAULT_COUNTED_ABSENCES,
+): List<SubjectStatus> {
+    val secondSemester = student != null && today > student.firstSemesterEnd
+    val semester = if (secondSemester) 2 else 1
+    val semesterEnd = student?.let { if (secondSemester) it.schoolYearEnd else it.firstSemesterEnd }
+    val daysOff = events.filter { it.type == EventType.DAY_OFF }.map { it.date }.toSet()
+    val weekly = currentWeek.filter { it.status != LessonStatus.CANCELLED }.groupBy { it.subjectKey }
+    return subjects.map { subject ->
+        val key = subject.sourceKey
+        val entries = attendance.filter { it.subjectKey == key && it.semester == semester }
+        SubjectStatus(
+            subjectKey = key,
+            grades = grades.filter { it.subjectKey == key && it.semester == semester },
+            method = methods[key] ?: AverageMethod.AUTO,
+            attendancePercent = attendancePercent(entries, counted),
+            reserve = semesterEnd?.takeIf { entries.isNotEmpty() }?.let { end ->
+                val perDay = weekly[key].orEmpty().groupingBy { it.date.dayOfWeek }.eachCount()
+                absenceReserve(entries, perDay, today, end, daysOff, counted)
+            },
+            isDifficult = key in difficult,
+            events = events.filter { it.subjectKey == key },
+            skippedGradeKeys = skippedGradeKeys,
+        )
+    }
 }

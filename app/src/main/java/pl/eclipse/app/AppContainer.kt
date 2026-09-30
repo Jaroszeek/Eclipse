@@ -6,6 +6,13 @@ import androidx.room.Room
 import pl.eclipse.app.data.EclipseDatabase
 import pl.eclipse.app.data.SchoolRepository
 import pl.eclipse.app.data.SettingsStore
+import pl.eclipse.app.notify.Notifier
+import pl.eclipse.app.security.CredentialStore
+import pl.eclipse.app.sync.SyncWorker
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 import pl.eclipse.core.source.DataSource
 import pl.eclipse.core.source.demo.DemoSource
 import pl.eclipse.core.source.librus.LibrusSource
@@ -15,6 +22,11 @@ class AppContainer(context: Context) {
     val database: EclipseDatabase = Room.databaseBuilder(context, EclipseDatabase::class.java, "eclipse.db").build()
     val school = SchoolRepository(database)
     val settings = SettingsStore(context)
+    val credentials = CredentialStore(context)
+    val notifier = Notifier(context, database)
+
+    /** Zakres dla krótkich zadań aplikacji (np. zapis ustawień) niezależnych od ekranu. */
+    val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
     fun dataSource(demo: Boolean): DataSource = if (demo) DemoSource() else LibrusSource()
 }
@@ -26,6 +38,13 @@ class EclipseApp : Application() {
     override fun onCreate() {
         super.onCreate()
         container = AppContainer(this)
+        container.notifier.createChannels()
+        container.scope.launch {
+            val settings = container.settings.current()
+            if (settings.demoMode || container.credentials.read() != null) {
+                SyncWorker.schedulePeriodic(this@EclipseApp, settings.syncIntervalHours)
+            }
+        }
     }
 }
 

@@ -10,4 +10,39 @@
     <string name="recon_running">Sprawdzam dane, to potrwa ok. pół minuty…</string>
     <string name="recon_copy">Kopiuj raport</string>
     <string name="recon_copied">Skopiowano raport</string>
+
+    <!-- Kanały powiadomień -->
+    <string name="channel_grades">Oceny</string>
+    <string name="channel_tests">Sprawdziany i kartkówki</string>
+    <string name="channel_reminders">Przypomnienia</string>
+    <string name="channel_plan">Zmiany w planie</string>
+    <string name="channel_important">Important</string>
+    <string name="channel_lucky">Szczęśliwy numerek</string>
+    <string name="channel_inbox">Skrzynka</string>
+    <string name="channel_sync">Problemy z synchronizacją</string>
+
+    <!-- Powiadomienia -->
+    <string name="notif_unknown_subject">przedmiot</string>
+    <string name="notif_grade_title">Nowa ocena</string>
+    <string name="notif_grade_line">%1$s: %2$s</string>
+    <string name="notif_grades_summary">Nowe oceny: %1$d</string>
+    <string name="word_test">sprawdzian</string>
+    <string name="word_quiz">kartkówka</string>
+    <string name="notif_test_new">Nowy wpis: %1$s, %2$s</string>
+    <string name="notif_test_moved">Przeniesiony termin: %1$s, %2$s</string>
+    <string name="notif_test_moved_body">Z %1$s na %2$s</string>
+    <string name="notif_reminder">Jutro %1$s: %2$s</string>
+    <string name="notif_plan_title">Zmiana w planie: %1$s</string>
+    <string name="notif_plan_body">%1$s, %2$d. lekcja — %3$s</string>
+    <string name="notif_plan_cancelled">odwołana</string>
+    <string name="notif_plan_substitution">zastępstwo</string>
+    <string name="notif_important">Nowe ostrzeżenie krytyczne: %1$s</string>
+    <string name="notif_lucky">Szczęśliwy numerek to %1$d — Twój numer!</string>
+    <string name="notif_message">Nowa wiadomość od: %1$s</string>
+    <string name="notif_announcement">Nowe ogłoszenie</string>
+    <string name="notif_note">Nowa uwaga</string>
+    <string name="notif_sync_problem">Nie udało się zsynchronizować danych z Librusem</string>
+    <string name="notif_digest">Nowe od wieczora: %1$d</string>
+    <string name="notif_test_title">Testowe powiadomienie</string>
+    <string name="notif_test_body">Powiadomienia Eclipse działają.</string>
 </resources>

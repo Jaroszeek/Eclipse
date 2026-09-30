@@ -231,7 +231,7 @@ class LibrusSource(
             code = retry.first
             body = retry.second
         }
-        if (code !in 200..299) throw LibrusException("Librus nie oddał danych: $path (HTTP $code).")
+        if (code !in 200..299) throw LibrusException("Librus nie oddał danych: $path (HTTP $code).", if (code >= 500) LibrusException.Kind.SERVER else LibrusException.Kind.OTHER)
         return Json.parseToJsonElement(body).obj
     }
 

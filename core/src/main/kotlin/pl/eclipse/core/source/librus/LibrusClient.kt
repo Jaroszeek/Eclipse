@@ -13,7 +13,10 @@ import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.Request
 
-class LibrusException(message: String) : Exception(message)
+class LibrusException(message: String, val kind: Kind = Kind.OTHER) : Exception(message) {
+    /** Rodzaj błędu — ekran logowania pokazuje na jego podstawie komunikat po polsku. */
+    enum class Kind { CREDENTIALS, CAPTCHA, MAINTENANCE, SERVER, OTHER }
+}
 
 /** Konto ucznia z listy kont Konta LIBRUS (bez loginu i nazwiska — tylko to, co potrzebne). */
 data class SynergiaAccount(val group: String?, val state: String?, val accessToken: String?)
@@ -51,7 +54,7 @@ class LibrusClient {
     fun login(email: String, password: String) {
         val portalToken = accessToken(authorizationCode(email, password))
         val (code, body) = send(Request.Builder().url(ACCOUNTS_URL).header("Authorization", "Bearer $portalToken").build())
-        if (code !in 200..299) throw LibrusException("Portal nie podał listy kont (HTTP $code).")
+        if (code !in 200..299) throw LibrusException("Portal nie podał listy kont (HTTP $code).", serverKind(code))
         accounts = runCatching {
             Json.parseToJsonElement(body).jsonObject["accounts"]?.jsonArray.orEmpty().map {
                 val o = it.jsonObject
@@ -76,13 +79,13 @@ class LibrusClient {
             if (location != null) {
                 CODE.find(location)?.let { return it.groupValues[1] }
                 if ("rejected_client" in location) throw LibrusException("Portal Librusa odrzucił aplikację (rejected_client).")
-                if ("command=close" in location) throw LibrusException("Portal Librusa ma przerwę techniczną. Spróbuj później.")
+                if ("command=close" in location) throw LibrusException("Portal Librusa ma przerwę techniczną. Spróbuj później.", LibrusException.Kind.MAINTENANCE)
                 url = url.toHttpUrl().resolve(location)?.toString() ?: throw LibrusException("Nieprawidłowe przekierowanie z portalu.")
                 return@repeat
             }
             if (loginSent) {
                 diagnostics += "Strona po logowaniu: ${describePage(body)}"
-                pageError(body)?.let { throw LibrusException(it) }
+                pageError(body)?.let { throw it }
                 throw LibrusException("Portal nie przekazał kodu logowania (HTTP ${response.code}).")
             }
 
@@ -101,12 +104,12 @@ class LibrusClient {
             loginSent = true
             if (postResponse.code != 302) {
                 diagnostics += "Odpowiedź na formularz (HTTP ${postResponse.code}): ${describePage(postBody)}"
-                pageError(postBody)?.let { throw LibrusException(it) }
+                pageError(postBody)?.let { throw it }
             }
             val next = postResponse.header("Location")
             if (next != null) {
                 CODE.find(next)?.let { return it.groupValues[1] }
-                if ("command=close" in next) throw LibrusException("Portal Librusa ma przerwę techniczną. Spróbuj później.")
+                if ("command=close" in next) throw LibrusException("Portal Librusa ma przerwę techniczną. Spróbuj później.", LibrusException.Kind.MAINTENANCE)
             }
             referer = url
             url = next?.let { LOGIN_URL.toHttpUrl().resolve(it)?.toString() } ?: AUTHORIZE_URL
@@ -145,16 +148,19 @@ class LibrusClient {
 
     private fun captchaCheck(body: String) {
         if ("g-recaptcha" in body || "captchaValidate" in body) throw LibrusException(
-            "Portal Librusa prosi o potwierdzenie, że nie jesteś robotem. Zaloguj się raz na portal.librus.pl w przeglądarce i spróbuj ponownie."
+            "Portal Librusa prosi o potwierdzenie, że nie jesteś robotem. Zaloguj się raz na portal.librus.pl w przeglądarce i spróbuj ponownie.",
+            LibrusException.Kind.CAPTCHA,
         )
     }
 
-    private fun pageError(body: String): String? = when {
-        "Sesja logowania wygasła" in body -> "Sesja logowania wygasła. Spróbuj jeszcze raz."
+    private fun pageError(body: String): LibrusException? = when {
+        "Sesja logowania wygasła" in body -> LibrusException("Sesja logowania wygasła. Spróbuj jeszcze raz.")
         "Upewnij się, że nie" in body || "Podany adres e-mail jest nieprawidłowy." in body ->
-            "Nieprawidłowy e-mail lub hasło do Konta LIBRUS."
+            LibrusException("Nieprawidłowy e-mail lub hasło do Konta LIBRUS.", LibrusException.Kind.CREDENTIALS)
         else -> null
     }
+
+    private fun serverKind(code: Int) = if (code >= 500) LibrusException.Kind.SERVER else LibrusException.Kind.OTHER
 
     private fun request(url: String, referer: String?) = execute(
         Request.Builder().url(url).header("X-Requested-With", APP_HEADER)

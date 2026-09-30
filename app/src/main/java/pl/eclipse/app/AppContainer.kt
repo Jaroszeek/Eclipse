@@ -6,6 +6,10 @@ import androidx.room.Room
 import pl.eclipse.app.data.EclipseDatabase
 import pl.eclipse.app.data.SchoolRepository
 import pl.eclipse.app.data.SettingsStore
+import pl.eclipse.app.data.VisitStore
+import pl.eclipse.app.data.ensureUserDefaults
+import pl.eclipse.app.data.snapshot
+import pl.eclipse.app.data.userData
 import pl.eclipse.app.notify.Notifier
 import pl.eclipse.app.security.CredentialStore
 import pl.eclipse.app.sync.SyncWorker
@@ -28,6 +32,11 @@ class AppContainer(context: Context) {
     /** Zakres dla krótkich zadań aplikacji (np. zapis ustawień) niezależnych od ekranu. */
     val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
+    /** Wspólne dane dla ekranów, współdzielone przez wszystkie ViewModele. */
+    val snapshot = school.snapshot(database, scope)
+    val user = userData(database, scope)
+    val visits = VisitStore(context)
+
     fun dataSource(demo: Boolean): DataSource = if (demo) DemoSource() else LibrusSource()
 }
 
@@ -40,6 +49,7 @@ class EclipseApp : Application() {
         container = AppContainer(this)
         container.notifier.createChannels()
         container.scope.launch {
+            ensureUserDefaults(container.database)
             val settings = container.settings.current()
             if (settings.demoMode || container.credentials.read() != null) {
                 SyncWorker.schedulePeriodic(this@EclipseApp, settings.syncIntervalHours)

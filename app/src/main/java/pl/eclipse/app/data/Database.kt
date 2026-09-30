@@ -1,7 +1,9 @@
 package pl.eclipse.app.data
 
+import androidx.room.AutoMigration
 import androidx.room.Dao
 import androidx.room.Database
+import androidx.room.Delete
 import androidx.room.Entity
 import androidx.room.Insert
 import androidx.room.PrimaryKey
@@ -105,6 +107,10 @@ data class NotificationEntity(
     val deferred: Boolean = false,
 )
 
+/** Proste znaczniki użytkownika: przeczytane (READ), ukryte powody Important (HIDDEN_REASON), oceny „pomiń” (SKIPPED_GRADE). */
+@Entity(tableName = "user_flags", primaryKeys = ["kind", "key"])
+data class UserFlagEntity(val kind: String, val key: String, val createdAt: Long = System.currentTimeMillis())
+
 data class TypeCount(val type: RecordType, val count: Int)
 
 @Dao
@@ -168,14 +174,64 @@ interface UserDao {
 
     @Query("SELECT * FROM subject_prefs")
     suspend fun subjectPrefsOnce(): List<SubjectPrefsEntity>
+
+    @Query("UPDATE notifications SET readAt = :now WHERE readAt IS NULL")
+    suspend fun markNotificationsRead(now: Long)
+
+    @Query("SELECT * FROM labels ORDER BY id")
+    fun labels(): Flow<List<LabelEntity>>
+
+    @Upsert
+    suspend fun upsertLabel(label: LabelEntity): Long
+
+    @Query("SELECT COUNT(*) FROM labels")
+    suspend fun labelCount(): Int
+
+    @Query("SELECT * FROM label_assignments")
+    fun assignments(): Flow<List<LabelAssignmentEntity>>
+
+    @Insert
+    suspend fun insertAssignment(assignment: LabelAssignmentEntity): Long
+
+    @Delete
+    suspend fun deleteAssignment(assignment: LabelAssignmentEntity)
+
+    @Query("SELECT * FROM custom_events ORDER BY start")
+    fun customEvents(): Flow<List<CustomEventEntity>>
+
+    @Upsert
+    suspend fun upsertCustomEvent(event: CustomEventEntity): Long
+
+    @Delete
+    suspend fun deleteCustomEvent(event: CustomEventEntity)
+
+    @Query("SELECT * FROM event_templates ORDER BY id")
+    fun templates(): Flow<List<EventTemplateEntity>>
+
+    @Upsert
+    suspend fun upsertTemplate(template: EventTemplateEntity): Long
+
+    @Query("SELECT COUNT(*) FROM event_templates")
+    suspend fun templateCount(): Int
+
+    @Query("SELECT * FROM user_flags")
+    fun flags(): Flow<List<UserFlagEntity>>
+
+    @Upsert
+    suspend fun setFlag(flag: UserFlagEntity)
+
+    @Query("DELETE FROM user_flags WHERE kind = :kind AND `key` = :key")
+    suspend fun clearFlag(kind: String, key: String)
 }
 
 @Database(
     entities = [
         RecordEntity::class, SyncRunEntity::class, SubjectPrefsEntity::class, CustomEventEntity::class,
         LabelEntity::class, LabelAssignmentEntity::class, EventTemplateEntity::class, NotificationEntity::class,
+        UserFlagEntity::class,
     ],
-    version = 1,
+    version = 2,
+    autoMigrations = [AutoMigration(from = 1, to = 2)],
 )
 abstract class EclipseDatabase : RoomDatabase() {
     abstract fun records(): RecordDao

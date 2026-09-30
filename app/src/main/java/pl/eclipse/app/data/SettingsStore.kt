@@ -13,9 +13,13 @@ import pl.eclipse.core.calc.GradingRules
 import pl.eclipse.core.calc.ImportantSettings
 import pl.eclipse.core.model.AttendanceCategory
 
-/** Ustawienia z wartościami domyślnymi (SPEC 12.8). Wygląd dojdzie w Etapie 2. */
+/** Ustawienia z wartościami domyślnymi (SPEC 12.8). */
 @Serializable
 data class AppSettings(
+    val themeMode: ThemeMode = ThemeMode.SYSTEM,
+    /** Kolor akcentu ARGB; domyślnie Korona #E9B949. */
+    val accent: Long = 0xFFE9B949,
+    val lessTransparency: Boolean = false,
     val demoMode: Boolean = false,
     val myDiaryNumber: Int? = null,
     val syncIntervalHours: Int = 3,
@@ -30,6 +34,8 @@ data class AppSettings(
     val important: ImportantSettings = ImportantSettings(),
     val countedAbsences: Set<AttendanceCategory> = DEFAULT_COUNTED_ABSENCES,
 )
+
+enum class ThemeMode { SYSTEM, LIGHT, DARK }
 
 enum class NotificationType { GRADE, TEST, REMINDER, PLAN_CHANGE, IMPORTANT, LUCKY_NUMBER, INBOX, SYNC_PROBLEM }
 

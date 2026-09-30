@@ -44,14 +44,14 @@ Aktualizowane po każdym kroku. Szczegóły etapów: `SPEC.md`, sekcja 14.
 - [x] 2b: Important (karty z poziomem, powodami, podpowiedziami z szablonów; „Oznacz jako trudny”, „Ukryj ten powód”, przejście do ocen)
 - [x] 2b: Skrzynka (wiadomości, ogłoszenia, uwagi; nieprzeczytane wyróżnione) + centrum powiadomień (dzwonek)
 - [x] 2b: Ustawienia (konto, wygląd, kolory typów, etykiety i szablony, zasady oceniania, frekwencja, Important, powiadomienia, synchronizacja, dane)
-- [x] Kryteria akceptacji Etapu 2 — na emulatorze (demo): oba motywy i akcent na żywo, szkło i wersja matowa, 360 dp + czcionka 130%, przeciąganie z Przybornika i alternatywa, brak błędów w Logcat, `assembleDebug` i `lintDebug` przechodzą. Do potwierdzenia na telefonie: praca na prawdziwych danych.
+- [x] Kryteria akceptacji Etapu 2 — na emulatorze (demo): oba motywy i akcent na żywo, szkło i wersja matowa, 360 dp + czcionka 130%, przeciąganie z Przybornika i alternatywa, brak błędów w Logcat, `assembleDebug` i `lintDebug` przechodzą. Na telefonie (v1.1): pobieranie prawdziwych danych z Librusa działa — potwierdzenie użytkownika 2026-09-30.
 
 ## Etap 3 — telefon na co dzień
 - [x] Ikona aplikacji (adaptacyjna + monochromatyczna, wektor) i ekran startowy (systemowy Android 12+, bez dodatkowej biblioteki)
 - [x] Podpisana wersja release (klucz w `~/.eclipse-signing/`, poza repozytorium; R8 włączony; release przetestowany na emulatorze — wszystkie ekrany bez błędów)
 - [x] Wydanie v1.0 na GitHubie z plikiem `Eclipse-1.0.apk` (prywatne repo) — https://github.com/Jaroszeek/Eclipse/releases/tag/v1.0
 - [x] Wydanie v1.1: naprawa zawieszonego ekranu pierwszej synchronizacji (zgłoszenie z telefonu: „Pobieram dane z Librusa…” bez końca, wymuszone zatrzymanie nie pomagało) — https://github.com/Jaroszeek/Eclipse/releases/tag/v1.1
-- [ ] Potwierdzenie na telefonie, że pierwsza synchronizacja w v1.1 kończy się danymi (albo zrzut ekranu z błędem)
+- [x] Potwierdzenie na telefonie, że pierwsza synchronizacja w v1.1 kończy się danymi (użytkownik: „działa”, 2026-09-30)
 - [ ] Instalacja na telefonie przez USB (instrukcja w README; czeka na użytkownika)
 - [ ] Całodniowy test synchronizacji w tle i powiadomień z godzinami ciszy (czeka na użytkownika)
 - [ ] Kryteria akceptacji Etapu 3
@@ -100,7 +100,7 @@ Z `SPEC.md`, sekcja 2:
 5. ~~Login e-mailem czy loginem Synergii~~ — e-mailem Konta LIBRUS (zmiana 2026-09-30, patrz SPEC 4.1).
 
 ## Znane problemy
-- v1.0 na telefonie: pierwsza synchronizacja zawisała bez wpisu w `sync_runs`. Dokładna przyczyna nieustalona. Na emulatorze wersja release działa, również z prawdziwym logowaniem do portalu (błędne dane → komunikat, brak internetu → komunikat). Podejrzane: zadanie czekające na warunek sieci albo przerwane bez wpisu. v1.1 usuwa obie drogi i pokazuje stan — czekam na wynik z telefonu.
+- ~~v1.0 na telefonie: pierwsza synchronizacja zawisała bez wpisu w `sync_runs`~~ — rozwiązane w v1.1 (potwierdzone na telefonie). Dokładna przyczyna w v1.0 nieustalona; najpewniej zadanie czekało na warunek sieci albo kończyło się bez wpisu — v1.1 usuwa obie drogi.
 - Wiadomości (wiadomosci.librus.pl) jeszcze niepodłączone — osobny serwis z własnym logowaniem; `LibrusSource.messages()` zwraca pustą listę.
 - Zadania domowe: `HomeWorkAssignments` puste w szkole użytkownika — mapowanie dopiero po pierwszym wpisie.
 - Uwagi: znaczenie `Positive` (1 = pozytywna, 0 = negatywna) do potwierdzenia.

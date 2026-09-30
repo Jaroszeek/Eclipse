@@ -38,8 +38,8 @@ Aktualizowane po każdym kroku. Szczegóły etapów: `SPEC.md`, sekcja 14.
 - [x] 2b: motyw i szkielet (pasek boczny, górny pasek, nawigacja, logowanie, stan synchronizacji)
 - [x] 2b: Pulpit
 - [x] 2b: Kalendarz z Przybornikiem (tydzień/dzień/miesiąc/lista, arkusz szczegółów, własne wydarzenia, etykiety i szablony przeciągane oraz bez przeciągania)
-- [ ] 2b: Sprawdziany
-- [ ] 2b: Oceny z kalkulatorem
+- [x] 2b: Sprawdziany (filtry, grupy, odliczanie, podpowiedź z kalkulatora, przeniesione i usunięte, minione z oceną)
+- [x] 2b: Oceny z kalkulatorem (okresy, sortowanie, średnia ogólna, karty, ekran przedmiotu z wykresem Vico, kalkulator w obu trybach, ustawienia przedmiotu, „poprawiona / pomiń”)
 - [ ] 2b: Statystyki
 - [ ] 2b: Important
 - [ ] 2b: Skrzynka

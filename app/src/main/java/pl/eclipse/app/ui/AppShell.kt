@@ -86,11 +86,14 @@ import pl.eclipse.app.ui.components.glass
 import pl.eclipse.app.ui.components.glassSource
 import pl.eclipse.app.ui.components.rememberGlassState
 import pl.eclipse.app.ui.diagnostics.DiagnosticsScreen
+import pl.eclipse.app.ui.grades.GradesScreen
+import pl.eclipse.app.ui.grades.SubjectScreen
 import pl.eclipse.app.ui.home.HomeScreen
 import pl.eclipse.app.ui.login.FirstSyncScreen
 import pl.eclipse.app.ui.login.LoginScreen
 import pl.eclipse.app.ui.login.NotificationPermissionScreen
 import pl.eclipse.app.ui.style.StyleScreen
+import pl.eclipse.app.ui.tests.TestsScreen
 import pl.eclipse.app.ui.theme.Eclipse
 import pl.eclipse.app.ui.theme.Palette
 import java.time.Instant
@@ -203,12 +206,15 @@ private fun MainShell(state: ShellState, viewModel: ShellViewModel, initialRoute
                     composable<CalendarRoute> {
                         CalendarScreen(contentPadding, glass, toolboxOpen, { toolboxOpen = it }, state.syncRunning, viewModel::syncNow)
                     }
-                    composable<TestsRoute> { ComingSoon(contentPadding) }
-                    composable<GradesRoute> { ComingSoon(contentPadding) }
+                    composable<TestsRoute> {
+                        TestsScreen(contentPadding, state.syncRunning, viewModel::syncNow, onOpenCalculator = { nav.navigate(SubjectRoute(it)) })
+                    }
+                    composable<GradesRoute> {
+                        GradesScreen(contentPadding, state.syncRunning, viewModel::syncNow, onOpenSubject = { nav.navigate(SubjectRoute(it)) })
+                    }
                     composable<SubjectRoute> { back ->
                         val route = back.toRoute<SubjectRoute>()
-                        subjectTitle = route.key
-                        ComingSoon(contentPadding)
+                        SubjectScreen(route.key, contentPadding, onTitle = { subjectTitle = it })
                     }
                     composable<StatsRoute> { ComingSoon(contentPadding) }
                     composable<ImportantRoute> { ComingSoon(contentPadding) }

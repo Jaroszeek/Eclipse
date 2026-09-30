@@ -139,11 +139,11 @@ private val Context.visitsDataStore by preferencesDataStore("visits")
 class VisitStore(private val context: Context) {
     fun observe(screen: String): Flow<Long> = context.visitsDataStore.data.map { it[longPreferencesKey(screen)] ?: 0L }
 
-    /** Zwraca poprzednią wizytę i zapisuje bieżącą. */
+    /** Zwraca poprzednią wizytę i zapisuje bieżącą. Przy pierwszej wizycie nic nie jest „nowe” (Long.MAX_VALUE). */
     suspend fun visit(screen: String): Long {
         val key = longPreferencesKey(screen)
         val previous = context.visitsDataStore.data.map { it[key] ?: 0L }.first()
         context.visitsDataStore.edit { it[key] = System.currentTimeMillis() }
-        return previous
+        return previous.takeIf { it > 0 } ?: Long.MAX_VALUE
     }
 }

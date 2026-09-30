@@ -58,7 +58,8 @@ Aktualizowane po każdym kroku. Szczegóły etapów: `SPEC.md`, sekcja 14.
 - [x] Wydanie v1.5: rekonesans wiadomości (przycisk „Sprawdź wiadomości” w ekranie rekonesansu)
 - [x] Wydanie v1.6: Diagnostyka (z rekonesansem) widoczna też w wersji release — wcześniej tylko w debug, a instrukcje odsyłały do niej użytkownika
 - [x] Wydanie v1.7: rekonesans wiadomości — przekierowania http:// w Librusie idą przez https, login ukryty w raporcie
-- [ ] Wiadomości krok 1: raport z rekonesansu wiadomości od użytkownika → mapowanie → odczyt w Skrzynce
+- [x] Wiadomości krok 1: raporty nr 1 i 2 → mapowanie w `docs/librus-rekonesans.md` → odczyt w Skrzynce (v1.8)
+- [ ] Potwierdzenie na telefonie, że wiadomości są w Skrzynce, i raport nr 3 (wysyłanie)
 - [ ] Wiadomości krok 2: wysyłanie z ekranem potwierdzenia (wymaga zmiany SPEC 12.7 „tylko odczyt” — za zgodą użytkownika)
 - [ ] Instalacja na telefonie przez USB (instrukcja w README; czeka na użytkownika)
 - [ ] Całodniowy test synchronizacji w tle i powiadomień z godzinami ciszy (czeka na użytkownika)
@@ -114,6 +115,7 @@ Aktualizowane po każdym kroku. Szczegóły etapów: `SPEC.md`, sekcja 14.
 - 2026-09-30: wysyłanie wiadomości — użytkownik wybrał wersję etapami (z trzech: etapami / przycisk do Librusa / od razu z wysyłaniem). Najpierw rekonesans serwisu wiadomości, potem odczyt, na końcu wysyłanie z potwierdzeniem. Rekonesans (`Recon.messages`) używa zapisanego logowania: AutoLoginToken → Synergia → /wiadomosci3, wypisuje przekierowania (bez parametrów, tokeny ukryte), ścieżki „/api/…” z kodu strony i strukturę odpowiedzi (treść zamaskowana, z tytułu strony tylko znane słowa).
 - 2026-09-30: Ustawienia → „Dla programisty” → „Diagnostyka” widoczne w release (Próbnik stylu nadal tylko w debug). Diagnostyka pokazuje awarie, synchronizacje i otwiera rekonesans — potrzebne na telefonie.
 - 2026-09-30: raport wiadomości nr 1: AutoLoginToken → `synergia.librus.pl/loguj/token/…/przenies` → `/uczen/index` działa; `/wiadomosci3` → `wiadomosci.librus.pl/pobierz04/MultiDomainLogon/token/…/login/…/target/…` (ustawia DZIENNIKSID dla wiadomości) → `/nowy` → 301 na http:// → Android blokuje (UnknownServiceException). Poprawka: przekierowania zawsze przez https. W ścieżce MultiDomainLogon jest login ucznia (base64) — `hidden()` ukrywa teraz fragment po „token” i „login”. Adresy API szukane też jako pełne adresy i bez ukośnika.
+- 2026-09-30: wiadomości w Skrzynce — nieprzeczytane to te, których nie otwarto ani w Eclipse, ani w Librusie (`readDate`). Pierwsze pobranie wiadomości (także po aktualizacji) nie tworzy powiadomień; później powiadomienie tylko o nowej wiadomości nieprzeczytanej w Librusie. „Nowe od ostatniej wizyty” pokazuje tylko wiadomości wysłane po ostatniej wizycie. Rekonesans czyta szczegóły tylko wiadomości już przeczytanej (żeby niczego w Librusie nie oznaczyć) i używa wyłącznie GET.
 - 2026-09-29: kod trafia do prywatnego repozytorium na GitHubie (konto Jaroszeek), autor commitów: Jaroszek.
 
 ## Otwarte kwestie
@@ -126,7 +128,7 @@ Z `SPEC.md`, sekcja 2:
 
 ## Znane problemy
 - ~~v1.0 na telefonie: pierwsza synchronizacja zawisała bez wpisu w `sync_runs`~~ — rozwiązane w v1.1 (potwierdzone na telefonie). Dokładna przyczyna w v1.0 nieustalona; najpewniej zadanie czekało na warunek sieci albo kończyło się bez wpisu — v1.1 usuwa obie drogi.
-- Wiadomości (wiadomosci.librus.pl) jeszcze niepodłączone — osobny serwis z własnym logowaniem; `LibrusSource.messages()` zwraca pustą listę.
+- Wiadomości: odczyt podłączony w v1.8 (do potwierdzenia na telefonie); wysyłanie jeszcze nie — czeka na rekonesans nr 3 (adresy odbiorców i wysyłania). Załączników aplikacja nie pobiera (tylko informacja „załącznik w Librusie”).
 - Zadania domowe: `HomeWorkAssignments` puste w szkole użytkownika — mapowanie dopiero po pierwszym wpisie.
 - Uwagi: znaczenie `Positive` (1 = pozytywna, 0 = negatywna) do potwierdzenia.
 - Emulator „gympixel” ma wyłączoną grafikę sprzętową (`hw.gpu.enabled = no`) i startuje bardzo wolno. Z opcją `-gpu host` Android wstaje w ok. 20 s. Stała poprawka: Device Manager → gympixel → Edit → Graphics: Hardware.

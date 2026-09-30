@@ -64,3 +64,23 @@ Wykonany 30.09.2026 z telefonu (ekran „Rekonesans Librusa”, SPEC 4.2). Bez d
 | Zebranie rodziców, Zebranie Rady Rodziców, Dzień otwarty dla rodziców | `TRIP` (wydarzenie szkolne) |
 | Powtórzenie wiadomości, ZAJĘCIA ON-LINE, Spotkanie / lekcja online, Kwarantanna - lekcje zdalne. | `OTHER` |
 | każda nowa, nieznana kategoria | `OTHER` (edytowalne w ustawieniach) |
+
+## Wiadomości (wiadomosci.librus.pl) — rekonesans 30.09.2026
+Osobny serwis. Sesja powstaje przez Synergię, bez drugiego logowania hasłem:
+1. `POST api.librus.pl/2.0/AutoLoginToken` (Bearer z konta ucznia) → `Token`, `ExpirationTime`.
+2. `GET synergia.librus.pl/loguj/token/{Token}/przenies` → 302 → `/uczen/index` (sesja Synergii).
+3. `GET synergia.librus.pl/wiadomosci3` → 302 → `wiadomosci.librus.pl/pobierz…/MultiDomainLogon/token/…/login/…/target/…` → 302 → `/nowy` → 301 **na http://** (klient przechodzi na https) → `/nowy/` 200. Ustawia ciasteczko `DZIENNIKSID` dla wiadomości.
+4. API JSON z tym ciasteczkiem:
+
+| Adres | Wynik |
+|---|---|
+| `GET /api/me` | 200: `firstName`, `lastName`, `groupId`, `groupName`, `accountId`, … (dane konta — nie zapisujemy) |
+| `GET /api/inbox/messages?page=1&limit=N` | 200: `data[]`, `total` |
+| `GET /api/outbox/messages?page=1&limit=N` | 200: `data[]` (u ucznia pusto), `total` |
+| `GET /api/receivers` | 404 |
+
+Pola wiadomości w `data[]`: `messageId` (tekst), `senderFirstName`, `senderLastName`, `senderName`, `topic`, `content`, `sendDate` (data i godzina), `readDate` (data albo null), `tags[]`, `category` (null), `otherNodeUuid`, `otherNodeAccountId` (null), `isAnyFileAttached` (tak/nie).
+
+**Mapowanie → `Message`:** `messageId` → `sourceKey` („message-{id}”), `senderName` (albo imię + nazwisko) → `sender`, `topic` → `title`, `content` → `content` (base64 odkodowywane, HTML → zwykły tekst), `sendDate` → `sentAt`, `readDate` → `readAt` (czas polski), `isAnyFileAttached` → `hasAttachment`. Jedna strona po 50 najnowszych przy każdej synchronizacji. Eclipse niczego w Librusie nie zmienia — otwarcie wiadomości w aplikacji nie oznacza jej w Librusie jako przeczytanej.
+
+**Do sprawdzenia (rekonesans nr 3):** postać `content` (tekst / HTML / base64), szczegóły `GET /api/inbox/messages/{id}`, adresy odbiorców i wysyłania w kodzie strony (`/nowy/assets/index-*.js` — ścieżki nie zawierają „api/”).

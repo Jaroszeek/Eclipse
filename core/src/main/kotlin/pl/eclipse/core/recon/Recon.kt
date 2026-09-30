@@ -14,6 +14,7 @@ import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.ZoneId
 import java.time.temporal.TemporalAdjusters
+import java.util.Base64
 
 /**
  * Rekonesans (SPEC 4.2): loguje się i opisuje strukturę każdego zasobu Librusa.
@@ -85,22 +86,37 @@ object Recon {
                 appendPage("Wiadomości", landing)
 
                 val origin = landing.url.substringBefore("://") + "://" + landing.url.substringAfter("://").substringBefore('/')
-                val paths = sortedSetOf<String>().apply { addAll(apiPaths(landing.body)) }
-                // tylko skrypty samego Librusa (bez zewnętrznych, np. statystyk)
+                // Kod strony wiadomości to aplikacja Librusa (bez danych ucznia) — szukamy w nim adresów wysyłania i odbiorców.
+                val endpoints = sortedSetOf<String>()
                 SCRIPT_SRC.findAll(landing.body).map { it.groupValues[1] }
                     .filter { !it.startsWith("http") && !it.startsWith("//") || "librus.pl" in it }.take(MAX_SCRIPTS).forEach { src ->
                     pause()
                     val script = client.page(resolve(landing.url, src))
                     appendLine("Skrypt ${script.url.substringAfterLast('/').substringBefore('?').take(40)}: HTTP ${script.code}, ${script.body.length} znaków")
-                    paths += apiPaths(script.body)
+                    endpoints += endpointStrings(script.body)
                 }
-                appendLine("\nAdresy API w kodzie strony (${paths.size}):")
-                paths.forEach { appendLine("  $it") }
+                appendLine("\nAdresy w kodzie strony (${endpoints.size}):")
+                endpoints.take(MAX_ENDPOINTS).forEach { appendLine("  $it") }
 
-                // najpierw adresy, które wyglądają na wiadomości i odbiorców
-                val probes = (paths.filter { '{' !in it && ':' !in it && '$' !in it }.sortedByDescending { p -> PRIORITY.count { it in p } } + PROBES)
-                    .distinct().take(MAX_PROBES)
-                for (path in probes) call(path) { client.page(origin + path).let { it.code to it.body } }
+                // Postać treści (długość, HTML, base64) — bez samej treści.
+                pause()
+                val list = client.page("$origin/api/inbox/messages?page=1&limit=5")
+                val items = runCatching { (Json.parseToJsonElement(list.body) as JsonObject)["data"] as JsonArray }.getOrNull()
+                    .orEmpty().filterIsInstance<JsonObject>()
+                appendLine("\n## Lista wiadomości: HTTP ${list.code}, ${items.size} el.")
+                items.firstOrNull()?.let { appendLine("Treść na liście: ${contentShape(it.text("content"))}") }
+                // Szczegóły tylko przeczytanej wiadomości — otwarcie nieprzeczytanej mogłoby ją w Librusie oznaczyć jako przeczytaną.
+                items.firstOrNull { it.text("readDate") != null }?.text("messageId")?.let { id ->
+                    pause()
+                    val detail = client.page("$origin/api/inbox/messages/$id")
+                    append(describe("/api/inbox/messages/{id}", detail.code, detail.body))
+                    appendLine("Treść w szczegółach: ${contentShape(detailContent(detail.body))}")
+                }
+
+                // Odbiorcy: tylko odczyt (GET) adresów z kodu strony, które na to wyglądają. Nic nie jest wysyłane.
+                val receiverProbes = endpoints.filter { e -> RECEIVER_WORDS.any { it in e.lowercase() } && e.none { it in "\${}:" } }
+                    .map { if (it.startsWith("/api/")) it else "/api/" + it.trimStart('/') }.distinct().take(MAX_PROBES)
+                for (path in receiverProbes) call(path) { client.page(origin + path).let { it.code to it.body } }
             } catch (e: IOException) {
                 appendLine("\nBłąd połączenia (${e.javaClass.simpleName}).")
             } catch (e: LibrusException) {
@@ -259,10 +275,29 @@ private fun sampleOf(v: JsonElement): JsonElement? = when (v) {
 private const val PAUSE_MS = 400L
 private const val MAX_SCRIPTS = 5
 private const val MAX_PROBES = 10
-private val PRIORITY = listOf("inbox", "message", "receiver", "me")
+private const val MAX_ENDPOINTS = 80
 
-/** Ścieżki „/api/…” zapisane w kodzie strony — także jako pełny adres albo bez ukośnika (bez danych, to tylko adresy). */
-internal fun apiPaths(text: String): Set<String> = API_PATH.findAll(text).map { "/" + it.groupValues[1].trimEnd('/') }.toSortedSet()
+/** Napisy z kodu strony, które wyglądają na adresy wiadomości (np. „/inbox/messages”) — to kod aplikacji, bez danych. */
+internal fun endpointStrings(text: String): Set<String> = STRING_LITERAL.findAll(text).map { it.groupValues[1] }
+    .filter { s -> '/' in s && ENDPOINT_WORDS.any { it in s.lowercase() } }
+    .toSortedSet()
+
+/** Postać treści wiadomości bez samej treści: długość, HTML, base64, liczba wierszy. */
+private fun contentShape(raw: String?): String {
+    if (raw == null) return "brak"
+    val base64 = raw.length % 4 == 0 && BASE64.matches(raw)
+    val decoded = if (base64) runCatching { String(Base64.getDecoder().decode(raw), Charsets.UTF_8) }.getOrNull() else null
+    fun yes(value: Boolean) = if (value) "tak" else "nie"
+    return "długość ${raw.length}, HTML: ${yes('<' in raw && '>' in raw)}, base64: ${yes(base64)}" +
+        (decoded?.let { ", po odkodowaniu HTML: ${yes('<' in it)}" } ?: "") + ", wierszy: ${raw.lines().size}"
+}
+
+private fun detailContent(body: String): String? = runCatching {
+    val json = Json.parseToJsonElement(body) as JsonObject
+    ((json["data"] as? JsonObject) ?: json).text("content")
+}.getOrNull()
+
+private fun JsonObject.text(key: String) = (this[key] as? JsonPrimitive)?.takeIf { it !is JsonNull }?.content
 
 private fun resolve(base: String, src: String): String = when {
     src.startsWith("http") -> src
@@ -271,12 +306,16 @@ private fun resolve(base: String, src: String): String = when {
     else -> base.substringBeforeLast('/') + "/" + src
 }
 
-private val API_PATH = Regex("""(?:["'`]|librus\.pl)/?(api/[A-Za-z0-9_\-/{}:$.]+)["'`?]""")
+// zamykający cudzysłów tylko sprawdzany (nie zjadany) — w zminifikowanym kodzie napisy stoją jeden przy drugim
+private val STRING_LITERAL = Regex("""["'`]([^"'`\s<>]{3,100})(?=["'`])""")
+private val ENDPOINT_WORDS = listOf("inbox", "outbox", "receiver", "recipient", "draft", "message", "attachment", "group", "contact", "send")
+private val RECEIVER_WORDS = listOf("receiver", "recipient", "group", "contact")
+private val BASE64 = Regex("""[A-Za-z0-9+/]+={0,2}""")
 private val SCRIPT_SRC = Regex("""<script[^>]+src="([^"]+)"""")
 private val TITLE = Regex("""<title>([^<]*)</title>""", RegexOption.IGNORE_CASE)
 private val FORM_TAG = Regex("""<form\b""", RegexOption.IGNORE_CASE)
 private val TITLE_WORDS = listOf("Wiadomości", "Librus", "Synergia", "Zaloguj", "Logowanie", "Błąd")
-private val PROBES = listOf("/api/me", "/api/inbox/messages?page=1&limit=5", "/api/outbox/messages?page=1&limit=5", "/api/receivers")
+
 private const val MAX_VALUES = 25
 private val SKIPPED_KEYS = setOf("Resources", "Url")
 private val SHOWN_KEYS = setOf(

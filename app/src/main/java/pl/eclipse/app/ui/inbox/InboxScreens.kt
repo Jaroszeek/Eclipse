@@ -67,13 +67,16 @@ data class InboxState(
 
 class InboxViewModel(application: Application) : AndroidViewModel(application) {
     private val container = application.container
+    private val attachment = application.getString(R.string.inbox_attachment)
 
     val state: StateFlow<InboxState> = combine(container.snapshot, container.user) { snapshot, user ->
         val read = user.keys(Flags.READ)
         InboxState(
             messages = snapshot.messages.sortedByDescending { it.value.sentAt }.map { m ->
                 val v = m.value
-                InboxItem(v.sourceKey, v.title, v.sender + " · " + formatDate(v.sentAt.atZone(WARSAW).toLocalDate()), v.content.orEmpty(), v.sourceKey !in read)
+                val meta = v.sender + " · " + formatDate(v.sentAt.atZone(WARSAW).toLocalDate()) + if (v.hasAttachment) " · $attachment" else ""
+                // przeczytana w Eclipse albo już w Librusie
+                InboxItem(v.sourceKey, v.title, meta, v.content.orEmpty(), v.sourceKey !in read && v.readAt == null)
             },
             announcements = snapshot.announcements.sortedByDescending { it.value.date }.map { a ->
                 val v = a.value

@@ -26,8 +26,8 @@ class MessagesReconTest {
     }
 
     @Test
-    fun apiPathsAreFoundInScript() {
-        val script = """fetch("/api/me");x='/api/inbox/messages/';u="https://wiadomosci.librus.pl/api/receivers";r='api/outbox';y="/static/app.js""""
-        assertEquals(setOf("/api/inbox/messages", "/api/me", "/api/outbox", "/api/receivers"), apiPaths(script))
+    fun endpointLikeStringsAreFoundInScript() {
+        val script = """a.get("/inbox/messages");b.post(`/outbox/messages/${'$'}{e}`);c="Wyślij wiadomość";d="application/json";g='receivers/groups'"""
+        assertEquals(setOf("/inbox/messages", "/outbox/messages/${'$'}{e}", "receivers/groups"), endpointStrings(script))
     }
 }

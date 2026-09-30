@@ -150,6 +150,8 @@ class SyncWorker(context: Context, params: WorkerParameters) : CoroutineWorker(c
         val announcements = sync(RecordType.ANNOUNCEMENT, Announcement.serializer(), Announcement::sourceKey) {
             source.announcements(lastSuccess)
         }
+        // Pierwsze pobranie wiadomości (np. po aktualizacji aplikacji) tylko zapisuje stan — bez powiadomień o starych wiadomościach.
+        val hadMessages = db.records().all(RecordType.MESSAGE).isNotEmpty()
         // Wiadomości przychodzą tylko nowe, więc brak na liście nie oznacza usunięcia.
         val messages = sync(RecordType.MESSAGE, Message.serializer(), Message::sourceKey, { false }) { source.messages(lastSuccess) }
         val lucky = sync(RecordType.LUCKY_NUMBER, LuckyNumber.serializer(), { it.date.toString() }, { false }) {
@@ -160,7 +162,7 @@ class SyncWorker(context: Context, params: WorkerParameters) : CoroutineWorker(c
         val success = errors.isEmpty()
         record(started, success, demo, summary.joinToString(", "), errors.joinToString("\n"))
 
-        val outcome = SyncOutcome(firstSync, grades, events, lessons, notes, announcements, messages, lucky?.items?.values?.firstOrNull())
+        val outcome = SyncOutcome(firstSync, grades, events, lessons, notes, announcements, messages.takeIf { hadMessages }, lucky?.items?.values?.firstOrNull())
         container.notifier.afterSync(outcome, settings)
         return if (success) Result.success() else afterFailure(manual)
     }

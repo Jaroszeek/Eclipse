@@ -294,6 +294,7 @@
     <string name="inbox_empty">Brak wpisów w tej zakładce.</string>
     <string name="inbox_note">Uwaga</string>
     <string name="inbox_mark_all_read">Oznacz wszystkie jako przeczytane</string>
+    <string name="inbox_attachment">załącznik w Librusie</string>
     <string name="note_positive">uwaga pozytywna</string>
     <string name="note_negative">uwaga negatywna</string>
     <string name="note_neutral">uwaga neutralna</string>

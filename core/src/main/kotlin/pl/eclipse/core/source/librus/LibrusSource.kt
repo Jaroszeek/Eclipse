@@ -26,7 +26,10 @@ import pl.eclipse.core.model.Subject
 import pl.eclipse.core.source.DataSource
 import java.time.Instant
 import java.time.LocalDate
+import java.time.LocalDateTime
 import java.time.LocalTime
+import java.time.ZoneId
+import java.util.Base64
 
 /**
  * Dane z API Librusa (`api.librus.pl/2.0`) według mapowania z `docs/librus-rekonesans.md`.
@@ -196,8 +199,32 @@ class LibrusSource(
             )
         }
 
-    // ponytail: wiadomości są w osobnym serwisie (wiadomosci.librus.pl), jeszcze niezbadanym — patrz PROGRESS.md.
-    override fun messages(since: Instant?): List<Message> = emptyList()
+    // Wiadomości: osobny serwis wiadomosci.librus.pl, sesja przez Synergię (rekonesans 2026-09-30).
+    // ponytail: jedna strona najnowszych wiadomości na synchronizację — wystarcza przy synchronizacji co kilka godzin.
+    override fun messages(since: Instant?): List<Message> {
+        if (!messagesOpen) {
+            client.openMessages()
+            messagesOpen = true
+        }
+        val (code, body) = client.messagesApi("inbox/messages?page=1&limit=$MESSAGES_PAGE")
+        if (code !in 200..299) {
+            throw LibrusException("Librus nie oddał wiadomości (HTTP $code).", if (code >= 500) LibrusException.Kind.SERVER else LibrusException.Kind.OTHER)
+        }
+        return Json.parseToJsonElement(body).obj["data"].arr.map { it.obj }.map { m ->
+            Message(
+                sourceKey = "message-${m["messageId"].str}",
+                sentAt = warsawInstant(m["sendDate"].str),
+                sender = m["senderName"].strOrNull?.takeIf { it.isNotBlank() }
+                    ?: listOfNotNull(m["senderFirstName"].strOrNull, m["senderLastName"].strOrNull).joinToString(" "),
+                title = m["topic"].strOrNull.orEmpty(),
+                content = m["content"].strOrNull?.let(::messageText),
+                readAt = m["readDate"].strOrNull?.let(::warsawInstant),
+                hasAttachment = m["isAnyFileAttached"].bool,
+            )
+        }
+    }
+
+    private var messagesOpen = false
 
     override fun luckyNumber(): LuckyNumber? = json("LuckyNumbers")["LuckyNumber"].objOrNull?.let {
         LuckyNumber(it["LuckyNumberDay"].date, it["LuckyNumber"].int)
@@ -237,6 +264,34 @@ class LibrusSource(
 
     private fun subjectKey(librusId: String) = "subject-$librusId"
 }
+
+private const val MESSAGES_PAGE = 50
+private val WARSAW: ZoneId = ZoneId.of("Europe/Warsaw")
+private val BASE64 = Regex("""[A-Za-z0-9+/]+={0,2}""")
+
+/** Data z serwisu wiadomości („2026-09-30 14:03:12”, z „T” albo sama data) — czas polski. */
+internal fun warsawInstant(text: String): Instant {
+    val value = text.take(19).replace(' ', 'T')
+    val local = if (value.length == 10) LocalDate.parse(value).atStartOfDay() else LocalDateTime.parse(value)
+    return local.atZone(WARSAW).toInstant()
+}
+
+/** Treść wiadomości jako zwykły tekst: odkodowana z base64, jeśli tak przyszła, i bez znaczników HTML. */
+internal fun messageText(raw: String): String {
+    val decoded = raw.takeIf { it.length >= 8 && it.length % 4 == 0 && BASE64.matches(it) }
+        ?.let { runCatching { String(Base64.getDecoder().decode(it), Charsets.UTF_8) }.getOrNull() }
+        ?.takeIf { text -> text.all { it == '\n' || it == '\r' || it == '\t' || (!it.isISOControl() && it != '\uFFFD') } }
+    return htmlToText(decoded ?: raw)
+}
+
+internal fun htmlToText(html: String): String = html
+    .replace(Regex("""(?i)<br\s*/?>|</p>|</div>|</li>"""), "\n")
+    .replace(Regex("""<[^>]+>"""), "")
+    .replace(Regex("""&#(\d+);""")) { m -> m.groupValues[1].toIntOrNull()?.let { String(Character.toChars(it)) } ?: m.value }
+    .replace("&nbsp;", " ").replace("&lt;", "<").replace("&gt;", ">").replace("&quot;", "\"").replace("&#39;", "'").replace("&amp;", "&")
+    .lines().joinToString("\n") { it.trim() }
+    .replace(Regex("""\n{3,}"""), "\n\n")
+    .trim()
 
 /** Kategoria terminarza → typ wydarzenia (zaakceptowane mapowanie, SPEC 11.3). */
 internal fun eventType(category: String): EventType {

@@ -64,7 +64,7 @@ class ShellViewModel(application: Application) : AndroidViewModel(application) {
             syncFailing = snapshot.recentRuns.size >= 3 && snapshot.recentRuns.take(3).none { it.success },
             lastSyncAt = snapshot.lastSuccessAt,
             newGrades = snapshot.grades.count { it.removedAt == null && gradesVisit > 0 && it.firstSeenAt.toEpochMilli() > gradesVisit },
-            unreadInbox = (snapshot.messages.map { it.value.sourceKey } + snapshot.announcements.map { it.value.sourceKey } + snapshot.notes.map { it.value.sourceKey })
+            unreadInbox = (snapshot.messages.filter { it.value.readAt == null }.map { it.value.sourceKey } + snapshot.announcements.map { it.value.sourceKey } + snapshot.notes.map { it.value.sourceKey })
                 .count { it !in read },
             critical = insights.warnings.count { it.level == WarningLevel.CRITICAL },
             unreadNotifications = user.notifications.count { it.readAt == null },

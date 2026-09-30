@@ -123,7 +123,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
                         add(NewItem(i.name(e.value.subjectKey), "${e.previous?.date?.let(::formatDate)} → ${formatDate(e.value.date)}", NewKind.MOVED_TEST))
                 }
             }
-            snapshot.messages.filter { it.firstSeenAt.toEpochMilli() > since }.forEach { add(NewItem(it.value.sender, it.value.title, NewKind.MESSAGE)) }
+            snapshot.messages.filter { it.firstSeenAt.toEpochMilli() > since && it.value.sentAt.toEpochMilli() > since }.forEach { add(NewItem(it.value.sender, it.value.title, NewKind.MESSAGE)) }
             snapshot.announcements.filter { it.firstSeenAt.toEpochMilli() > since }.forEach { add(NewItem(it.value.title, it.value.author.orEmpty(), NewKind.ANNOUNCEMENT)) }
         }
 

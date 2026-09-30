@@ -131,7 +131,7 @@ class Notifier(private val context: Context, private val db: EclipseDatabase) {
         }
 
         outcome.messages?.let { r ->
-            r.changes.added.mapNotNull(r.items::get).forEach {
+            r.changes.added.mapNotNull(r.items::get).filter { it.readAt == null }.forEach {
                 post(NotificationType.INBOX, context.getString(R.string.notif_message, it.sender), it.title, ROUTE_INBOX, settings)
             }
         }

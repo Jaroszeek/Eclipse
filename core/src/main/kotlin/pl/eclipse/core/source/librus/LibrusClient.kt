@@ -91,6 +91,24 @@ class LibrusClient {
             .post(FormBody.Builder().build()).build(),
     )
 
+    /**
+     * Sesja w serwisie wiadomości (rekonesans 2026-09-30): AutoLoginToken → Synergia → /wiadomosci3 →
+     * MultiDomainLogon → wiadomosci.librus.pl/nowy/, które ustawia ciasteczko sesji wiadomości.
+     */
+    fun openMessages() {
+        val (code, body) = autoLoginToken()
+        val token = runCatching { Json.parseToJsonElement(body).jsonObject.text("Token") }.getOrNull()
+            ?: throw LibrusException("Librus nie wydał tokenu do wiadomości (HTTP $code).", serverKind(code))
+        page("https://synergia.librus.pl/loguj/token/$token/przenies")
+        val landing = page(MESSAGES_START)
+        if (landing.code !in 200..299 || !landing.url.startsWith(MESSAGES_URL)) {
+            throw LibrusException("Nie udało się otworzyć wiadomości Librusa (HTTP ${landing.code}).", serverKind(landing.code))
+        }
+    }
+
+    /** Zasób API wiadomości, np. "inbox/messages?page=1&limit=50" → https://wiadomosci.librus.pl/api/inbox/messages… */
+    fun messagesApi(path: String): Pair<Int, String> = send(Request.Builder().url("$MESSAGES_URL/api/$path").build())
+
     /** Zasób API Librusa, np. "Grades" → https://api.librus.pl/2.0/Grades. */
     fun gateway(path: String): Pair<Int, String> =
         send(Request.Builder().url(API_URL + path).header("Authorization", "Bearer $apiToken").build())
@@ -211,6 +229,8 @@ class LibrusClient {
         const val TOKEN_URL = "https://portal.librus.pl/oauth2/access_token"
         const val ACCOUNTS_URL = "https://portal.librus.pl/api/v3/SynergiaAccounts"
         const val API_URL = "https://api.librus.pl/2.0/"
+        const val MESSAGES_START = "https://synergia.librus.pl/wiadomosci3"
+        const val MESSAGES_URL = "https://wiadomosci.librus.pl"
         const val USER_AGENT = "Mozilla/5.0 (Linux; Android 16) LibrusMobileApp"
         const val MAX_STEPS = 10
         val CODE = Regex("""app://librus\?code=([^&?]+)""")

@@ -120,6 +120,9 @@ data class Message(
     val sender: String,
     val title: String,
     val content: String?,
+    /** Kiedy wiadomość przeczytano w Librusie (null — nieprzeczytana). */
+    val readAt: Instant? = null,
+    val hasAttachment: Boolean = false,
 )
 
 @Serializable

@@ -21,7 +21,7 @@ Aktualizowane po każdym kroku. Szczegóły etapów: `SPEC.md`, sekcja 14.
   - Próba 2: logowanie każe iść pod goTo = /OAuth/Authorization/2FA (krok logowania, nie weryfikacja dwuetapowa); wejście od razu pod Grant odsyła do portalu. Gateway nadal 401. Wersja 3: logowanie idzie pod goTo, rekonesans sprawdza też strony HTML dziennika (plan B z SPEC 4.1).
 - [x] 1a: `docs/librus-rekonesans.md`
 - [x] 1a: akceptacja mapowania przez użytkownika
-- [ ] 1b: modele i `DataSource`
+- [x] 1b: modele i `DataSource` (`core/model/Models.kt`, `core/source/DataSource.kt`; funkcje blokujące, wołane w tle)
 - [ ] 1b: `DemoSource`
 - [ ] 1b: obliczenia z testami (sekcje 6–8)
 - [ ] 1b: `LibrusSource` według mapowania

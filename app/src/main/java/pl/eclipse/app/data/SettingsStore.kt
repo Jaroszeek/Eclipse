@@ -33,6 +33,8 @@ data class AppSettings(
     val grading: GradingRules = GradingRules(),
     val important: ImportantSettings = ImportantSettings(),
     val countedAbsences: Set<AttendanceCategory> = DEFAULT_COUNTED_ABSENCES,
+    /** Czy pokazano już ekran z prośbą o zgodę na powiadomienia (SPEC 12.9). */
+    val permissionAsked: Boolean = false,
 )
 
 enum class ThemeMode { SYSTEM, LIGHT, DARK }

@@ -11,6 +11,108 @@
     <string name="recon_copy">Kopiuj raport</string>
     <string name="recon_copied">Skopiowano raport</string>
 
+    <!-- Nawigacja (SPEC 12.0) -->
+    <string name="nav_home">Pulpit</string>
+    <string name="nav_calendar">Kalendarz</string>
+    <string name="nav_tests">Sprawdziany</string>
+    <string name="nav_grades">Oceny</string>
+    <string name="nav_stats">Statystyki</string>
+    <string name="nav_important">Important</string>
+    <string name="nav_inbox">Skrzynka</string>
+    <string name="nav_settings">Ustawienia</string>
+    <string name="nav_notifications">Powiadomienia</string>
+    <string name="nav_style">Próbnik stylu</string>
+    <string name="open_menu">Otwórz menu</string>
+    <string name="open_menu_alert">Otwórz menu — są ostrzeżenia krytyczne</string>
+    <string name="back">Wróć</string>
+    <string name="refresh">Odśwież dane</string>
+    <string name="refreshing">Trwa odświeżanie danych</string>
+    <string name="open_notifications">Powiadomienia</string>
+    <string name="open_toolbox">Przybornik</string>
+    <string name="theme_label">Motyw: %1$s</string>
+    <string name="theme_system">systemowy</string>
+    <string name="theme_light">jasny</string>
+    <string name="theme_dark">ciemny</string>
+    <string name="last_sync">Synchronizacja: %1$s</string>
+    <string name="last_sync_never">Synchronizacja: jeszcze nie było</string>
+    <string name="sync_failing">Nie udało się zsynchronizować danych z Librusem. Pokazuję dane z %1$s.</string>
+    <string name="sync_failing_never">Nie udało się zsynchronizować danych z Librusem.</string>
+    <string name="details">Szczegóły</string>
+    <string name="coming_soon">Ten ekran powstaje w kolejnym kroku Etapu 2.</string>
+
+    <!-- Pulpit (SPEC 12.1) -->
+    <string name="home_today">Dziś</string>
+    <string name="home_tomorrow">Jutro</string>
+    <string name="home_no_lessons">Brak lekcji w planie.</string>
+    <string name="home_new">Nowe od ostatniej wizyty</string>
+    <string name="home_important_none">Nic nie wymaga uwagi.</string>
+    <string name="home_lucky">Szczęśliwy numerek</string>
+    <string name="home_lucky_mine">To Twój numer!</string>
+    <string name="home_homework">Zadania na 3 dni</string>
+    <string name="home_homework_none">Brak zadań domowych na najbliższe 3 dni.</string>
+    <string name="disc_none">Brak sprawdzianów w najbliższych 2 tygodniach</string>
+    <string name="disc_description">Najbliższy sprawdzian: %1$s, za %2$s. Dotknij, żeby otworzyć Sprawdziany.</string>
+    <string name="disc_today">dziś</string>
+    <string name="disc_next_test">do najbliższego sprawdzianu</string>
+    <string name="disc_next_quiz">do najbliższej kartkówki</string>
+    <plurals name="days">
+        <item quantity="one">dzień</item>
+        <item quantity="few">dni</item>
+        <item quantity="many">dni</item>
+        <item quantity="other">dnia</item>
+    </plurals>
+    <plurals name="hours">
+        <item quantity="one">godzina</item>
+        <item quantity="few">godziny</item>
+        <item quantity="many">godzin</item>
+        <item quantity="other">godziny</item>
+    </plurals>
+    <string name="room">sala %1$s</string>
+    <string name="now">teraz</string>
+    <string name="substitution">zastępstwo</string>
+    <string name="cancelled">odwołana</string>
+    <string name="no_grades">Brak ocen</string>
+    <string name="level_critical">Krytyczne</string>
+    <string name="level_warning">Uwaga</string>
+    <string name="level_watch">Do obserwacji</string>
+    <string name="demo_tag">Dane przykładowe</string>
+
+    <!-- Próbnik stylu (Etap 2a) -->
+    <string name="style_theme">Motyw i akcent</string>
+    <string name="less_transparency">Mniej przezroczystości</string>
+    <string name="accent_custom">Własny kolor (np. #8B5CF6)</string>
+    <string name="style_glass">Szkło</string>
+    <string name="style_glass_title">Szklany panel</string>
+    <string name="style_glass_body">Rozmycie 20 dp, półprzezroczysty tint i ramka 1 dp.</string>
+    <string name="style_buttons">Przyciski</string>
+    <string name="style_add_event">Dodaj wydarzenie</string>
+    <string name="style_disabled">Nieaktywny</string>
+    <string name="style_type">Typografia</string>
+    <string name="style_pangram">Zażółć gęślą jaźń</string>
+    <string name="style_body">Tekst interfejsu w kroju Manrope. Duże liczby i tytuły — Unbounded.</string>
+    <string name="style_secondary">Tekst drugiego planu, np. sala i nauczyciel.</string>
+    <string name="style_link">Tekst w kolorze akcentu</string>
+    <string name="style_grades">Kafelki ocen i średnia</string>
+    <string name="style_prediction">prognoza 3</string>
+    <string name="style_distance">do 4 brakuje 3,2 pp · zapas 21,8 pp</string>
+    <string name="style_blocks">Bloki kalendarza</string>
+    <string name="style_levels">Poziomy ostrzeżeń</string>
+    <string name="style_eclipse">Zaćmienie</string>
+    <string name="style_eclipse_hint">Pełna korona — brak sprawdzianów w 14 dniach; im bliżej sprawdzianu, tym bardziej tarcza zakrywa koronę.</string>
+
+    <!-- Logowanie (SPEC 12.9) -->
+    <string name="login_privacy">Dane zostają na telefonie, a hasło jest zaszyfrowane. Eclipse łączy się tylko z Librusem.</string>
+    <string name="login_error_credentials">Nie udało się zalogować do Librusa. Sprawdź e-mail i hasło do Konta LIBRUS. Jeśli masz włączoną weryfikację dwuetapową, logowanie z tej aplikacji może nie działać.</string>
+    <string name="login_error_server">Librus jest teraz niedostępny. Spróbuj ponownie za kilka minut.</string>
+    <string name="login_error_captcha">Portal Librusa prosi o potwierdzenie, że nie jesteś robotem. Zaloguj się raz na portal.librus.pl w przeglądarce i spróbuj ponownie.</string>
+    <string name="login_error_maintenance">Portal Librusa ma przerwę techniczną. Spróbuj później.</string>
+    <string name="login_error_other">Nie udało się zalogować do Librusa. Spróbuj ponownie, a jeśli błąd wróci — sprawdź Diagnostykę w ustawieniach.</string>
+    <string name="first_sync">Pobieram dane z Librusa…</string>
+    <string name="permission_title">Powiadomienia</string>
+    <string name="permission_body">Eclipse powie Ci o nowej ocenie, przeniesionym sprawdzianie i zmianie w planie na dziś lub jutro, a dzień przed sprawdzianem przypomni o nim. Powiadomienia tworzy sama aplikacja — nic nie jest wysyłane poza Librusa. Każdy rodzaj możesz wyłączyć w ustawieniach.</string>
+    <string name="permission_allow">Włącz powiadomienia</string>
+    <string name="permission_later">Nie teraz</string>
+
     <!-- Ekran diagnostyczny -->
     <string name="diag_title">Diagnostyka</string>
     <string name="demo_badge">Dane przykładowe</string>

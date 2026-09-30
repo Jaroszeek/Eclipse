@@ -92,8 +92,8 @@ data class EclipseColors(
     /** Kolor czytelny na danym tle koloru (tekst na kafelku oceny itp.). */
     fun textOn(color: Color): Color = if (contrast(Palette.Ink, color) >= contrast(Color.White, color)) Palette.Ink else Color.White
 
-    /** Kolor typu lub oceny jako tekst na tle aplikacji — w jasnym motywie przyciemniony. */
-    fun readable(color: Color): Color = if (isDark) color else darkenForContrast(color, backgroundBottom)
+    /** Kolor typu lub oceny jako tekst na tle aplikacji — dobrany do kontrastu ≥ 4,5:1 (rozjaśniony nocą, przyciemniony za dnia). */
+    fun readable(color: Color): Color = if (isDark) lightenForContrast(color, backgroundBottom) else darkenForContrast(color, backgroundBottom)
 }
 
 fun eclipseColors(dark: Boolean, accent: Color, lessTransparency: Boolean): EclipseColors {

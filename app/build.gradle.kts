@@ -33,6 +33,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 
@@ -58,5 +59,9 @@ dependencies {
     implementation(libs.androidx.datastore.preferences)
     implementation(libs.androidx.work.runtime.ktx)
     implementation(libs.tink.android)
+    implementation(libs.androidx.navigation.compose)
+    implementation(libs.haze.blur)
+    implementation(libs.vico.compose.m3)
+    implementation(libs.calendar.compose)
     debugImplementation(libs.androidx.compose.ui.tooling)
 }

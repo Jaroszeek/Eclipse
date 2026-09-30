@@ -85,7 +85,8 @@ fun ScheduleBlock(
             .alpha(if (dimmed) 0.5f else 1f)
             .then(if (glow > 0.dp && !dimmed) Modifier.shadow(glow, shape, ambientColor = typeColor, spotColor = typeColor) else Modifier)
             .clip(shape)
-            .background(c.backgroundBottom.copy(alpha = if (c.isDark) 0.55f else 0.7f))
+            // pełne tło pod gradientem — inaczej cień poświaty prześwituje przez blok
+            .background(if (c.isDark) Color(0xFF161B42) else Color(0xFFFBFCFE))
             .background(
                 Brush.horizontalGradient(
                     0f to (if (isLesson) c.lessonTint else typeColor.copy(alpha = 0.18f)),

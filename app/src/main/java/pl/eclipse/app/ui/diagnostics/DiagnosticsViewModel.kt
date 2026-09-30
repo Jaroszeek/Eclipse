@@ -5,25 +5,18 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.work.WorkInfo
 import androidx.work.WorkManager
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import pl.eclipse.app.R
 import pl.eclipse.app.container
 import pl.eclipse.app.data.RecordType
 import pl.eclipse.app.data.SyncRunEntity
-import pl.eclipse.app.security.Credentials
 import pl.eclipse.app.sync.SyncWorker
-import pl.eclipse.core.source.librus.LibrusException
-import pl.eclipse.core.source.librus.LibrusSource
-import java.io.IOException
 import java.util.concurrent.TimeUnit
 
 data class DiagnosticsState(
@@ -80,28 +73,13 @@ class DiagnosticsViewModel(application: Application) : AndroidViewModel(applicat
     fun login(email: String, password: String) {
         local.update { it.copy(loggingIn = true, message = null) }
         viewModelScope.launch {
-            val error = withContext(Dispatchers.IO) {
-                try {
-                    LibrusSource().login(email.trim(), password)
-                    null
-                } catch (e: LibrusException) {
-                    e.message
-                } catch (e: IOException) {
-                    string(R.string.login_error_network)
-                }
-            }
-            if (error != null) {
-                local.update { LocalState(message = string(R.string.login_error, error)) }
-                return@launch
-            }
-            container.credentials.save(Credentials(email.trim(), password))
-            switchSource(demo = false)
-            local.update { LocalState(message = string(R.string.login_success)) }
+            val error = container.account.login(email, password)
+            local.update { LocalState(message = if (error == null) string(R.string.login_success) else string(R.string.login_error, error.name)) }
         }
     }
 
     fun useDemo(demo: Boolean) {
-        viewModelScope.launch { switchSource(demo) }
+        viewModelScope.launch { container.account.useDemo(demo) }
     }
 
     fun syncNow() {
@@ -117,24 +95,11 @@ class DiagnosticsViewModel(application: Application) : AndroidViewModel(applicat
         viewModelScope.launch { container.notifier.test() }
     }
 
-    /** „Wyloguj i usuń dane” (SPEC 10.3): dane logowania, baza i zaplanowane zadania. */
     fun logout() {
         viewModelScope.launch {
-            SyncWorker.cancelAll(getApplication())
-            container.credentials.clear()
-            container.database.records().clear()
-            container.database.records().clearSyncRuns()
-            container.settings.update { it.copy(demoMode = false) }
+            container.account.logout()
             local.update { LocalState(message = string(R.string.logout_done)) }
         }
-    }
-
-    /** Dane z demo i z Librusa się nie mieszają: przy zmianie źródła czyścimy dane szkolne (dane użytkownika zostają). */
-    private suspend fun switchSource(demo: Boolean) {
-        if (container.settings.settings.first().demoMode != demo || !demo) container.database.records().clear()
-        container.settings.update { it.copy(demoMode = demo) }
-        SyncWorker.schedulePeriodic(getApplication(), container.settings.current().syncIntervalHours)
-        SyncWorker.syncNow(getApplication())
     }
 
     private fun string(id: Int, vararg args: Any?) = getApplication<Application>().getString(id, *args)

@@ -3,7 +3,9 @@ package pl.eclipse.app
 import android.app.Application
 import android.content.Context
 import androidx.room.Room
+import pl.eclipse.app.data.Account
 import pl.eclipse.app.data.EclipseDatabase
+import pl.eclipse.app.data.SyncStatus
 import pl.eclipse.app.data.SchoolRepository
 import pl.eclipse.app.data.SettingsStore
 import pl.eclipse.app.data.VisitStore
@@ -36,6 +38,8 @@ class AppContainer(context: Context) {
     val snapshot = school.snapshot(database, scope)
     val user = userData(database, scope)
     val visits = VisitStore(context)
+    val account = Account(context, database, settings, credentials)
+    val sync = SyncStatus(context)
 
     fun dataSource(demo: Boolean): DataSource = if (demo) DemoSource() else LibrusSource()
 }

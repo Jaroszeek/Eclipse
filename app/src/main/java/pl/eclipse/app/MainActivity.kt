@@ -1,36 +1,55 @@
 package pl.eclipse.app
 
+import android.content.Context
+import android.content.Intent
+import android.content.res.Configuration
+import android.graphics.Color
 import android.os.Bundle
 import androidx.activity.ComponentActivity
-import androidx.activity.compose.BackHandler
+import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Scaffold
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Modifier
-import pl.eclipse.app.ui.ReconScreen
-import pl.eclipse.app.ui.diagnostics.DiagnosticsScreen
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import pl.eclipse.app.data.AppSettings
+import pl.eclipse.app.notify.Notifier
+import pl.eclipse.app.ui.EclipseRoot
 import pl.eclipse.app.ui.theme.EclipseTheme
+import pl.eclipse.app.ui.theme.isDarkTheme
 
-// ponytail: do Etapu 2 aplikacja ma tylko ekran diagnostyczny i rekonesans; nawigacja powstanie z interfejsem.
 class MainActivity : ComponentActivity() {
+    private var route by mutableStateOf<String?>(null)
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        route = intent.getStringExtra(Notifier.EXTRA_ROUTE)
         enableEdgeToEdge()
         setContent {
-            EclipseTheme {
-                var recon by rememberSaveable { mutableStateOf(false) }
-                BackHandler(enabled = recon) { recon = false }
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    if (recon) ReconScreen(Modifier.padding(innerPadding))
-                    else DiagnosticsScreen(onOpenRecon = { recon = true }, modifier = Modifier.padding(innerPadding))
-                }
+            val settings by container.settings.settings.collectAsStateWithLifecycle(AppSettings())
+            val dark = isDarkTheme(settings.themeMode)
+            // Ikony pasków systemowych w kolorze pasującym do motywu aplikacji, nie systemu.
+            DisposableEffect(dark) {
+                val style = if (dark) SystemBarStyle.dark(Color.TRANSPARENT) else SystemBarStyle.light(Color.TRANSPARENT, Color.TRANSPARENT)
+                enableEdgeToEdge(statusBarStyle = style, navigationBarStyle = style)
+                onDispose {}
+            }
+            EclipseTheme(settings.themeMode, androidx.compose.ui.graphics.Color(settings.accent), settings.lessTransparency) {
+                EclipseRoot(route)
             }
         }
+    }
+
+    /** Aplikacja jest tylko po polsku — polskie zasady odmiany („2 dni”, „5 dni”) niezależnie od języka telefonu. */
+    override fun attachBaseContext(newBase: Context) {
+        val config = Configuration(newBase.resources.configuration).apply { setLocale(java.util.Locale.forLanguageTag("pl-PL")) }
+        super.attachBaseContext(newBase.createConfigurationContext(config))
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        route = intent.getStringExtra(Notifier.EXTRA_ROUTE)
     }
 }

@@ -38,6 +38,7 @@ data class SchoolSnapshot(
     val messages: List<Stored<Message>> = emptyList(),
     val luckyNumbers: List<LuckyNumber> = emptyList(),
     val lastSync: SyncRunEntity? = null,
+    val recentRuns: List<SyncRunEntity> = emptyList(),
     val lastSuccessAt: Long? = null,
 ) {
     val isEmpty get() = subjects.isEmpty() && lessons.isEmpty()
@@ -96,6 +97,7 @@ fun SchoolRepository.snapshot(db: EclipseDatabase, scope: CoroutineScope): Share
             messages = at(9),
             luckyNumbers = active<LuckyNumber>(10).sortedByDescending { it.date },
             lastSync = runs.firstOrNull(),
+            recentRuns = runs,
             lastSuccessAt = runs.firstOrNull { it.success }?.finishedAt,
         )
     }.shareIn(scope, SharingStarted.WhileSubscribed(5_000), replay = 1)
@@ -135,6 +137,8 @@ private val Context.visitsDataStore by preferencesDataStore("visits")
 
 /** Kiedy ostatnio oglądano dany ekran — do „Nowe od ostatniej wizyty” (SPEC 4.4). */
 class VisitStore(private val context: Context) {
+    fun observe(screen: String): Flow<Long> = context.visitsDataStore.data.map { it[longPreferencesKey(screen)] ?: 0L }
+
     /** Zwraca poprzednią wizytę i zapisuje bieżącą. */
     suspend fun visit(screen: String): Long {
         val key = longPreferencesKey(screen)

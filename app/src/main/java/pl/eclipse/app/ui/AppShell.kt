@@ -2,6 +2,9 @@ package pl.eclipse.app.ui
 
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
@@ -54,6 +57,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
@@ -62,7 +66,9 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavDestination.Companion.hasRoute
+import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -79,7 +85,10 @@ import pl.eclipse.app.ui.calendar.CalendarScreen
 import pl.eclipse.app.ui.components.CountBadge
 import pl.eclipse.app.ui.components.EclipseBackground
 import pl.eclipse.app.ui.components.EclipseDisc
+import pl.eclipse.app.ui.components.EclipseMotion
 import pl.eclipse.app.ui.components.GlassState
+import pl.eclipse.app.ui.components.NavScreen
+import pl.eclipse.app.ui.components.RevealScreen
 import pl.eclipse.app.ui.components.Tag
 import pl.eclipse.app.ui.components.glass
 import pl.eclipse.app.ui.components.glassSource
@@ -133,24 +142,61 @@ enum class TopLevel(val route: Any, @param:StringRes val title: Int, @param:Draw
 private val TIME: DateTimeFormatter = DateTimeFormatter.ofPattern("HH:mm").withZone(WARSAW)
 private val DAY_TIME: DateTimeFormatter = DateTimeFormatter.ofPattern("d.MM, HH:mm").withZone(WARSAW)
 
+/** Cel nawigacji w ramce „Zaćmienia” ([NavScreen]); ekrany z menu rozmywają się przy zmianie. */
+private inline fun <reified T : Any> NavGraphBuilder.screen(noinline content: @Composable (NavBackStackEntry) -> Unit) {
+    composable<T> { entry -> NavScreen(blur = entry.isTopLevel()) { content(entry) } }
+}
+
+private fun NavBackStackEntry.isTopLevel() = TopLevel.entries.any { destination.hasRoute(it.route::class) }
+
 fun formatSyncTime(millis: Long): String {
     val instant = Instant.ofEpochMilli(millis)
     return if (instant.atZone(WARSAW).toLocalDate() == today()) TIME.format(instant) else DAY_TIME.format(instant)
 }
 
-/** Wejście do interfejsu: logowanie → pierwsza synchronizacja → zgoda na powiadomienia → aplikacja (SPEC 12.9). */
+/** Ekran najwyższego poziomu (SPEC 12.9): logowanie → pierwsza synchronizacja → zgoda na powiadomienia → aplikacja. */
+private enum class Root { LOADING, LOGIN, FIRST_SYNC, PERMISSION, MAIN }
+
+/** Wejście do interfejsu. Każdy nowy ekran odsłania koło rosnące od tarczy poprzedniego („Zaćmienie”). */
 @Composable
 fun EclipseRoot(initialRoute: RouteRequest?, viewModel: ShellViewModel = viewModel()) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    when {
-        !state.ready -> EclipseBackground()
-        !state.loggedIn -> LoginScreen()
-        state.firstSyncPending -> FirstSyncScreen(
-            state.syncRunning, state.syncWaiting, state.lastSyncError,
-            onStart = viewModel::syncNow, onRetry = viewModel::retrySync, onLogout = viewModel::logout,
-        )
-        state.askPermission -> NotificationPermissionScreen(onDone = viewModel::permissionAsked)
-        else -> MainShell(state, viewModel, initialRoute)
+    val root = when {
+        !state.ready -> Root.LOADING
+        !state.loggedIn -> Root.LOGIN
+        state.firstSyncPending -> Root.FIRST_SYNC
+        state.askPermission -> Root.PERMISSION
+        else -> Root.MAIN
+    }
+    val reduceMotion = Eclipse.reduceMotion
+    // Środek tarczy na ekranach, które ją mają, i skąd rośnie koło przy wejściu na ekran. Zwykłe mapy — czytane dopiero przy rysowaniu.
+    val discs = remember { mutableMapOf<Root, Offset>() }
+    val revealFrom = remember { mutableMapOf<Root, Offset?>() }
+    // Stary ekran cofa się i blednie nad tłem aplikacji, a nie nad jasnym tłem okna.
+    EclipseBackground {
+        AnimatedContent(
+            root,
+            transitionSpec = {
+                revealFrom[targetState] = discs[initialState]
+                EclipseMotion.reveal(reduceMotion)
+            },
+            label = "root",
+        ) { screen ->
+            val onDiscPlaced: (Offset) -> Unit = { discs[screen] = it }
+            RevealScreen(enabled = !reduceMotion, origin = { revealFrom[screen] }) {
+                when (screen) {
+                    Root.LOADING -> Unit
+                    Root.LOGIN -> LoginScreen(onDiscPlaced)
+                    Root.FIRST_SYNC -> FirstSyncScreen(
+                        state.syncRunning, state.syncWaiting, state.lastSyncError,
+                        onStart = viewModel::syncNow, onRetry = viewModel::retrySync, onLogout = viewModel::logout,
+                        onDiscPlaced = onDiscPlaced,
+                    )
+                    Root.PERMISSION -> NotificationPermissionScreen(onDone = viewModel::permissionAsked)
+                    Root.MAIN -> MainShell(state, viewModel, initialRoute)
+                }
+            }
+        }
     }
 }
 
@@ -204,8 +250,22 @@ private fun MainShell(state: ShellState, viewModel: ShellViewModel, initialRoute
         Box(Modifier.fillMaxSize()) {
             Box(Modifier.fillMaxSize().glassSource(glass)) {
                 EclipseBackground()
-                NavHost(nav, startDestination = HomeRoute) {
-                    composable<HomeRoute> {
+                val reduceMotion = Eclipse.reduceMotion
+                NavHost(
+                    nav,
+                    startDestination = HomeRoute,
+                    enterTransition = {
+                        if (reduceMotion) EnterTransition.None else if (targetState.isTopLevel()) EclipseMotion.throughEnter else EclipseMotion.forwardEnter
+                    },
+                    exitTransition = {
+                        if (reduceMotion) ExitTransition.None else if (targetState.isTopLevel()) EclipseMotion.throughExit else EclipseMotion.forwardExit
+                    },
+                    popEnterTransition = { if (reduceMotion) EnterTransition.None else EclipseMotion.backEnter },
+                    popExitTransition = { if (reduceMotion) ExitTransition.None else EclipseMotion.backExit() },
+                    predictivePopEnterTransition = { if (reduceMotion) EnterTransition.None else EclipseMotion.backEnter },
+                    predictivePopExitTransition = { edge -> if (reduceMotion) ExitTransition.None else EclipseMotion.backExit(edge) },
+                ) {
+                    screen<HomeRoute> {
                         HomeScreen(
                             contentPadding,
                             onOpenTests = { nav.navigateTop(TestsRoute) },
@@ -213,23 +273,23 @@ private fun MainShell(state: ShellState, viewModel: ShellViewModel, initialRoute
                             onOpenGrades = { nav.navigateTop(GradesRoute) },
                         )
                     }
-                    composable<CalendarRoute> {
+                    screen<CalendarRoute> {
                         CalendarScreen(contentPadding, glass, toolboxOpen, { toolboxOpen = it }, state.syncRunning, viewModel::syncNow)
                     }
-                    composable<TestsRoute> {
+                    screen<TestsRoute> {
                         TestsScreen(contentPadding, state.syncRunning, viewModel::syncNow, onOpenCalculator = { nav.navigate(SubjectRoute(it)) })
                     }
-                    composable<GradesRoute> {
+                    screen<GradesRoute> {
                         GradesScreen(contentPadding, state.syncRunning, viewModel::syncNow, onOpenSubject = { nav.navigate(SubjectRoute(it)) })
                     }
-                    composable<SubjectRoute> { back ->
+                    screen<SubjectRoute> { back ->
                         val route = back.toRoute<SubjectRoute>()
                         SubjectScreen(route.key, contentPadding, onTitle = { subjectTitle = it })
                     }
-                    composable<StatsRoute> { StatsScreen(contentPadding) }
-                    composable<ImportantRoute> { ImportantScreen(contentPadding, onOpenSubject = { nav.navigate(SubjectRoute(it)) }) }
-                    composable<InboxRoute> { InboxScreen(contentPadding) }
-                    composable<SettingsRoute> {
+                    screen<StatsRoute> { StatsScreen(contentPadding) }
+                    screen<ImportantRoute> { ImportantScreen(contentPadding, onOpenSubject = { nav.navigate(SubjectRoute(it)) }) }
+                    screen<InboxRoute> { InboxScreen(contentPadding) }
+                    screen<SettingsRoute> {
                         SettingsScreen(
                             contentPadding,
                             onOpenSubject = { nav.navigate(SubjectRoute(it)) },
@@ -237,12 +297,12 @@ private fun MainShell(state: ShellState, viewModel: ShellViewModel, initialRoute
                             onOpenDiagnostics = { nav.navigate(DiagnosticsRoute) },
                         )
                     }
-                    composable<NotificationsRoute> { NotificationsScreen(contentPadding, onOpenRoute = { r -> routeFor(r)?.let { nav.navigateTop(it) } }) }
-                    composable<StyleRoute> { StyleScreen(contentPadding) }
-                    composable<DiagnosticsRoute> {
+                    screen<NotificationsRoute> { NotificationsScreen(contentPadding, onOpenRoute = { r -> routeFor(r)?.let { nav.navigateTop(it) } }) }
+                    screen<StyleRoute> { StyleScreen(contentPadding) }
+                    screen<DiagnosticsRoute> {
                         DiagnosticsScreen(onOpenRecon = { nav.navigate(ReconRoute) }, modifier = Modifier.padding(contentPadding))
                     }
-                    composable<ReconRoute> { ReconScreen(Modifier.padding(contentPadding)) }
+                    screen<ReconRoute> { ReconScreen(Modifier.padding(contentPadding)) }
                 }
             }
             TopBar(

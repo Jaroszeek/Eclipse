@@ -52,6 +52,7 @@ Aktualizowane po każdym kroku. Szczegóły etapów: `SPEC.md`, sekcja 14.
 - [x] Wydanie v1.0 na GitHubie z plikiem `Eclipse-1.0.apk` (prywatne repo) — https://github.com/Jaroszeek/Eclipse/releases/tag/v1.0
 - [x] Wydanie v1.1: naprawa zawieszonego ekranu pierwszej synchronizacji (zgłoszenie z telefonu: „Pobieram dane z Librusa…” bez końca, wymuszone zatrzymanie nie pomagało) — https://github.com/Jaroszeek/Eclipse/releases/tag/v1.1
 - [x] Potwierdzenie na telefonie, że pierwsza synchronizacja w v1.1 kończy się danymi (użytkownik: „działa”, 2026-09-30)
+- [x] Wydanie v1.2: przejścia „Zaćmienie” (wybór użytkownika z 3 propozycji)
 - [ ] Instalacja na telefonie przez USB (instrukcja w README; czeka na użytkownika)
 - [ ] Całodniowy test synchronizacji w tle i powiadomień z godzinami ciszy (czeka na użytkownika)
 - [ ] Kryteria akceptacji Etapu 3
@@ -89,6 +90,14 @@ Aktualizowane po każdym kroku. Szczegóły etapów: `SPEC.md`, sekcja 14.
   - synchronizacja przy otwarciu aplikacji, gdy ostatnia próba była ponad godzinę temu (SPEC 4.3), przeniesiona z ekranu Diagnostyka do `MainActivity.onStart` — działała tylko po wejściu w Diagnostykę;
   - ostatnia awaria aplikacji zapisywana w pliku (nazwy klas i miejsca w kodzie, bez komunikatów) i pokazywana w Diagnostyce oraz na ekranie pierwszej synchronizacji — na telefonie nie ma Logcata;
   - R8 bez zaciemniania nazw (`app/src/main/keepRules/eclipse.keep`), żeby opisy błędów z telefonu były czytelne. Numery linii R8 przenumerowuje — dokładne miejsce: `retrace` z `mapping.txt` z builda tego samego commita.
+- 2026-09-30: przejścia „Zaćmienie” (użytkownik wybrał z trzech: płynne przesunięcia, ekspresyjne ze sprężynką, zaćmienie) — `ui/components/Motion.kt`:
+  - ekrany z menu: przenikanie z krótkim rozmyciem i lekkim przybliżeniem (ok. 0,3 s); tak samo widoki kalendarza;
+  - wejście głębiej (przedmiot, ustawienia, powiadomienia, diagnostyka): wsunięcie z prawej;
+  - powrót: bieżący ekran maleje jak karta z zaokrąglonymi rogami; przy geście „wstecz” (predictive back) maleje w stronę palca;
+  - logowanie, pierwsza synchronizacja, zgoda na powiadomienia i otwarcie aplikacji: nowy ekran odsłania koło rosnące od tarczy poprzedniego ekranu (bez tarczy — od środka) ze świecącą krawędzią;
+  - każdy ekran nawigacji ma własne tło, żeby malejąca karta zasłaniała poprzedni ekran;
+  - gdy w systemie animacje są wyłączone — bez przejść (SPEC 11.8);
+  - `android:enableOnBackInvokedCallback="true"` w manifeście, żeby gest „wstecz” z podglądem działał też na Androidzie 13–15 (na 16 jest domyślnie).
 - 2026-09-29: kod trafia do prywatnego repozytorium na GitHubie (konto Jaroszeek), autor commitów: Jaroszek.
 
 ## Otwarte kwestie

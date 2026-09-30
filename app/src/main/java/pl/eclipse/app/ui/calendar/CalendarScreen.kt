@@ -3,6 +3,7 @@ package pl.eclipse.app.ui.calendar
 import pl.eclipse.app.ui.components.ChoiceChips
 import android.content.ClipData
 import android.content.ClipDescription
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
@@ -85,6 +86,8 @@ import pl.eclipse.app.data.CustomEventEntity
 import pl.eclipse.app.ui.WARSAW
 import pl.eclipse.app.ui.components.BlockKind
 import pl.eclipse.app.ui.components.BlockStatus
+import pl.eclipse.app.ui.components.BlurWhileMoving
+import pl.eclipse.app.ui.components.EclipseMotion
 import pl.eclipse.app.ui.components.EmptyState
 import pl.eclipse.app.ui.components.GlassState
 import pl.eclipse.app.ui.components.ScheduleBlock
@@ -154,17 +157,24 @@ fun CalendarScreen(
 
     // Własne źródło szkła: Przybornik leży obok kalendarza, nie w nim — Haze nie rozmywa warstwy, w której sam jest.
     val localGlass = rememberGlassState()
+    val reduceMotion = Eclipse.reduceMotion
     Box(Modifier.fillMaxSize()) {
         PullToRefreshBox(isRefreshing = syncing, onRefresh = onRefresh, modifier = Modifier.fillMaxSize().glassSource(localGlass)) {
             Column(Modifier.fillMaxSize().padding(top = contentPadding.calculateTopPadding())) {
                 ViewSwitcher(state.view, viewModel::setView)
-                when (state.view) {
-                    CalendarView.WEEK -> WeekPager(state, pager, actions, contentPadding.calculateBottomPadding(), onWeekShift = { delta ->
-                        scope.launch { pager.animateScrollToPage((pager.currentPage + delta).coerceIn(0, WEEKS_TOTAL - 1)) }
-                    })
-                    CalendarView.DAY -> DayView(state, actions, viewModel::shiftDay, contentPadding.calculateBottomPadding())
-                    CalendarView.MONTH -> MonthView(state, viewModel::openDay)
-                    CalendarView.LIST -> ListView(state, actions, contentPadding.calculateBottomPadding())
+                AnimatedContent(state.view, transitionSpec = { EclipseMotion.through(reduceMotion) }, label = "calendar-view") { view ->
+                    BlurWhileMoving {
+                        Column(Modifier.fillMaxSize()) {
+                            when (view) {
+                                CalendarView.WEEK -> WeekPager(state, pager, actions, contentPadding.calculateBottomPadding(), onWeekShift = { delta ->
+                                    scope.launch { pager.animateScrollToPage((pager.currentPage + delta).coerceIn(0, WEEKS_TOTAL - 1)) }
+                                })
+                                CalendarView.DAY -> DayView(state, actions, viewModel::shiftDay, contentPadding.calculateBottomPadding())
+                                CalendarView.MONTH -> MonthView(state, viewModel::openDay)
+                                CalendarView.LIST -> ListView(state, actions, contentPadding.calculateBottomPadding())
+                            }
+                        }
+                    }
                 }
             }
         }

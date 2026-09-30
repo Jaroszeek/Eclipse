@@ -36,6 +36,9 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.layout.boundsInRoot
+import androidx.compose.ui.layout.onPlaced
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -62,7 +65,7 @@ import pl.eclipse.app.ui.theme.Eclipse
 
 /** Pierwsze uruchomienie (SPEC 12.9). Hasło trzymane w `remember`, nie w `rememberSaveable` — nie trafia do zapisanego stanu. */
 @Composable
-fun LoginScreen() {
+fun LoginScreen(onDiscPlaced: (Offset) -> Unit = {}) {
     val context = LocalContext.current
     val account = context.container.account
     val scope = rememberCoroutineScope()
@@ -90,7 +93,10 @@ fun LoginScreen() {
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
-            EclipseDisc(coverage = 0f, size = 180.dp, showProgress = false, animateIn = true)
+            EclipseDisc(
+                coverage = 0f, size = 180.dp, showProgress = false, animateIn = true,
+                modifier = Modifier.onPlaced { onDiscPlaced(it.boundsInRoot().center) },
+            )
             Text(stringResource(R.string.app_name), style = MaterialTheme.typography.displaySmall, color = c.text)
             Column(Modifier.widthIn(max = 480.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 OutlinedTextField(
@@ -162,6 +168,7 @@ fun FirstSyncScreen(
     onStart: () -> Unit,
     onRetry: () -> Unit,
     onLogout: () -> Unit,
+    onDiscPlaced: (Offset) -> Unit = {},
 ) {
     val context = LocalContext.current
     // Zleca pobieranie od nowa, np. po wymuszonym zatrzymaniu aplikacji; gdy zadanie już czeka albo trwa, nic nie zmienia.
@@ -183,7 +190,10 @@ fun FirstSyncScreen(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center,
             ) {
-                EclipseDisc(coverage = 0.5f, size = 160.dp, showProgress = false)
+                EclipseDisc(
+                    coverage = 0.5f, size = 160.dp, showProgress = false,
+                    modifier = Modifier.onPlaced { onDiscPlaced(it.boundsInRoot().center) },
+                )
                 Spacer(Modifier.height(24.dp))
                 val title = when {
                     failed -> R.string.first_sync_failed

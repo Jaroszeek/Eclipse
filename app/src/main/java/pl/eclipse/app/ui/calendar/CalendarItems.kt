@@ -9,6 +9,7 @@ import pl.eclipse.app.ui.Insights
 import pl.eclipse.app.ui.components.BlockKind
 import pl.eclipse.app.ui.components.BlockStatus
 import pl.eclipse.app.ui.theme.Palette
+import pl.eclipse.app.data.CustomKind
 import pl.eclipse.core.model.EventType
 import pl.eclipse.core.model.Homework
 import pl.eclipse.core.model.Lesson
@@ -191,18 +192,25 @@ fun calendarItems(i: Insights, from: LocalDate, to: LocalDate, since: Long): Lis
         val start = runCatching { LocalDateTime.parse(ce.start) }.getOrNull() ?: return@forEach
         val end = runCatching { LocalDateTime.parse(ce.end) }.getOrNull() ?: start.plusHours(1)
         if (start.toLocalDate() !in from..to) return@forEach
-        val color = ce.color?.let(::Color) ?: i.typeColor("CUSTOM")
+        val homework = ce.kind == CustomKind.HOMEWORK
+        val typeKey = if (homework) "HOMEWORK" else "CUSTOM"
+        val color = ce.color?.let(::Color) ?: i.typeColor(typeKey)
         result += CalendarItem(
             id = "custom|${ce.id}",
-            kind = BlockKind.CUSTOM,
-            title = ce.title,
-            short = ce.title.take(5),
+            kind = when (ce.kind) {
+                CustomKind.EVENT -> BlockKind.CUSTOM
+                CustomKind.HOMEWORK -> BlockKind.HOMEWORK
+                CustomKind.TUTORING -> BlockKind.TUTORING
+            },
+            // zadanie domowe jak z Librusa: „przedmiot — co zadane”
+            title = if (homework) listOf(i.name(ce.subjectKey), ce.title).filter { it.isNotBlank() }.joinToString(" — ") else ce.title,
+            short = if (homework) i.short(ce.subjectKey).ifBlank { ce.title.take(4) } else ce.title.take(5),
             date = start.toLocalDate(),
             start = if (ce.allDay) null else start.toLocalTime(),
             end = if (ce.allDay) null else end.toLocalTime(),
             lessonNo = null,
             subjectKey = ce.subjectKey,
-            typeColor = i.typeColor("CUSTOM"),
+            typeColor = i.typeColor(typeKey),
             subjectColor = ce.subjectKey?.let(i::color) ?: color,
             status = BlockStatus.NORMAL,
             labels = attached("CUSTOM_EVENT", ce.id.toString()),

@@ -38,6 +38,9 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -83,6 +86,7 @@ import com.kizitonwose.calendar.core.daysOfWeek
 import kotlinx.coroutines.launch
 import pl.eclipse.app.R
 import pl.eclipse.app.data.CustomEventEntity
+import pl.eclipse.app.data.CustomKind
 import pl.eclipse.app.ui.WARSAW
 import pl.eclipse.app.ui.components.BlockKind
 import pl.eclipse.app.ui.components.BlockStatus
@@ -137,9 +141,20 @@ fun CalendarScreen(
     val scope = rememberCoroutineScope()
     val pager = rememberPagerState(initialPage = WEEKS_BACK.toInt()) { WEEKS_TOTAL }
 
-    fun create(date: LocalDate, time: LocalTime?) {
+    val tutoringName = stringResource(R.string.kind_tutoring)
+
+    fun create(date: LocalDate, time: LocalTime?, kind: CustomKind = CustomKind.EVENT) {
         val start = date.atTime(time ?: LocalTime.of(16, 0))
-        sheet = CalendarSheet.Edit(CustomEventEntity(title = "", start = start.toString(), end = start.plusHours(1).toString()))
+        sheet = CalendarSheet.Edit(
+            if (kind == CustomKind.HOMEWORK) {
+                CustomEventEntity(title = "", start = date.atStartOfDay().toString(), end = date.atTime(23, 59).toString(), allDay = true, kind = kind)
+            } else {
+                CustomEventEntity(
+                    title = if (kind == CustomKind.TUTORING) tutoringName else "",
+                    start = start.toString(), end = start.plusHours(1).toString(), kind = kind,
+                )
+            },
+        )
     }
 
     val actions = CalendarActions(
@@ -162,22 +177,30 @@ fun CalendarScreen(
         PullToRefreshBox(isRefreshing = syncing, onRefresh = onRefresh, modifier = Modifier.fillMaxSize().glassSource(localGlass)) {
             Column(Modifier.fillMaxSize().padding(top = contentPadding.calculateTopPadding())) {
                 ViewSwitcher(state.view, viewModel::setView)
+                // miejsce pod ostatnim wierszem, żeby przycisk „+” nie zasłaniał lekcji
+                val bottomSpace = contentPadding.calculateBottomPadding() + FAB_SPACE
                 AnimatedContent(state.view, transitionSpec = { EclipseMotion.through(reduceMotion) }, label = "calendar-view") { view ->
                     BlurWhileMoving {
                         Column(Modifier.fillMaxSize()) {
                             when (view) {
-                                CalendarView.WEEK -> WeekPager(state, pager, actions, contentPadding.calculateBottomPadding(), onWeekShift = { delta ->
+                                CalendarView.WEEK -> WeekPager(state, pager, actions, bottomSpace, onWeekShift = { delta ->
                                     scope.launch { pager.animateScrollToPage((pager.currentPage + delta).coerceIn(0, WEEKS_TOTAL - 1)) }
                                 })
-                                CalendarView.DAY -> DayView(state, actions, viewModel::shiftDay, contentPadding.calculateBottomPadding())
+                                CalendarView.DAY -> DayView(state, actions, viewModel::shiftDay, bottomSpace)
                                 CalendarView.MONTH -> MonthView(state, viewModel::openDay)
-                                CalendarView.LIST -> ListView(state, actions, contentPadding.calculateBottomPadding())
+                                CalendarView.LIST -> ListView(state, actions, bottomSpace)
                             }
                         }
                     }
                 }
             }
         }
+        AddEntryButton(
+            onHomework = { create(state.today.plusDays(1), null, CustomKind.HOMEWORK) },
+            onTutoring = { create(state.today, null, CustomKind.TUTORING) },
+            onEvent = { create(state.today, null) },
+            modifier = Modifier.align(Alignment.BottomEnd).padding(end = 16.dp, bottom = contentPadding.calculateBottomPadding() + 16.dp),
+        )
         if (toolboxOpen) {
             // dotknięcie poza Przybornikiem zamyka go
             Box(Modifier.fillMaxSize().pointerInput(Unit) { detectTapGestures { onToolboxChange(false) } })
@@ -201,6 +224,35 @@ fun CalendarScreen(
     }
 
     CalendarSheets(sheet, state, viewModel, onChange = { sheet = it })
+}
+
+private val FAB_SPACE = 80.dp
+
+/** Przycisk „+”: własne zadanie domowe, korepetycje albo wydarzenie. */
+@Composable
+private fun AddEntryButton(onHomework: () -> Unit, onTutoring: () -> Unit, onEvent: () -> Unit, modifier: Modifier = Modifier) {
+    var open by remember { mutableStateOf(false) }
+    Box(modifier) {
+        FloatingActionButton(onClick = { open = true }, containerColor = Eclipse.colors.accent, contentColor = Palette.Ink) {
+            Icon(painterResource(R.drawable.ic_add), stringResource(R.string.add_entry))
+        }
+        DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
+            listOf(
+                Triple(R.string.add_homework, R.drawable.ic_menu_book, onHomework),
+                Triple(R.string.add_tutoring, R.drawable.ic_school, onTutoring),
+                Triple(R.string.add_event, R.drawable.ic_star, onEvent),
+            ).forEach { (text, icon, action) ->
+                DropdownMenuItem(
+                    text = { Text(stringResource(text)) },
+                    leadingIcon = { Icon(painterResource(icon), null) },
+                    onClick = {
+                        open = false
+                        action()
+                    },
+                )
+            }
+        }
+    }
 }
 
 /** Zdarzenia z kalendarza: dotknięcie elementu, wolnego miejsca, upuszczenie etykiety lub szablonu. */

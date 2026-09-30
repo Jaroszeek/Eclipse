@@ -11,6 +11,9 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import pl.eclipse.app.container
+import pl.eclipse.app.data.CustomKind
+import pl.eclipse.app.data.HomeTile
+import pl.eclipse.app.data.homeTiles
 import pl.eclipse.app.formatDate
 import pl.eclipse.app.formatPercent
 import pl.eclipse.app.ui.Insights
@@ -20,6 +23,7 @@ import pl.eclipse.core.calc.gradePercent
 import pl.eclipse.core.model.EventType
 import pl.eclipse.core.model.LessonStatus
 import java.time.LocalDate
+import java.time.LocalDateTime
 import java.time.LocalTime
 
 data class DiscState(val coverage: Float, val value: String?, val unitHours: Boolean, val subject: String?, val typeQuiz: Boolean)
@@ -54,6 +58,7 @@ data class HomeState(
     val luckyIsMine: Boolean = false,
     val homework: List<Pair<String, String>> = emptyList(),
     val lastSyncAt: Long? = null,
+    val order: List<HomeTile> = HomeTile.entries,
 )
 
 class HomeViewModel(application: Application) : AndroidViewModel(application) {
@@ -124,6 +129,14 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
 
         val warnings = i.warnings
         val lucky = snapshot.luckyNumbers.firstOrNull { it.date == today }?.number
+        // Zadania na 3 dni: z Librusa i własne z kalendarza
+        val window = today..today.plusDays(3)
+        val fromLibrus = snapshot.homework.filter { it.removedAt == null && it.value.dueDate in window }
+            .map { it.value.dueDate to listOf(i.name(it.value.subjectKey), it.value.title).filter(String::isNotBlank).joinToString(": ") }
+        val own = user.customEvents.filter { it.kind == CustomKind.HOMEWORK }.mapNotNull { e ->
+            val due = runCatching { LocalDateTime.parse(e.start).toLocalDate() }.getOrNull()?.takeIf { it in window } ?: return@mapNotNull null
+            due to listOf(i.name(e.subjectKey), e.title).filter(String::isNotBlank).joinToString(": ")
+        }
         HomeState(
             loading = false,
             disc = disc,
@@ -134,11 +147,28 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
             topWarnings = warnings.take(3).map { WarningRow(i.name(it.subjectKey), it.level, it.average) },
             luckyNumber = lucky,
             luckyIsMine = lucky != null && lucky == settings.myDiaryNumber,
-            homework = snapshot.homework.filter { it.removedAt == null && it.value.dueDate in today..today.plusDays(3) }
-                .sortedBy { it.value.dueDate }.map { i.name(it.value.subjectKey) + ": " + it.value.title to formatDate(it.value.dueDate) },
+            homework = (fromLibrus + own).sortedBy { it.first }.map { (due, text) -> text to formatDate(due) },
             lastSyncAt = snapshot.lastSuccessAt,
+            order = settings.homeTiles(),
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), HomeState())
+
+    /** Przesuwa kafelek Pulpitu o [delta] miejsc: −1 wyżej, +1 niżej. */
+    fun move(tile: HomeTile, delta: Int) {
+        viewModelScope.launch {
+            container.settings.update { s ->
+                val order = s.homeTiles().toMutableList()
+                val to = (order.indexOf(tile) + delta).coerceIn(0, order.lastIndex)
+                order.remove(tile)
+                order.add(to, tile)
+                s.copy(homeOrder = order)
+            }
+        }
+    }
+
+    fun resetOrder() {
+        viewModelScope.launch { container.settings.update { it.copy(homeOrder = HomeTile.entries) } }
+    }
 
     private fun nextSchoolDay(today: LocalDate, days: Set<LocalDate>): LocalDate =
         days.filter { it > today }.minOrNull() ?: today.plusDays(1)

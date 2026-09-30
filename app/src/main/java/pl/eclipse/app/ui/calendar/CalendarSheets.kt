@@ -48,7 +48,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -58,12 +57,15 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import pl.eclipse.app.R
 import pl.eclipse.app.data.CustomEventEntity
+import pl.eclipse.app.data.CustomKind
 import pl.eclipse.app.formatDate
 import pl.eclipse.app.ui.components.BlockKind
 import pl.eclipse.app.ui.components.BlockStatus
+import pl.eclipse.app.ui.components.ChoiceChips
 import pl.eclipse.app.ui.components.PrimaryButton
 import pl.eclipse.app.ui.components.SecondaryButton
 import pl.eclipse.app.ui.components.Tag
+import pl.eclipse.app.ui.components.sheetColor
 import pl.eclipse.app.ui.theme.Eclipse
 import pl.eclipse.app.ui.theme.Palette
 import pl.eclipse.core.model.EventType
@@ -132,8 +134,6 @@ fun CalendarSheets(sheet: CalendarSheet?, state: CalendarState, viewModel: Calen
     }
 }
 
-@Composable
-private fun sheetColor() = Eclipse.colors.dialog.compositeOver(Eclipse.colors.backgroundBottom)
 
 @Composable
 private fun DetailsSheet(
@@ -232,6 +232,7 @@ private val BlockKind.word
         BlockKind.EVENT -> R.string.kind_event
         BlockKind.DAY_OFF -> R.string.kind_day_off
         BlockKind.CUSTOM -> R.string.kind_custom
+        BlockKind.TUTORING -> R.string.kind_tutoring
     }
 
 private val EVENT_COLORS = listOf(Palette.Custom, Palette.Homework, Palette.SchoolEvent, Palette.DayOff, Palette.Quiz, Palette.Subjects[1], Palette.Subjects[3])
@@ -256,12 +257,40 @@ private fun EditSheet(
     var color by remember { mutableStateOf(initial.color) }
     var note by remember { mutableStateOf(initial.note) }
     var subject by remember { mutableStateOf(initial.subjectKey) }
+    var kind by remember { mutableStateOf(initial.kind) }
     var picker by remember { mutableStateOf<String?>(null) }
+    val tutoringName = stringResource(R.string.kind_tutoring)
+    val heading = when (kind) {
+        CustomKind.EVENT -> if (initial.id == 0L) R.string.add_event else R.string.edit_event
+        CustomKind.HOMEWORK -> if (initial.id == 0L) R.string.add_homework else R.string.edit_homework
+        CustomKind.TUTORING -> if (initial.id == 0L) R.string.add_tutoring else R.string.edit_tutoring
+    }
 
     ModalBottomSheet(onDismissRequest = onDismiss, sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true), containerColor = sheetColor()) {
         Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(horizontal = 20.dp).navigationBarsPadding().padding(bottom = 16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            Text(stringResource(if (initial.id == 0L) R.string.add_event else R.string.edit_event), style = MaterialTheme.typography.headlineSmall, color = c.text)
-            OutlinedTextField(title, { title = it }, label = { Text(stringResource(R.string.event_title)) }, singleLine = true, modifier = Modifier.fillMaxWidth())
+            Text(stringResource(heading), style = MaterialTheme.typography.headlineSmall, color = c.text)
+            ChoiceChips(
+                listOf(
+                    CustomKind.EVENT to stringResource(R.string.custom_kind_event),
+                    CustomKind.HOMEWORK to stringResource(R.string.kind_homework),
+                    CustomKind.TUTORING to tutoringName,
+                ),
+                kind,
+                { chosen ->
+                    kind = chosen
+                    // Zadanie domowe jest na dzień, bez godziny; korepetycje mają godzinę i domyślny tytuł.
+                    when (chosen) {
+                        CustomKind.HOMEWORK -> allDay = true
+                        CustomKind.TUTORING -> {
+                            allDay = false
+                            if (title.isBlank()) title = tutoringName
+                        }
+                        CustomKind.EVENT -> Unit
+                    }
+                },
+            )
+            val titleLabel = if (kind == CustomKind.HOMEWORK) R.string.homework_title else R.string.event_title
+            OutlinedTextField(title, { title = it }, label = { Text(stringResource(titleLabel)) }, singleLine = true, modifier = Modifier.fillMaxWidth())
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 SecondaryButton(formatDate(date), { picker = "date" }, Modifier.weight(1f))
                 if (!allDay) {
@@ -302,6 +331,7 @@ private fun EditSheet(
                         color = color,
                         note = note.trim(),
                         subjectKey = subject,
+                        kind = kind,
                     ),
                 )
             }, Modifier.fillMaxWidth(), enabled = valid)

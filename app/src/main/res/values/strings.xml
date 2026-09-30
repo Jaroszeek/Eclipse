@@ -48,6 +48,16 @@
     <string name="home_lucky">Szczęśliwy numerek</string>
     <string name="home_lucky_mine">To Twój numer!</string>
     <string name="home_homework">Zadania na 3 dni</string>
+    <string name="home_reorder">Zmień kolejność kafelków</string>
+    <string name="home_reorder_title">Kolejność kafelków na Pulpicie</string>
+    <string name="home_reorder_hint">Strzałkami przesuń kafelek wyżej lub niżej. Zmiany zapisują się od razu.</string>
+    <string name="home_reorder_reset">Przywróć domyślną kolejność</string>
+    <string name="home_tile_countdown">Odliczanie do sprawdzianu</string>
+    <string name="home_tile_lessons">Lekcje na dziś lub jutro</string>
+    <string name="home_tile_homework">Zadania domowe</string>
+    <string name="move_up">Przesuń wyżej</string>
+    <string name="move_down">Przesuń niżej</string>
+    <string name="done">Gotowe</string>
     <string name="home_homework_none">Brak zadań domowych na najbliższe 3 dni.</string>
     <string name="disc_none">Brak sprawdzianów w najbliższych 2 tygodniach</string>
     <string name="disc_description">Najbliższy sprawdzian: %1$s, za %2$s. Dotknij, żeby otworzyć Sprawdziany.</string>
@@ -107,6 +117,13 @@
     <string name="note_optional">Notatka (opcjonalnie), np. cyrkiel</string>
     <string name="add_event">Dodaj wydarzenie</string>
     <string name="edit_event">Edytuj wydarzenie</string>
+    <string name="add_homework">Dodaj zadanie domowe</string>
+    <string name="edit_homework">Edytuj zadanie domowe</string>
+    <string name="add_tutoring">Dodaj korepetycje</string>
+    <string name="edit_tutoring">Edytuj korepetycje</string>
+    <string name="add_entry">Dodaj do kalendarza</string>
+    <string name="custom_kind_event">Wydarzenie</string>
+    <string name="homework_title">Co jest zadane</string>
     <string name="save_event">Zapisz wydarzenie</string>
     <string name="delete_event">Usuń wydarzenie</string>
     <string name="event_title">Tytuł</string>
@@ -132,6 +149,7 @@
     <string name="kind_event">Wydarzenie szkolne</string>
     <string name="kind_day_off">Dzień wolny</string>
     <string name="kind_custom">Własne wydarzenie</string>
+    <string name="kind_tutoring">Korepetycje</string>
 
     <!-- Sprawdziany (SPEC 12.3) -->
     <string name="filter_tests">Sprawdziany</string>
@@ -183,7 +201,7 @@
     <string name="kind_semester">śródroczna</string>
     <string name="kind_final">roczna</string>
     <string name="kind_descriptive">opisowa</string>
-    <string name="calculator">Kalkulator „co jeśli”</string>
+    <string name="calculator">Kalkulator ocen</string>
     <string name="calculator_hint">Tylko symulacja — nic nie zapisuje w ocenach.</string>
     <string name="calc_add">Dodaj oceny</string>
     <string name="calc_goal">Cel</string>

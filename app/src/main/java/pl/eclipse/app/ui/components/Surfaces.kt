@@ -31,6 +31,7 @@ import androidx.compose.ui.graphics.ShaderBrush
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.TileMode
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.unit.dp
 import pl.eclipse.app.ui.theme.Eclipse
 import kotlin.random.Random
@@ -141,3 +142,7 @@ fun EmptyState(text: String, modifier: Modifier = Modifier) {
         Text(text, style = MaterialTheme.typography.bodyMedium, color = Eclipse.colors.textSecondary)
     }
 }
+
+/** Tło arkuszy wysuwanych od dołu: kolor okna dialogowego nałożony na tło, bez prześwitu. */
+@Composable
+fun sheetColor() = Eclipse.colors.dialog.compositeOver(Eclipse.colors.backgroundBottom)

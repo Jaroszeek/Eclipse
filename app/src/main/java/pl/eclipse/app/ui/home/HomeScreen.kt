@@ -9,21 +9,33 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
@@ -35,13 +47,16 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import pl.eclipse.app.R
+import pl.eclipse.app.data.HomeTile
 import pl.eclipse.app.formatPercent
 import pl.eclipse.app.ui.components.DiscLabel
 import pl.eclipse.app.ui.components.EclipseCard
 import pl.eclipse.app.ui.components.EclipseDisc
 import pl.eclipse.app.ui.components.EmptyState
+import pl.eclipse.app.ui.components.PrimaryButton
 import pl.eclipse.app.ui.components.SectionTitle
 import pl.eclipse.app.ui.components.Tag
+import pl.eclipse.app.ui.components.sheetColor
 import pl.eclipse.app.ui.theme.Eclipse
 import pl.eclipse.app.ui.theme.Palette
 import pl.eclipse.app.ui.theme.TabularNumbers
@@ -61,89 +76,159 @@ fun HomeScreen(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val c = Eclipse.colors
+    var reordering by rememberSaveable { mutableStateOf(false) }
     LazyColumn(
         contentPadding = contentPadding,
         verticalArrangement = Arrangement.spacedBy(10.dp),
         modifier = Modifier.padding(horizontal = 16.dp),
     ) {
-        item { Disc(state.disc, onOpenTests) }
+        state.order.forEach { tile ->
+            when (tile) {
+                HomeTile.COUNTDOWN -> item { Disc(state.disc, onOpenTests) }
 
-        item { SectionTitle(stringResource(if (state.dayLabelTomorrow) R.string.home_tomorrow else R.string.home_today)) }
-        if (state.lessons.isEmpty()) item { EmptyState(stringResource(R.string.home_no_lessons)) }
-        items(state.lessons, key = { it.key }) { LessonLine(it) }
+                HomeTile.LESSONS -> {
+                    item { SectionTitle(stringResource(if (state.dayLabelTomorrow) R.string.home_tomorrow else R.string.home_today)) }
+                    if (state.lessons.isEmpty()) item { EmptyState(stringResource(R.string.home_no_lessons)) }
+                    items(state.lessons, key = { it.key }) { LessonLine(it) }
+                }
 
-        if (state.newItems.isNotEmpty()) {
-            item { SectionTitle(stringResource(R.string.home_new)) }
-            item {
-                EclipseCard(onClick = onOpenGrades) {
-                    state.newItems.take(8).forEach { n ->
-                        Row(Modifier.padding(vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
-                            Icon(painterResource(n.kind.icon), null, Modifier.size(18.dp), tint = c.accentText)
-                            Text(n.title, style = MaterialTheme.typography.titleSmall, color = c.text, modifier = Modifier.padding(start = 10.dp).weight(1f), maxLines = 1)
-                            Text(n.detail, style = MaterialTheme.typography.bodyMedium.merge(TabularNumbers), color = c.textSecondary, maxLines = 1)
+                HomeTile.NEW -> if (state.newItems.isNotEmpty()) {
+                    item { SectionTitle(stringResource(R.string.home_new)) }
+                    item {
+                        EclipseCard(onClick = onOpenGrades) {
+                            state.newItems.take(8).forEach { n ->
+                                Row(Modifier.padding(vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+                                    Icon(painterResource(n.kind.icon), null, Modifier.size(18.dp), tint = c.accentText)
+                                    Text(n.title, style = MaterialTheme.typography.titleSmall, color = c.text, modifier = Modifier.padding(start = 10.dp).weight(1f), maxLines = 1)
+                                    Text(n.detail, style = MaterialTheme.typography.bodyMedium.merge(TabularNumbers), color = c.textSecondary, maxLines = 1)
+                                }
+                            }
                         }
                     }
                 }
-            }
-        }
 
-        item { SectionTitle(stringResource(R.string.nav_important)) }
-        item {
-            EclipseCard(onClick = onOpenImportant) {
-                if (state.topWarnings.isEmpty()) {
-                    Text(stringResource(R.string.home_important_none), style = MaterialTheme.typography.bodyMedium, color = c.textSecondary)
-                } else {
-                    androidx.compose.foundation.layout.FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                        WarningLevel.entries.reversed().forEach { level ->
-                            val count = state.warningCounts[level] ?: 0
-                            Tag("${stringResource(level.word)}: $count", levelColor(level))
+                HomeTile.IMPORTANT -> {
+                    item { SectionTitle(stringResource(R.string.nav_important)) }
+                    item {
+                        EclipseCard(onClick = onOpenImportant) {
+                            if (state.topWarnings.isEmpty()) {
+                                Text(stringResource(R.string.home_important_none), style = MaterialTheme.typography.bodyMedium, color = c.textSecondary)
+                            } else {
+                                androidx.compose.foundation.layout.FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                                    WarningLevel.entries.reversed().forEach { level ->
+                                        val count = state.warningCounts[level] ?: 0
+                                        Tag("${stringResource(level.word)}: $count", levelColor(level))
+                                    }
+                                }
+                                state.topWarnings.forEach { w ->
+                                    Row(Modifier.padding(top = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+                                        Box(Modifier.size(8.dp).clip(CircleShape).background(levelColor(w.level)))
+                                        Text(w.subject, style = MaterialTheme.typography.titleSmall, color = c.text, modifier = Modifier.padding(start = 10.dp).weight(1f))
+                                        Text(
+                                            w.average?.let(::formatPercent) ?: stringResource(R.string.no_grades),
+                                            style = MaterialTheme.typography.titleSmall.merge(TabularNumbers),
+                                            color = c.readable(levelColor(w.level)),
+                                        )
+                                    }
+                                }
+                            }
                         }
                     }
-                    state.topWarnings.forEach { w ->
-                        Row(Modifier.padding(top = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-                            Box(Modifier.size(8.dp).clip(CircleShape).background(levelColor(w.level)))
-                            Text(w.subject, style = MaterialTheme.typography.titleSmall, color = c.text, modifier = Modifier.padding(start = 10.dp).weight(1f))
+                }
+
+                HomeTile.LUCKY -> item {
+                    val lucky = state.luckyNumber
+                    EclipseCard(border = if (state.luckyIsMine) c.accent else c.cardBorder) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Column(Modifier.weight(1f)) {
+                                Text(stringResource(R.string.home_lucky), style = MaterialTheme.typography.titleSmall, color = c.text)
+                                if (state.luckyIsMine) Text(stringResource(R.string.home_lucky_mine), style = MaterialTheme.typography.bodyMedium, color = c.accentText)
+                            }
                             Text(
-                                w.average?.let(::formatPercent) ?: stringResource(R.string.no_grades),
-                                style = MaterialTheme.typography.titleSmall.merge(TabularNumbers),
-                                color = c.readable(levelColor(w.level)),
+                                lucky?.toString() ?: "—",
+                                style = MaterialTheme.typography.displaySmall.merge(TabularNumbers),
+                                color = if (state.luckyIsMine) c.accentText else c.text,
                             )
                         }
                     }
                 }
+
+                HomeTile.HOMEWORK -> {
+                    item { SectionTitle(stringResource(R.string.home_homework)) }
+                    if (state.homework.isEmpty()) item { EmptyState(stringResource(R.string.home_homework_none)) }
+                    items(state.homework) { (title, due) ->
+                        EclipseCard {
+                            Row {
+                                Icon(painterResource(R.drawable.ic_menu_book), null, Modifier.size(18.dp), tint = c.readable(Palette.Homework))
+                                Text(title, style = MaterialTheme.typography.bodyMedium, color = c.text, modifier = Modifier.padding(start = 10.dp).weight(1f))
+                                Text(due, style = MaterialTheme.typography.bodySmall, color = c.textSecondary)
+                            }
+                        }
+                    }
+                }
             }
         }
 
         item {
-            val lucky = state.luckyNumber
-            EclipseCard(border = if (state.luckyIsMine) c.accent else c.cardBorder) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Column(Modifier.weight(1f)) {
-                        Text(stringResource(R.string.home_lucky), style = MaterialTheme.typography.titleSmall, color = c.text)
-                        if (state.luckyIsMine) Text(stringResource(R.string.home_lucky_mine), style = MaterialTheme.typography.bodyMedium, color = c.accentText)
-                    }
-                    Text(
-                        lucky?.toString() ?: "—",
-                        style = MaterialTheme.typography.displaySmall.merge(TabularNumbers),
-                        color = if (state.luckyIsMine) c.accentText else c.text,
-                    )
-                }
-            }
-        }
-
-        item { SectionTitle(stringResource(R.string.home_homework)) }
-        if (state.homework.isEmpty()) item { EmptyState(stringResource(R.string.home_homework_none)) }
-        items(state.homework) { (title, due) ->
-            EclipseCard {
-                Row {
-                    Icon(painterResource(R.drawable.ic_menu_book), null, Modifier.size(18.dp), tint = c.readable(Palette.Homework))
-                    Text(title, style = MaterialTheme.typography.bodyMedium, color = c.text, modifier = Modifier.padding(start = 10.dp).weight(1f))
-                    Text(due, style = MaterialTheme.typography.bodySmall, color = c.textSecondary)
-                }
+            TextButton(onClick = { reordering = true }, modifier = Modifier.fillMaxWidth()) {
+                Text(stringResource(R.string.home_reorder), color = c.accentText)
             }
         }
     }
+
+    if (reordering) ReorderSheet(state.order, onMove = viewModel::move, onReset = viewModel::resetOrder, onDismiss = { reordering = false })
 }
+
+/** Kolejność kafelków Pulpitu: strzałki w górę i w dół, zmiany zapisują się od razu. */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun ReorderSheet(order: List<HomeTile>, onMove: (HomeTile, Int) -> Unit, onReset: () -> Unit, onDismiss: () -> Unit) {
+    val c = Eclipse.colors
+    ModalBottomSheet(onDismissRequest = onDismiss, sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true), containerColor = sheetColor()) {
+        Column(
+            Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(horizontal = 20.dp).navigationBarsPadding().padding(bottom = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            Text(stringResource(R.string.home_reorder_title), style = MaterialTheme.typography.headlineSmall, color = c.text)
+            Text(stringResource(R.string.home_reorder_hint), style = MaterialTheme.typography.bodyMedium, color = c.textSecondary)
+            order.forEachIndexed { index, tile ->
+                EclipseCard {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(stringResource(tile.label), style = MaterialTheme.typography.titleSmall, color = c.text, modifier = Modifier.weight(1f))
+                        MoveButton(up = true, enabled = index > 0) { onMove(tile, -1) }
+                        MoveButton(up = false, enabled = index < order.lastIndex) { onMove(tile, 1) }
+                    }
+                }
+            }
+            TextButton(onClick = onReset) { Text(stringResource(R.string.home_reorder_reset), color = c.accentText) }
+            PrimaryButton(stringResource(R.string.done), onDismiss, Modifier.fillMaxWidth())
+        }
+    }
+}
+
+@Composable
+private fun MoveButton(up: Boolean, enabled: Boolean, onClick: () -> Unit) {
+    val c = Eclipse.colors
+    IconButton(onClick = onClick, enabled = enabled) {
+        Icon(
+            painterResource(R.drawable.ic_chevron_left),
+            stringResource(if (up) R.string.move_up else R.string.move_down),
+            // strzałka „w lewo” obrócona: 90° — w górę, −90° — w dół
+            Modifier.rotate(if (up) 90f else -90f),
+            tint = if (enabled) c.text else c.textSecondary.copy(alpha = 0.4f),
+        )
+    }
+}
+
+private val HomeTile.label
+    get() = when (this) {
+        HomeTile.COUNTDOWN -> R.string.home_tile_countdown
+        HomeTile.LESSONS -> R.string.home_tile_lessons
+        HomeTile.NEW -> R.string.home_new
+        HomeTile.IMPORTANT -> R.string.nav_important
+        HomeTile.LUCKY -> R.string.home_lucky
+        HomeTile.HOMEWORK -> R.string.home_tile_homework
+    }
 
 @Composable
 private fun Disc(disc: DiscState?, onOpenTests: () -> Unit) {

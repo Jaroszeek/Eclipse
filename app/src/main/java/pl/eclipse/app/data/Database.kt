@@ -1,6 +1,7 @@
 package pl.eclipse.app.data
 
 import androidx.room.AutoMigration
+import androidx.room.ColumnInfo
 import androidx.room.Dao
 import androidx.room.Database
 import androidx.room.Delete
@@ -68,7 +69,11 @@ data class CustomEventEntity(
     val note: String = "",
     val subjectKey: String? = null,
     val templateId: Long? = null,
+    @ColumnInfo(defaultValue = "EVENT") val kind: CustomKind = CustomKind.EVENT,
 )
+
+/** Rodzaj własnego wpisu w kalendarzu: zwykłe wydarzenie, zadanie domowe (na dzień, bez godziny) albo korepetycje. */
+enum class CustomKind { EVENT, HOMEWORK, TUTORING }
 
 @Entity(tableName = "labels")
 data class LabelEntity(@PrimaryKey(autoGenerate = true) val id: Long = 0, val name: String, val color: Int)
@@ -242,8 +247,8 @@ interface UserDao {
         LabelEntity::class, LabelAssignmentEntity::class, EventTemplateEntity::class, NotificationEntity::class,
         UserFlagEntity::class,
     ],
-    version = 2,
-    autoMigrations = [AutoMigration(from = 1, to = 2)],
+    version = 3,
+    autoMigrations = [AutoMigration(from = 1, to = 2), AutoMigration(from = 2, to = 3)],
 )
 abstract class EclipseDatabase : RoomDatabase() {
     abstract fun records(): RecordDao

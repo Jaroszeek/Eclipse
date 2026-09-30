@@ -37,9 +37,16 @@ data class AppSettings(
     val countedAbsences: Set<AttendanceCategory> = DEFAULT_COUNTED_ABSENCES,
     /** Czy pokazano już ekran z prośbą o zgodę na powiadomienia (SPEC 12.9). */
     val permissionAsked: Boolean = false,
+    /** Kolejność kafelków na Pulpicie — użytkownik zmienia ją strzałkami. */
+    val homeOrder: List<HomeTile> = HomeTile.entries,
 )
 
+/** Kafelki Pulpitu w kolejności użytkownika; kafelek dodany w nowszej wersji trafia na koniec. */
+fun AppSettings.homeTiles(): List<HomeTile> = (homeOrder + HomeTile.entries).distinct()
+
 enum class ThemeMode { SYSTEM, LIGHT, DARK }
+
+enum class HomeTile { COUNTDOWN, LESSONS, NEW, IMPORTANT, LUCKY, HOMEWORK }
 
 enum class NotificationType { GRADE, TEST, REMINDER, PLAN_CHANGE, IMPORTANT, LUCKY_NUMBER, INBOX, SYNC_PROBLEM }
 

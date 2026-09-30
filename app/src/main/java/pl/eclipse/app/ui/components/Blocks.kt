@@ -45,7 +45,7 @@ import pl.eclipse.app.ui.theme.gradeColor
 
 enum class BlockKind(@param:DrawableRes val icon: Int?) {
     LESSON(null), TEST(R.drawable.ic_fact_check), QUIZ(R.drawable.ic_bolt), HOMEWORK(R.drawable.ic_menu_book),
-    EVENT(R.drawable.ic_flag), DAY_OFF(R.drawable.ic_wb_sunny), CUSTOM(R.drawable.ic_star),
+    EVENT(R.drawable.ic_flag), DAY_OFF(R.drawable.ic_wb_sunny), CUSTOM(R.drawable.ic_star), TUTORING(R.drawable.ic_school),
 }
 
 enum class BlockStatus { NORMAL, SUBSTITUTION, CANCELLED, CHANGED, REMOVED }

@@ -54,6 +54,7 @@ Aktualizowane po każdym kroku. Szczegóły etapów: `SPEC.md`, sekcja 14.
 - [x] Potwierdzenie na telefonie, że pierwsza synchronizacja w v1.1 kończy się danymi (użytkownik: „działa”, 2026-09-30)
 - [x] Wydanie v1.2: przejścia „Zaćmienie” (wybór użytkownika z 3 propozycji)
 - [x] Wydanie v1.3: przycisk „Oznacz wszystkie jako przeczytane” w Skrzynce
+- [x] Wydanie v1.4: „Kalkulator ocen”, kolejność kafelków Pulpitu, własne zadania domowe i korepetycje w kalendarzu
 - [ ] Instalacja na telefonie przez USB (instrukcja w README; czeka na użytkownika)
 - [ ] Całodniowy test synchronizacji w tle i powiadomień z godzinami ciszy (czeka na użytkownika)
 - [ ] Kryteria akceptacji Etapu 3
@@ -100,6 +101,11 @@ Aktualizowane po każdym kroku. Szczegóły etapów: `SPEC.md`, sekcja 14.
   - gdy w systemie animacje są wyłączone — bez przejść (SPEC 11.8);
   - `android:enableOnBackInvokedCallback="true"` w manifeście, żeby gest „wstecz” z podglądem działał też na Androidzie 13–15 (na 16 jest domyślnie).
 - 2026-09-30: Skrzynka — przycisk „Oznacz wszystkie jako przeczytane” (prośba użytkownika). Oznacza naraz wszystkie zakładki (wiadomości, ogłoszenia, uwagi), więc znika też licznik w menu. Działa tylko w Eclipse — w Librusie nic się nie zmienia (SPEC 12.7: tylko odczyt). Widoczny, gdy jest coś nieprzeczytanego.
+- 2026-09-30: v1.4 (prośby użytkownika; decyzje podjęte samodzielnie, bo użytkownik prosił o dokończenie bez pytań i wyłączenie komputera):
+  - kalkulator „co jeśli” nazywa się teraz „Kalkulator ocen” (tylko napis w aplikacji; działanie jak w SPEC 6.5);
+  - Pulpit: przycisk „Zmień kolejność kafelków” na dole otwiera arkusz ze strzałkami w górę i w dół; kolejność w ustawieniach (`AppSettings.homeOrder`), zmiany od razu, „Przywróć domyślną kolejność”. Strzałki zamiast przeciągania — prostsze i działają przy dużej czcionce;
+  - kalendarz: przycisk „+” (dodaj zadanie domowe / korepetycje / wydarzenie) i wybór rodzaju w arkuszu edycji. Własny wpis ma rodzaj `CustomKind` (baza v3, automatyczna migracja z v2 — stare wpisy to zwykłe wydarzenia). Zadanie domowe: na dzień, bez godziny, niebieski kolor zadań i ikona książki, pokazuje się też w „Zadaniach na 3 dni” na Pulpicie. Korepetycje: z godziną, domyślnie 16:00–17:00 i tytuł „Korepetycje”, ikona czapki;
+  - bez odhaczania „zrobione” przy zadaniu domowym — wykonane zadanie można usunąć; odhaczanie dojdzie, jeśli będzie potrzebne.
 - 2026-09-29: kod trafia do prywatnego repozytorium na GitHubie (konto Jaroszeek), autor commitów: Jaroszek.
 
 ## Otwarte kwestie

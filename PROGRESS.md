@@ -30,7 +30,7 @@ Aktualizowane po każdym kroku. Szczegóły etapów: `SPEC.md`, sekcja 14.
 - [x] 1b: magazyn danych logowania (DataStore + Tink AES-256-GCM, klucz główny w Android Keystore; wyłączony z kopii i przenosin)
 - [x] 1b: powiadomienia lokalne (8 kanałów, centrum powiadomień w tabeli `notifications`, godziny ciszy z porannym podsumowaniem, przypomnienie dzień przed sprawdzianem, > 3 oceny → jedno zbiorcze, po 3 nieudanych synchronizacjach jedno powiadomienie)
 - [x] 1b: ekran diagnostyczny (logowanie e-mailem z zapisem zaszyfrowanym, tryb demo, liczby rekordów, historia synchronizacji, stan zadania w tle, „Synchronizuj teraz” — nie częściej niż co 2 min, „Wyślij testowe powiadomienie”, zgoda na powiadomienia, rekonesans, „Wyloguj i usuń dane”). Na emulatorze w demo: baza wypełniona, druga synchronizacja bez nowych/zmienionych, testowe powiadomienie dociera, zadanie okresowe zaplanowane.
-- [ ] Kryteria akceptacji Etapu 1
+- [x] Kryteria akceptacji Etapu 1 — 30.09.2026 użytkownik potwierdził na telefonie: pełna synchronizacja z Librusem, druga bez duplikatów, czytelny błąd złego hasła, testowe powiadomienie.
 
 ## Etap 2 — interfejs
 - [ ] 2a: plan wyglądu i akceptacja

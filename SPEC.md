@@ -437,7 +437,7 @@ Tylko elementy wybrane przez użytkownika:
 Szczegóły w sekcji 8.
 
 ### 12.7 Skrzynka
-Zakładki Wiadomości, Ogłoszenia, Uwagi. Lista z podglądem, nieprzeczytane wyróżnione, uwagi z ikoną pozytywnej lub negatywnej. Tylko odczyt.
+Zakładki Wiadomości, Ogłoszenia, Uwagi. Lista z podglądem, nieprzeczytane wyróżnione, uwagi z ikoną pozytywnej lub negatywnej. Ogłoszenia i uwagi tylko do odczytu. Wiadomości można też pisać: przycisk „Napisz wiadomość” otwiera ekran z listą odbiorców z Librusa (nauczyciele, wychowawca, pedagog, sekretariat), tematem i treścią. Przed wysłaniem zawsze pytanie z nazwą odbiorcy i tematem, bo wysłania nie da się cofnąć. Gdy Librus nie potwierdzi wysłania, aplikacja mówi, że wynik jest nieznany, i nie proponuje ponowienia — wiadomość mogła już pójść. Załączników aplikacja nie wysyła ani nie pobiera.
 
 ### 12.8 Ustawienia (z wartościami domyślnymi)
 - Konto: kto jest zalogowany, „Wyloguj i usuń dane”.

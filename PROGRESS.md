@@ -63,7 +63,9 @@ Aktualizowane po każdym kroku. Szczegóły etapów: `SPEC.md`, sekcja 14.
 - [x] Wydanie v1.9: rekonesans nr 4 — doczytywane części kodu strony (adresy wysyłania i odbiorców), porównanie podglądu z pełną treścią
 - [x] Raport nr 4: adresy wysyłania i odbiorców z doczytywanej części kodu strony; lista wiadomości najpewniej ma całą treść
 - [x] Wydanie v2.0: rekonesans nr 5 — odbiorcy dostępni dla ucznia i fragmenty kodu wysyłania
-- [ ] Potwierdzenie na telefonie, że wiadomości są w Skrzynce, raport nr 5 → wysyłanie z potwierdzeniem
+- [x] Odczyt wiadomości potwierdzony na telefonie (użytkownik: „wiadomości są i wyglądają dobrze”)
+- [x] Wydanie v2.1: wysyłanie wiadomości z aplikacji (starszy moduł Librusa, wzorzec szkolny-android)
+- [ ] Potwierdzenie na telefonie: czy lista odbiorców się wczytuje i czy wysyłanie działa
 - [ ] Wiadomości krok 2: wysyłanie z ekranem potwierdzenia (wymaga zmiany SPEC 12.7 „tylko odczyt” — za zgodą użytkownika)
 - [ ] Instalacja na telefonie przez USB (instrukcja w README; czeka na użytkownika)
 - [ ] Całodniowy test synchronizacji w tle i powiadomień z godzinami ciszy (czeka na użytkownika)
@@ -120,6 +122,12 @@ Aktualizowane po każdym kroku. Szczegóły etapów: `SPEC.md`, sekcja 14.
 - 2026-09-30: Ustawienia → „Dla programisty” → „Diagnostyka” widoczne w release (Próbnik stylu nadal tylko w debug). Diagnostyka pokazuje awarie, synchronizacje i otwiera rekonesans — potrzebne na telefonie.
 - 2026-09-30: raport wiadomości nr 1: AutoLoginToken → `synergia.librus.pl/loguj/token/…/przenies` → `/uczen/index` działa; `/wiadomosci3` → `wiadomosci.librus.pl/pobierz04/MultiDomainLogon/token/…/login/…/target/…` (ustawia DZIENNIKSID dla wiadomości) → `/nowy` → 301 na http:// → Android blokuje (UnknownServiceException). Poprawka: przekierowania zawsze przez https. W ścieżce MultiDomainLogon jest login ucznia (base64) — `hidden()` ukrywa teraz fragment po „token” i „login”. Adresy API szukane też jako pełne adresy i bez ukośnika.
 - 2026-09-30: wiadomości w Skrzynce — nieprzeczytane to te, których nie otwarto ani w Eclipse, ani w Librusie (`readDate`). Pierwsze pobranie wiadomości (także po aktualizacji) nie tworzy powiadomień; później powiadomienie tylko o nowej wiadomości nieprzeczytanej w Librusie. „Nowe od ostatniej wizyty” pokazuje tylko wiadomości wysłane po ostatniej wizycie. Rekonesans czyta szczegóły tylko wiadomości już przeczytanej (żeby niczego w Librusie nie oznaczyć) i używa wyłącznie GET.
+- 2026-09-30: wysyłanie wiadomości. Nowy interfejs wiadomości (`/api/...`) daje odczyt, ale formatu wysyłania nie dało się z niego odczytać bez rozbierania zaciemnionego kodu strony — tego nie robimy. Zamiast tego kontrakt pochodzi z otwartych źródeł **szkolny-android** (GPLv3), wskazanych w `CLAUDE.md` jako wzorzec do nauki: starszy moduł `wiadomosci.librus.pl/module/…` z ciałem XML. Kod Eclipse jest własny — z repozytorium wzięte są tylko fakty techniczne (adresy, nazwy pól), nie kod, więc GPL nie przechodzi na Eclipse.
+  - `SendResult` rozróżnia trzy wyniki: wysłane, odrzucone (można poprawić), **nieznane** (nie ponawiaj bez sprawdzenia w Librusie). Nieznana odpowiedź i błąd połączenia w trakcie wysyłania to „nieznane”, bo wiadomość mogła już pójść, a wysłania nie da się cofnąć.
+  - Ekran „Napisz wiadomość”: odbiorcy z Librusa (szukanie, wybór wielu), temat, treść, obowiązkowe potwierdzenie z nazwiskiem i tematem.
+  - Osobna, zalogowana sesja (`Messaging`) — nie przerywa synchronizacji w tle; jedno zapytanie naraz.
+  - Sprawdzone na emulatorze w trybie demo (demo niczego nie wysyła): lista, wybór, potwierdzenie, komunikat o wysłaniu, powrót do Skrzynki. Na prawdziwym koncie **niesprawdzone** — starszy moduł może już nie działać; wtedy lista odbiorców się nie wczyta i nic nie zostanie wysłane.
+  - SPEC 12.7 zmieniona: Skrzynka nie jest już „tylko odczyt” (zgoda użytkownika: „wolę abyś zrobił tak, że mogę wysłać wiadomość z tej aplikacji”).
 - 2026-09-29: kod trafia do prywatnego repozytorium na GitHubie (konto Jaroszeek), autor commitów: Jaroszek.
 
 ## Otwarte kwestie

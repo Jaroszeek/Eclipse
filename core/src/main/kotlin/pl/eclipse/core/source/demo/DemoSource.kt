@@ -13,10 +13,12 @@ import pl.eclipse.core.model.LuckyNumber
 import pl.eclipse.core.model.Message
 import pl.eclipse.core.model.Note
 import pl.eclipse.core.model.NoteKind
+import pl.eclipse.core.model.Recipient
 import pl.eclipse.core.model.SchoolEvent
 import pl.eclipse.core.model.StudentInfo
 import pl.eclipse.core.model.Subject
 import pl.eclipse.core.source.DataSource
+import pl.eclipse.core.source.SendResult
 import java.time.DayOfWeek
 import java.time.Instant
 import java.time.LocalDate
@@ -163,6 +165,17 @@ class DemoSource(private val today: LocalDate = LocalDate.now(WARSAW)) : DataSou
     }
 
     override fun luckyNumber() = LuckyNumber(today, Random(today.toEpochDay()).nextInt(1, 31))
+
+    override fun messageRecipients() = listOf(
+        Recipient("1", "Nowak Katarzyna", "Nauczyciele"),
+        Recipient("2", "Lewandowski Piotr", "Nauczyciele"),
+        Recipient("3", "Zielińska Anna", "Wychowawca"),
+        Recipient("4", "Sekretariat szkoły", "Sekretariat"),
+    )
+
+    /** Tryb demo niczego nie wysyła — udaje, że się udało. */
+    override fun sendMessage(recipientIds: List<String>, subject: String, text: String): SendResult =
+        if (recipientIds.isEmpty()) SendResult.Rejected("Nie wybrano odbiorcy.") else SendResult.Sent("demo-sent-1")
 
     private fun weekday(date: LocalDate): LocalDate = when (date.dayOfWeek) {
         DayOfWeek.SATURDAY -> date.plusDays(2)

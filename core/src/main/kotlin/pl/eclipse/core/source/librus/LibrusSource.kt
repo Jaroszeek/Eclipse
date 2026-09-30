@@ -19,11 +19,13 @@ import pl.eclipse.core.model.LessonStatus
 import pl.eclipse.core.model.LuckyNumber
 import pl.eclipse.core.model.Message
 import pl.eclipse.core.model.Note
+import pl.eclipse.core.model.Recipient
 import pl.eclipse.core.model.NoteKind
 import pl.eclipse.core.model.SchoolEvent
 import pl.eclipse.core.model.StudentInfo
 import pl.eclipse.core.model.Subject
 import pl.eclipse.core.source.DataSource
+import pl.eclipse.core.source.SendResult
 import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -202,10 +204,7 @@ class LibrusSource(
     // Wiadomości: osobny serwis wiadomosci.librus.pl, sesja przez Synergię (rekonesans 2026-09-30).
     // ponytail: jedna strona najnowszych wiadomości na synchronizację — wystarcza przy synchronizacji co kilka godzin.
     override fun messages(since: Instant?): List<Message> {
-        if (!messagesOpen) {
-            client.openMessages()
-            messagesOpen = true
-        }
+        openMessagesOnce()
         val (code, body) = client.messagesApi("inbox/messages?page=1&limit=$MESSAGES_PAGE")
         if (code !in 200..299) {
             throw LibrusException("Librus nie oddał wiadomości (HTTP $code).", if (code >= 500) LibrusException.Kind.SERVER else LibrusException.Kind.OTHER)
@@ -225,6 +224,63 @@ class LibrusSource(
     }
 
     private var messagesOpen = false
+
+    private fun openMessagesOnce() {
+        if (!messagesOpen) {
+            client.openMessages()
+            messagesOpen = true
+        }
+    }
+
+    /**
+     * Lista odbiorców z modułu wiadomości: najpierw rodzaje odbiorców, potem osoby w każdym rodzaju.
+     * Rodzaj, którego Librus nie udostępnia uczniowi, po prostu pomijamy.
+     */
+    override fun messageRecipients(): List<Recipient> {
+        openMessagesOnce()
+        val (code, body) = client.messagesModule("Receivers/action/GetTypes", mapOf("includeClass" to "1"))
+        if (code !in 200..299) {
+            throw LibrusException(
+                "Librus nie oddał listy odbiorców (HTTP $code).",
+                if (code >= 500) LibrusException.Kind.SERVER else LibrusException.Kind.OTHER,
+            )
+        }
+        moduleError(body)?.let { throw it }
+        val types = xmlItems(body).mapNotNull { item ->
+            val id = item["id"]?.takeIf { it.isNotBlank() && it !in SKIPPED_RECEIVER_TYPES } ?: return@mapNotNull null
+            id to (item["name"]?.takeIf { it.isNotBlank() } ?: id)
+        }
+        return types.flatMap { (typeId, typeName) ->
+            val (listCode, listBody) = client.messagesModule("Receivers/action/GetListForType", mapOf("receiverType" to typeId))
+            if (listCode !in 200..299 || moduleError(listBody) != null) return@flatMap emptyList()
+            xmlItems(listBody).mapNotNull { item ->
+                val id = item["id"]?.takeIf { it.isNotEmpty() && it.all(Char::isDigit) } ?: return@mapNotNull null
+                val label = item["label"]?.replace(SPACES, " ")?.trim()?.takeIf { it.isNotEmpty() } ?: return@mapNotNull null
+                Recipient(id, label, typeName)
+            }
+        }.distinctBy { it.id }.sortedWith(compareBy({ it.group }, { it.name.lowercase() }))
+    }
+
+    /** Wysyła wiadomość przez moduł wiadomości. Temat i treść idą zakodowane base64, tak jak przy odczycie. */
+    override fun sendMessage(recipientIds: List<String>, subject: String, text: String): SendResult {
+        if (recipientIds.isEmpty()) return SendResult.Rejected("Nie wybrano odbiorcy.")
+        openMessagesOnce()
+        val (code, body) = client.messagesModule(
+            "SendMessage",
+            mapOf(
+                "topic" to base64(subject),
+                "message" to base64(text),
+                "receivers" to recipientIds.joinToString(","),
+                "actions" to base64("<Actions/>"),
+            ),
+        )
+        return when {
+            STATUS_OK.containsMatchIn(body) -> SendResult.Sent(MODULE_DATA.find(body)?.groupValues?.get(1))
+            moduleError(body) != null -> SendResult.Rejected(moduleError(body)?.message.orEmpty())
+            // Nieznana odpowiedź albo błąd serwera: wiadomość mogła pójść, więc nie namawiamy na ponowną próbę.
+            else -> SendResult.Unknown("Librus nie potwierdził wysłania (HTTP $code).")
+        }
+    }
 
     override fun luckyNumber(): LuckyNumber? = json("LuckyNumbers")["LuckyNumber"].objOrNull?.let {
         LuckyNumber(it["LuckyNumberDay"].date, it["LuckyNumber"].int)
@@ -284,14 +340,51 @@ internal fun messageText(raw: String): String {
     return htmlToText(decoded ?: raw)
 }
 
-internal fun htmlToText(html: String): String = html
-    .replace(Regex("""(?i)<br\s*/?>|</p>|</div>|</li>"""), "\n")
-    .replace(Regex("""<[^>]+>"""), "")
-    .replace(Regex("""&#(\d+);""")) { m -> m.groupValues[1].toIntOrNull()?.let { String(Character.toChars(it)) } ?: m.value }
-    .replace("&nbsp;", " ").replace("&lt;", "<").replace("&gt;", ">").replace("&quot;", "\"").replace("&#39;", "'").replace("&amp;", "&")
+internal fun htmlToText(html: String): String = unescapeEntities(
+    html.replace(Regex("""(?i)<br\s*/?>|</p>|</div>|</li>"""), "\n").replace(Regex("""<[^>]+>"""), ""),
+)
     .lines().joinToString("\n") { it.trim() }
     .replace(Regex("""\n{3,}"""), "\n\n")
     .trim()
+
+private fun base64(text: String): String = Base64.getEncoder().encodeToString(text.toByteArray(Charsets.UTF_8))
+
+/** Rodzaje odbiorców, które nie są listą osób. */
+private val SKIPPED_RECEIVER_TYPES = setOf("contactsGroups")
+private val STATUS_OK = Regex("""<status>\s*ok\s*</status>""", RegexOption.IGNORE_CASE)
+private val MODULE_DATA = Regex("""<data>\s*(\d+)\s*</data>""")
+private val MODULE_MESSAGE = Regex("""<message>([^<]*)</message>""")
+private val SPACES = Regex("""\s+""")
+
+/** Znany błąd modułu wiadomości albo null. Komunikaty Librusa są ogólne, więc pokazujemy je użytkownikowi. */
+internal fun moduleError(body: String): LibrusException? {
+    val message = MODULE_MESSAGE.find(body)?.groupValues?.get(1)?.trim()
+    return when {
+        body.contains("Niepoprawny login", ignoreCase = true) ->
+            LibrusException("Sesja wiadomości wygasła. Odśwież dane i spróbuj ponownie.", LibrusException.Kind.CREDENTIALS)
+        "OffLine" in body ->
+            LibrusException("Wiadomości Librusa mają przerwę techniczną. Spróbuj później.", LibrusException.Kind.MAINTENANCE)
+        "eAccessDeny" in body || "eVarWhitThisNameNotExists" in body || "stop.png" in body ->
+            LibrusException("Librus nie pozwolił na tę operację w wiadomościach.")
+        STATUS_ERROR.containsMatchIn(body) || "<error>" in body ->
+            LibrusException(message?.takeIf { it.isNotEmpty() } ?: "Librus odrzucił wiadomość.")
+        else -> null
+    }
+}
+
+private val STATUS_ERROR = Regex("""<status>\s*error\s*</status>""", RegexOption.IGNORE_CASE)
+
+/**
+ * Najgłębsze elementy `<ArrayItem>` z odpowiedzi modułu jako mapy pole → wartość.
+ * Moduł zwraca XML, a potrzebujemy z niego tylko prostych pól, więc obchodzimy się bez biblioteki.
+ */
+internal fun xmlItems(body: String): List<Map<String, String>> = ARRAY_ITEM.findAll(body)
+    .map { item -> SIMPLE_TAG.findAll(item.groupValues[1]).associate { it.groupValues[1] to unescapeEntities(it.groupValues[2]) } }
+    .filter { it.isNotEmpty() }
+    .toList()
+
+private val ARRAY_ITEM = Regex("""<ArrayItem>((?:(?!<ArrayItem>)[\s\S])*?)</ArrayItem>""")
+private val SIMPLE_TAG = Regex("""<([A-Za-z_][\w.:-]*)>([^<]*)</\1>""")
 
 /** Kategoria terminarza → typ wydarzenia (zaakceptowane mapowanie, SPEC 11.3). */
 internal fun eventType(category: String): EventType {
@@ -304,6 +397,12 @@ internal fun eventType(category: String): EventType {
         else -> EventType.OTHER
     }
 }
+
+/** Encje HTML i XML na znaki („&amp;” → „&”). */
+internal fun unescapeEntities(text: String): String = text
+    .replace(Regex("""&#(\d+);""")) { m -> m.groupValues[1].toIntOrNull()?.let { String(Character.toChars(it)) } ?: m.value }
+    .replace("&nbsp;", " ").replace("&lt;", "<").replace("&gt;", ">").replace("&quot;", "\"")
+    .replace("&#39;", "'").replace("&apos;", "'").replace("&amp;", "&")
 
 /** Typ frekwencji → kategoria (zaakceptowane mapowanie, SPEC 7). */
 internal fun attendanceCategory(short: String, isPresence: Boolean): AttendanceCategory = when (short.lowercase()) {

@@ -5,6 +5,7 @@ import android.content.Context
 import androidx.room.Room
 import pl.eclipse.app.data.Account
 import pl.eclipse.app.data.EclipseDatabase
+import pl.eclipse.app.data.Messaging
 import pl.eclipse.app.data.SyncStatus
 import pl.eclipse.app.data.SchoolRepository
 import pl.eclipse.app.data.SettingsStore
@@ -42,6 +43,7 @@ class AppContainer(context: Context) {
     val visits = VisitStore(context)
     val account = Account(context, database, settings, credentials)
     val sync = SyncStatus(context)
+    val messaging = Messaging(settings, credentials, ::dataSource)
 
     fun dataSource(demo: Boolean): DataSource = if (demo) DemoSource() else LibrusSource()
 }

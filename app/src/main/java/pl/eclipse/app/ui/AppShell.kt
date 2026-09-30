@@ -100,6 +100,7 @@ import pl.eclipse.app.ui.home.HomeScreen
 import pl.eclipse.app.ui.important.ImportantScreen
 import pl.eclipse.app.ui.inbox.InboxScreen
 import pl.eclipse.app.ui.inbox.NotificationsScreen
+import pl.eclipse.app.ui.messages.ComposeScreen
 import pl.eclipse.app.ui.login.FirstSyncScreen
 import pl.eclipse.app.ui.login.LoginScreen
 import pl.eclipse.app.ui.login.NotificationPermissionScreen
@@ -126,6 +127,7 @@ class RouteRequest(val route: String)
 @Serializable data object SettingsRoute
 @Serializable data object NotificationsRoute
 @Serializable data object StyleRoute
+@Serializable data object ComposeRoute
 @Serializable data object DiagnosticsRoute
 @Serializable data object ReconRoute
 
@@ -218,6 +220,7 @@ private fun MainShell(state: ShellState, viewModel: ShellViewModel, initialRoute
         top != null -> stringResource(top.title)
         destination?.hasRoute(SubjectRoute::class) == true -> subjectTitle
         destination?.hasRoute(SettingsRoute::class) == true -> stringResource(R.string.nav_settings)
+        destination?.hasRoute(ComposeRoute::class) == true -> stringResource(R.string.compose_title)
         destination?.hasRoute(NotificationsRoute::class) == true -> stringResource(R.string.nav_notifications)
         destination?.hasRoute(StyleRoute::class) == true -> stringResource(R.string.nav_style)
         destination?.hasRoute(DiagnosticsRoute::class) == true -> stringResource(R.string.diag_title)
@@ -288,7 +291,8 @@ private fun MainShell(state: ShellState, viewModel: ShellViewModel, initialRoute
                     }
                     screen<StatsRoute> { StatsScreen(contentPadding) }
                     screen<ImportantRoute> { ImportantScreen(contentPadding, onOpenSubject = { nav.navigate(SubjectRoute(it)) }) }
-                    screen<InboxRoute> { InboxScreen(contentPadding) }
+                    screen<InboxRoute> { InboxScreen(contentPadding, onCompose = { nav.navigate(ComposeRoute) }) }
+                    screen<ComposeRoute> { ComposeScreen(contentPadding, onDone = { nav.popBackStack() }) }
                     screen<SettingsRoute> {
                         SettingsScreen(
                             contentPadding,

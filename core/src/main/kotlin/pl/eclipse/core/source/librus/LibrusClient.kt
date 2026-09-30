@@ -10,8 +10,10 @@ import okhttp3.CookieJar
 import okhttp3.FormBody
 import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrl
+import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import okhttp3.RequestBody.Companion.toRequestBody
 import java.util.concurrent.TimeUnit
 
 class LibrusException(message: String, val kind: Kind = Kind.OTHER) : Exception(message) {
@@ -37,7 +39,9 @@ class LibrusClient {
         .followRedirects(false) // przekierowania obsługujemy sami, żeby złapać app://librus?code=
         .callTimeout(30, TimeUnit.SECONDS) // całe zapytanie razem z DNS — synchronizacja nie może zawisnąć
         .addInterceptor { chain ->
-            chain.proceed(chain.request().newBuilder().header("User-Agent", USER_AGENT).build())
+            // własny User-Agent zapytania zostaje (moduł wiadomości oczekuje przeglądarki)
+            val request = chain.request()
+            chain.proceed(if (request.header("User-Agent") != null) request else request.newBuilder().header("User-Agent", USER_AGENT).build())
         }
         .addNetworkInterceptor { chain ->
             val request = chain.request()
@@ -104,6 +108,22 @@ class LibrusClient {
         if (landing.code !in 200..299 || !landing.url.startsWith(MESSAGES_URL)) {
             throw LibrusException("Nie udało się otworzyć wiadomości Librusa (HTTP ${landing.code}).", serverKind(landing.code))
         }
+    }
+
+    /**
+     * Starszy moduł wiadomości (XML): stąd bierze się lista odbiorców i wysyłanie. Sesję zakłada [openMessages].
+     * Kontrakt odczytany z otwartych źródeł szkolny-android (GPLv3) — wzorca wskazanego w CLAUDE.md; kod własny.
+     */
+    fun messagesModule(module: String, params: Map<String, String> = emptyMap()): Pair<Int, String> {
+        val body = params.entries.joinToString("", "<service><header/><data>", "</data></service>") { (key, value) ->
+            "<$key>${xmlEscape(value)}</$key>"
+        }
+        return send(
+            Request.Builder().url("$MESSAGES_URL/module/$module")
+                .header("User-Agent", BROWSER_USER_AGENT)
+                .post(body.toRequestBody(XML))
+                .build(),
+        )
     }
 
     /** Zasób API wiadomości, np. "inbox/messages?page=1&limit=50" → https://wiadomosci.librus.pl/api/inbox/messages… */
@@ -232,6 +252,8 @@ class LibrusClient {
         const val MESSAGES_START = "https://synergia.librus.pl/wiadomosci3"
         const val MESSAGES_URL = "https://wiadomosci.librus.pl"
         const val USER_AGENT = "Mozilla/5.0 (Linux; Android 16) LibrusMobileApp"
+        const val BROWSER_USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:128.0) Gecko/20100101 Firefox/128.0"
+        val XML = "application/xml; charset=utf-8".toMediaType()
         const val MAX_STEPS = 10
         val CODE = Regex("""app://librus\?code=([^&?]+)""")
         val CSRF = Regex("""name="csrf-token" content="([A-Za-z0-9=+/\-_]+?)"""")
@@ -280,3 +302,7 @@ private val SECRET_KEYS = setOf("token", "login")
 
 /** Token albo identyfikator sesji: bardzo długi fragment albo długi z cyframi (zwykłe nazwy jak „SynergiaAccounts” zostają). */
 private fun isSecret(segment: String) = segment.length >= 24 || (segment.length >= 16 && segment.any(Char::isDigit))
+
+/** Wartość w XML-u modułu wiadomości. Wysyłamy base64 i liczby, ale escapujemy zawsze — na wypadek zmiany formatu. */
+internal fun xmlEscape(value: String) = value
+    .replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace("\"", "&quot;").replace("'", "&apos;")

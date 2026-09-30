@@ -94,3 +94,26 @@ Pola wiadomości w `data[]`: `messageId` (tekst), `senderFirstName`, `senderLast
 - Adresy API (względem `/api`) z doczytywanej części kodu `App-*.js`: `inbox/messages`, `inbox/messages/{id}`, `inbox/messages/senders`, `inbox/unreadMessagesCount`, `outbox/messages`, `outbox/messages/{id}`, `outbox/messages/receivers`, `messages` (prawdopodobnie wysłanie nowej), `messages/reply`, `messages/forwarding`, `messages/{id}/withdrawal`, `drafts`, `drafts/newOne`, `drafts/reply`, `drafts/forward`, `sending`, `during-send/messages`, `attachments…`, `receivers/types`, `receivers/groups/{grupa}`, `receivers/student-subjects`, `receivers/custom-groups`, `receivers/crossed-out-students`, `archive/…`, `trash-bin/…`, `tags/…`.
 - GET u ucznia: `outbox/messages/receivers` 200 (pusto), `receivers/custom-groups` 200 (pusto), `receivers/groups/class-parents` 403, `receivers/groups/jst-*` 200 (pusto), `receiver-groups` 404 (to ścieżka ekranu, nie API).
 - Rekonesans nr 5: `receivers/types`, `receivers/groups/school-employees`, `receivers/groups/students-and-attendants`, `receivers/student-subjects`, `inbox/messages/senders` (GET) i fragmenty kodu wokół adresów wysyłania (pola wysyłanej wiadomości).
+
+## Wysyłanie wiadomości — starszy moduł (30.09.2026)
+Nowy interfejs (`/api/...`) obsługuje odczyt. Do wysyłania i listy odbiorców używamy **starszego modułu**
+`https://wiadomosci.librus.pl/module/{Moduł}`, z tą samą sesją (ciasteczko `DZIENNIKSID`, patrz wyżej).
+
+Kontrakt odczytany z otwartych źródeł **szkolny-android** (GPLv3) — wzorca wskazanego w `CLAUDE.md`.
+Kod Eclipse jest własny; z repozytorium wzięte są tylko fakty techniczne (adresy, nazwy pól), nie kod.
+
+- **Zapytanie:** `POST`, ciało XML `application/xml`:
+  `<service><header/><data><pole>wartość</pole>…</data></service>`, nagłówek `User-Agent` przeglądarki.
+- **Odpowiedź:** XML; sukces zawiera `<status>ok</status>`, a przy wysyłaniu `<data>{id}</data>`.
+
+| Moduł | Parametry | Zwraca |
+|---|---|---|
+| `Receivers/action/GetTypes` | `includeClass=1` | rodzaje odbiorców: `ArrayItem` z `id` i `name` |
+| `Receivers/action/GetListForType` | `receiverType={id}` | osoby: `ArrayItem` z `id` i `label` (bywa zagnieżdżone w `list`) |
+| `SendMessage` | `topic` (base64), `message` (base64), `receivers` (id po przecinku), `actions` (base64 `<Actions/>`) | `status`, `data` = id wysłanej |
+
+Znane błędy w odpowiedzi: „Niepoprawny login” (wygasła sesja), `OffLine` (przerwa techniczna),
+`eAccessDeny` / `eVarWhitThisNameNotExists` / `stop.png` (brak uprawnień), `<status>error</status>` albo `<error>` z `<message>`.
+
+**Nieznana odpowiedź traktowana jest jako „nie wiadomo”, nie jako błąd** — wiadomość mogła pójść, a wysłania nie da się cofnąć.
+Rodzaj `contactsGroups` pomijamy (to nie lista osób). Załączników nie wysyłamy ani nie pobieramy.

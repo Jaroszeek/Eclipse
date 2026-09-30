@@ -125,5 +125,9 @@ data class Message(
     val hasAttachment: Boolean = false,
 )
 
+/** Odbiorca wiadomości w Librusie: [id] to identyfikator z listy odbiorców, [group] — rodzaj („Nauczyciele”, „Pedagog”…). */
+@Serializable
+data class Recipient(val id: String, val name: String, val group: String)
+
 @Serializable
 data class LuckyNumber(val date: LocalDate, val number: Int)

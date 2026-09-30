@@ -8,6 +8,7 @@ import pl.eclipse.core.model.Lesson
 import pl.eclipse.core.model.LuckyNumber
 import pl.eclipse.core.model.Message
 import pl.eclipse.core.model.Note
+import pl.eclipse.core.model.Recipient
 import pl.eclipse.core.model.SchoolEvent
 import pl.eclipse.core.model.StudentInfo
 import pl.eclipse.core.model.Subject
@@ -31,4 +32,22 @@ interface DataSource {
     fun announcements(since: Instant?): List<Announcement>
     fun messages(since: Instant?): List<Message>
     fun luckyNumber(): LuckyNumber?
+
+    /** Kto może dostać wiadomość od ucznia (SPEC 12.7). */
+    fun messageRecipients(): List<Recipient>
+
+    /** Wysyła wiadomość. Wysłania nie da się cofnąć, dlatego wynik rozróżnia pewny błąd od niewiadomej. */
+    fun sendMessage(recipientIds: List<String>, subject: String, text: String): SendResult
+}
+
+/** Wynik wysyłania wiadomości. */
+sealed interface SendResult {
+    /** Librus potwierdził wysłanie; [messageId] bywa nieznany. */
+    data class Sent(val messageId: String?) : SendResult
+
+    /** Librus odrzucił wiadomość — nic nie poszło, można poprawić i spróbować ponownie. */
+    data class Rejected(val reason: String) : SendResult
+
+    /** Nie wiadomo, czy wiadomość poszła (np. zerwane połączenie) — nie ponawiaj bez sprawdzenia w Librusie. */
+    data class Unknown(val reason: String) : SendResult
 }

@@ -103,7 +103,7 @@ class InboxViewModel(application: Application) : AndroidViewModel(application) {
 /** Skrzynka (SPEC 12.7): tylko odczyt. */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun InboxScreen(contentPadding: PaddingValues, viewModel: InboxViewModel = viewModel()) {
+fun InboxScreen(contentPadding: PaddingValues, onCompose: () -> Unit = {}, viewModel: InboxViewModel = viewModel()) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     var tab by rememberSaveable { mutableStateOf(InboxTab.MESSAGES) }
     val items = when (tab) {
@@ -130,10 +130,18 @@ fun InboxScreen(contentPadding: PaddingValues, viewModel: InboxViewModel = viewM
                     )
                 }
             }
-            if (tabs.any { it.second.second > 0 }) {
-                TextButton(onClick = viewModel::markAllRead) {
-                    Icon(painterResource(R.drawable.ic_check), null, Modifier.size(18.dp), tint = Eclipse.colors.accentText)
-                    Text(stringResource(R.string.inbox_mark_all_read), color = Eclipse.colors.accentText, modifier = Modifier.padding(start = 8.dp))
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                if (tab == InboxTab.MESSAGES) {
+                    TextButton(onClick = onCompose) {
+                        Icon(painterResource(R.drawable.ic_mail), null, Modifier.size(18.dp), tint = Eclipse.colors.accentText)
+                        Text(stringResource(R.string.inbox_write), color = Eclipse.colors.accentText, modifier = Modifier.padding(start = 8.dp))
+                    }
+                }
+                if (tabs.any { it.second.second > 0 }) {
+                    TextButton(onClick = viewModel::markAllRead) {
+                        Icon(painterResource(R.drawable.ic_check), null, Modifier.size(18.dp), tint = Eclipse.colors.accentText)
+                        Text(stringResource(R.string.inbox_mark_all_read), color = Eclipse.colors.accentText, modifier = Modifier.padding(start = 8.dp))
+                    }
                 }
             }
         }

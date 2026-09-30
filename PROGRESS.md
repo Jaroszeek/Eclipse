@@ -23,7 +23,7 @@ Aktualizowane po każdym kroku. Szczegóły etapów: `SPEC.md`, sekcja 14.
 - [x] 1a: akceptacja mapowania przez użytkownika
 - [x] 1b: modele i `DataSource` (`core/model/Models.kt`, `core/source/DataSource.kt`; funkcje blokujące, wołane w tle)
 - [x] 1b: `DemoSource` (uczeń technikum, dzwonki jak w szkole użytkownika, rok szkolny demo zaczyna się 10 tygodni przed dziś; scenariusze Important: chemia < 40%, fizyka 40–50%, historia ze spadkiem, biologia z frekwencją ok. 53%, świeża jedynka z matematyki, geografia 53%)
-- [ ] 1b: obliczenia z testami (sekcje 6–8)
+- [x] 1b: obliczenia z testami (sekcje 6–8): `core/calc/Grades.kt`, `Attendance.kt`, `Important.kt`; 24 testy w `:core:test`
 - [ ] 1b: `LibrusSource` według mapowania
 - [ ] 1b: Room i repozytoria
 - [ ] 1b: `SyncWorker` z wykrywaniem zmian
@@ -61,6 +61,8 @@ Aktualizowane po każdym kroku. Szczegóły etapów: `SPEC.md`, sekcja 14.
 - 2026-09-29: logowanie do Librusa loginem Synergii, bez weryfikacji dwuetapowej — znana droga OAuth z SPEC 4.1 powinna działać.
 - 2026-09-30: rekonesans działa w aplikacji zamiast `./gradlew :core:recon` z plikiem `librus-dev.properties` (prośba użytkownika — nie był przy komputerze; hasło nie leży w pliku). SPEC 4.2 zaktualizowana. Plik wzoru usunięty; wpis w `.gitignore` i blokada w `.claude/settings.json` zostają na wszelki wypadek.
 - 2026-09-30: mapowanie z `docs/librus-rekonesans.md` zaakceptowane; „uroczystość nieobecność” nie liczy się do limitu nieobecności.
+- 2026-09-30: obliczenia — samodzielne „+” i „−” liczą się tylko, gdy mają własną wartość w tabeli symboli (to jest przełącznik z SPEC 12.8). Procent z opisu oceny pominięty (rekonesans: opisy nie zawierają procentów). Ustawienie „poprawy” (licz obie / tylko poprawę / lepszą) odłożone — Librus nie pokazał powiązania oceny z poprawą; na razie liczone są obie, a ręczne „poprawiona / pomiń” działa w Important.
+- 2026-09-30: reguła „zagrożenie od nauczyciela” pominięta — w API nie ma takiej informacji; zostaje „proponowana ocena 1”.
 - 2026-09-30: `LibrusClient` ma własny prosty magazyn ciasteczek w pamięci; zapisywanie sesji dojdzie w `LibrusSource`.
 - 2026-09-29: kod trafia do prywatnego repozytorium na GitHubie (konto Jaroszeek), autor commitów: Jaroszek.
 

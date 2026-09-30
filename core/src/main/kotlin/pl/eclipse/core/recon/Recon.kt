@@ -59,6 +59,7 @@ object Recon {
     private fun StringBuilder.appendTrace(client: LibrusClient) {
         appendLine("\nPrzebieg logowania:")
         client.trace.forEach { appendLine("  $it") }
+        client.diagnostics.forEach { appendLine(it) }
         appendLine("Ciasteczka: ${client.cookieNames()}")
     }
 

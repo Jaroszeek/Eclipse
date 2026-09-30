@@ -80,9 +80,14 @@ class LibrusClient {
                 url = url.toHttpUrl().resolve(location)?.toString() ?: throw LibrusException("Nieprawidłowe przekierowanie z portalu.")
                 return@repeat
             }
-            pageError(body)?.let { throw LibrusException(it) }
-            if (loginSent) throw LibrusException("Portal nie przekazał kodu logowania (HTTP ${response.code}).")
+            if (loginSent) {
+                diagnostics += "Strona po logowaniu: ${describePage(body)}"
+                pageError(body)?.let { throw LibrusException(it) }
+                throw LibrusException("Portal nie przekazał kodu logowania (HTTP ${response.code}).")
+            }
 
+            captchaCheck(body)
+            diagnostics += "Strona logowania: ${describePage(body)}"
             val form = FormBody.Builder().add("email", email).add("password", password)
             HIDDEN_INPUT.findAll(body).forEach { input ->
                 val name = INPUT_NAME.find(input.value)?.groupValues?.get(1)
@@ -94,7 +99,10 @@ class LibrusClient {
             CSRF.find(body)?.let { post.header("X-CSRF-TOKEN", it.groupValues[1]) }
             val (postResponse, postBody) = execute(post)
             loginSent = true
-            pageError(postBody)?.let { throw LibrusException(it) }
+            if (postResponse.code != 302) {
+                diagnostics += "Odpowiedź na formularz (HTTP ${postResponse.code}): ${describePage(postBody)}"
+                pageError(postBody)?.let { throw LibrusException(it) }
+            }
             val next = postResponse.header("Location")
             if (next != null) {
                 CODE.find(next)?.let { return it.groupValues[1] }
@@ -119,12 +127,32 @@ class LibrusClient {
             ?: throw LibrusException("Portal nie wydał tokenu (HTTP $status: ${json?.text("hint") ?: json?.text("error")}).")
     }
 
+    /** Opis strony do diagnostyki: pola formularza (bez wartości) i komunikaty błędów portalu. */
+    val diagnostics = mutableListOf<String>()
+
+    private fun describePage(body: String): String {
+        val fields = INPUT.findAll(body).map { input ->
+            val name = INPUT_NAME.find(input.value)?.groupValues?.get(1)
+            val type = INPUT_TYPE.find(input.value)?.groupValues?.get(1) ?: "text"
+            "$name($type)"
+        }.toList()
+        val forms = FORM.findAll(body).map { it.groupValues[1].substringBefore('?') }.toList()
+        val errors = ERROR_BLOCK.findAll(body).map { TAG.replace(it.groupValues[1], " ").replace(SPACES, " ").trim() }
+            .filter { it.isNotEmpty() }.map { it.take(160) }.distinct().toList()
+        return "formularze: $forms; pola: $fields; komunikaty: $errors; " +
+            "„Upewnij się, że nie”: ${"Upewnij się, że nie" in body}; csrf: ${CSRF.containsMatchIn(body)}"
+    }
+
+    private fun captchaCheck(body: String) {
+        if ("g-recaptcha" in body || "captchaValidate" in body) throw LibrusException(
+            "Portal Librusa prosi o potwierdzenie, że nie jesteś robotem. Zaloguj się raz na portal.librus.pl w przeglądarce i spróbuj ponownie."
+        )
+    }
+
     private fun pageError(body: String): String? = when {
+        "Sesja logowania wygasła" in body -> "Sesja logowania wygasła. Spróbuj jeszcze raz."
         "Upewnij się, że nie" in body || "Podany adres e-mail jest nieprawidłowy." in body ->
             "Nieprawidłowy e-mail lub hasło do Konta LIBRUS."
-        "Sesja logowania wygasła" in body -> "Sesja logowania wygasła. Spróbuj jeszcze raz."
-        "g-recaptcha" in body || "captchaValidate" in body ->
-            "Portal Librusa prosi o potwierdzenie, że nie jesteś robotem. Zaloguj się raz na portal.librus.pl w przeglądarce i spróbuj ponownie."
         else -> null
     }
 
@@ -155,6 +183,12 @@ class LibrusClient {
         const val MAX_STEPS = 10
         val CODE = Regex("""app://librus\?code=([^&?]+)""")
         val CSRF = Regex("""name="csrf-token" content="([A-Za-z0-9=+/\-_]+?)"""")
+        val INPUT = Regex("""<input [^>]*>""")
+        val INPUT_TYPE = Regex("""type="(.+?)"""")
+        val FORM = Regex("""<form [^>]*action="(.+?)"""")
+        val ERROR_BLOCK = Regex("""<[^>]+class="[^"]*(?:error|invalid|alert|danger)[^"]*"[^>]*>(.*?)</""", RegexOption.DOT_MATCHES_ALL)
+        val TAG = Regex("""<[^>]+>""")
+        val SPACES = Regex("""\s+""")
         val HIDDEN_INPUT = Regex("""<input [^>]*type="hidden"[^>]*>""")
         val INPUT_NAME = Regex("""name="(.+?)"""")
         val INPUT_VALUE = Regex("""value="(.*?)"""")

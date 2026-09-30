@@ -97,12 +97,11 @@ fun SettingsScreen(
         item { NotificationsSection(s, ::set, viewModel) }
         item { SyncSection(s, state, ::set, viewModel) }
         item { DataSection(s, ::set, viewModel) }
-        if (BuildConfig.DEBUG) {
-            item {
-                Section(stringResource(R.string.settings_developer)) {
-                    TextButton(onClick = onOpenStyle) { Text(stringResource(R.string.nav_style)) }
-                    TextButton(onClick = onOpenDiagnostics) { Text(stringResource(R.string.diag_title)) }
-                }
+        // Diagnostyka także w wersji release: awarie, synchronizacje i rekonesans są potrzebne na telefonie.
+        item {
+            Section(stringResource(R.string.settings_developer)) {
+                if (BuildConfig.DEBUG) TextButton(onClick = onOpenStyle) { Text(stringResource(R.string.nav_style)) }
+                TextButton(onClick = onOpenDiagnostics) { Text(stringResource(R.string.diag_title)) }
             }
         }
     }

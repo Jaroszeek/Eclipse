@@ -9,14 +9,18 @@ import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.ExistingWorkPolicy
 import androidx.work.NetworkType
 import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.OutOfQuotaPolicy
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import androidx.work.workDataOf
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.KSerializer
 import pl.eclipse.app.container
+import pl.eclipse.app.data.AppSettings
 import pl.eclipse.app.data.JSON
 import pl.eclipse.app.data.RecordEntity
 import pl.eclipse.app.data.RecordType
@@ -75,24 +79,31 @@ class SyncWorker(context: Context, params: WorkerParameters) : CoroutineWorker(c
         if (!manual && hour !in settings.syncFromHour until settings.syncToHour) return Result.success()
 
         val started = System.currentTimeMillis()
+        // Każde uruchomienie kończy się wpisem w sync_runs — także przy nieoczekiwanym błędzie i przerwaniu,
+        // inaczej ekran pierwszej synchronizacji czekałby w nieskończoność.
+        try {
+            sync(settings, started, manual)
+        } catch (e: CancellationException) {
+            withContext(NonCancellable) { record(started, false, settings.demoMode, "", "Synchronizacja została przerwana.") }
+            throw e
+        } catch (e: Throwable) {
+            record(started, false, settings.demoMode, "", describe(e))
+            afterFailure(manual)
+        }
+    }
+
+    private suspend fun sync(settings: AppSettings, started: Long, manual: Boolean): Result {
+        val demo = settings.demoMode
         val errors = mutableListOf<String>()
         val summary = mutableListOf<String>()
-        val source = container.dataSource(settings.demoMode)
-        if (!settings.demoMode) {
+        val source = container.dataSource(demo)
+        if (!demo) {
             val credentials = container.credentials.read()
             if (credentials == null) {
-                record(started, false, settings.demoMode, "", "Brak danych logowania — zaloguj się w aplikacji.")
+                record(started, false, false, "", "Brak danych logowania — zaloguj się w aplikacji.")
                 return Result.failure()
             }
-            try {
-                source.login(credentials.email, credentials.password)
-            } catch (e: LibrusException) {
-                record(started, false, false, "", e.message.orEmpty())
-                return afterFailure()
-            } catch (e: IOException) {
-                record(started, false, false, "", "Brak połączenia z Librusem (${e.javaClass.simpleName}).")
-                return afterFailure()
-            }
+            source.login(credentials.email, credentials.password)
         }
 
         val firstSync = db.records().countAll() == 0
@@ -117,8 +128,7 @@ class SyncWorker(context: Context, params: WorkerParameters) : CoroutineWorker(c
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
-            // Komunikaty spoza LibrusException mogą zawierać fragment odpowiedzi — zapisujemy tylko nazwę błędu.
-            errors += "$type: " + if (e is LibrusException) e.message else e.javaClass.simpleName
+            errors += "$type: " + describe(e)
             null
         }
 
@@ -148,11 +158,11 @@ class SyncWorker(context: Context, params: WorkerParameters) : CoroutineWorker(c
 
         db.records().purgeRemovedBefore(System.currentTimeMillis() - TimeUnit.DAYS.toMillis(REMOVED_KEEP_DAYS))
         val success = errors.isEmpty()
-        record(started, success, settings.demoMode, summary.joinToString(", "), errors.joinToString("\n"))
+        record(started, success, demo, summary.joinToString(", "), errors.joinToString("\n"))
 
         val outcome = SyncOutcome(firstSync, grades, events, lessons, notes, announcements, messages, lucky?.items?.values?.firstOrNull())
         container.notifier.afterSync(outcome, settings)
-        if (success) Result.success() else afterFailure()
+        return if (success) Result.success() else afterFailure(manual)
     }
 
     /** Zapis jednego rodzaju danych w transakcji, z wykrywaniem zmian (SPEC 4.4). */
@@ -190,13 +200,28 @@ class SyncWorker(context: Context, params: WorkerParameters) : CoroutineWorker(c
         db.syncRuns().insert(SyncRunEntity(0, started, System.currentTimeMillis(), success, demo, summary, errors))
     }
 
-    /** Po 3 nieudanych próbach z rzędu: jedno powiadomienie o problemie; WorkManager wydłuża odstępy (SPEC 4.3). */
-    private suspend fun afterFailure(): Result {
+    /**
+     * Opis błędu do `sync_runs`. Komunikaty spoza [LibrusException] mogą zawierać fragment odpowiedzi Librusa,
+     * więc zapisujemy tylko nazwę błędu i miejsce w kodzie.
+     */
+    private fun describe(e: Throwable): String = when (e) {
+        is LibrusException -> e.message.orEmpty()
+        is IOException -> "Brak połączenia z Librusem (${e.javaClass.simpleName})."
+        else -> "Błąd aplikacji: ${e.javaClass.simpleName}" +
+            e.stackTrace.firstOrNull { it.className.startsWith("pl.eclipse") }
+                ?.let { " (${it.className.substringAfterLast('.')}.${it.methodName}:${it.lineNumber})" }.orEmpty()
+    }
+
+    /**
+     * Po 3 nieudanych próbach z rzędu: jedno powiadomienie o problemie; WorkManager wydłuża odstępy (SPEC 4.3).
+     * Ręczna synchronizacja nie ponawia się sama — wynik widać od razu, a kolejną próbę uruchamia użytkownik.
+     */
+    private suspend fun afterFailure(manual: Boolean): Result {
         val recent = db.syncRuns().latestOnce(FAILURES_BEFORE_ALERT)
         if (recent.size == FAILURES_BEFORE_ALERT && recent.none { it.success }) {
             container.notifier.syncProblem(recent.first().errors)
         }
-        return if (runAttemptCount < MAX_RETRIES) Result.retry() else Result.failure()
+        return if (!manual && runAttemptCount < MAX_RETRIES) Result.retry() else Result.failure()
     }
 
     companion object {
@@ -219,12 +244,17 @@ class SyncWorker(context: Context, params: WorkerParameters) : CoroutineWorker(c
             WorkManager.getInstance(context).enqueueUniquePeriodicWork(PERIODIC, ExistingPeriodicWorkPolicy.UPDATE, request)
         }
 
-        fun syncNow(context: Context) {
+        /**
+         * Ręczna synchronizacja: od razu, bez warunku sieci — bez internetu kończy się szybko czytelnym błędem,
+         * zamiast czekać, aż Android uzna sieć za dostępną. [replace] zastępuje zadanie, które utknęło w kolejce.
+         */
+        fun syncNow(context: Context, replace: Boolean = false) {
             val request = OneTimeWorkRequestBuilder<SyncWorker>()
-                .setConstraints(network)
+                .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
                 .setInputData(workDataOf(KEY_MANUAL to true))
                 .build()
-            WorkManager.getInstance(context).enqueueUniqueWork(MANUAL, ExistingWorkPolicy.KEEP, request)
+            val policy = if (replace) ExistingWorkPolicy.REPLACE else ExistingWorkPolicy.KEEP
+            WorkManager.getInstance(context).enqueueUniqueWork(MANUAL, policy, request)
         }
 
         fun cancelAll(context: Context) {

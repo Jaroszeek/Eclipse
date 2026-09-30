@@ -5,11 +5,13 @@ import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
@@ -26,6 +28,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -44,7 +47,9 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import pl.eclipse.app.CrashLog
 import pl.eclipse.app.R
 import pl.eclipse.app.container
 import pl.eclipse.app.data.LoginError
@@ -145,23 +150,74 @@ private val LoginError.message
         LoginError.OTHER -> R.string.login_error_other
     }
 
-/** Po zalogowaniu: pierwsza synchronizacja z paskiem postępu (SPEC 12.9). */
+/**
+ * Po zalogowaniu: pierwsza synchronizacja z paskiem postępu (SPEC 12.9). Gdy się nie uda albo trwa za długo,
+ * ekran pokazuje przyczynę i wyjście: ponowną próbę albo wylogowanie.
+ */
 @Composable
-fun FirstSyncScreen() {
+fun FirstSyncScreen(
+    running: Boolean,
+    waiting: Boolean,
+    error: String?,
+    onStart: () -> Unit,
+    onRetry: () -> Unit,
+    onLogout: () -> Unit,
+) {
+    val context = LocalContext.current
+    // Zleca pobieranie od nowa, np. po wymuszonym zatrzymaniu aplikacji; gdy zadanie już czeka albo trwa, nic nie zmienia.
+    LaunchedEffect(Unit) { onStart() }
+    val busy = running || waiting
+    val failed = !busy && error != null
+    var slow by remember { mutableStateOf(false) }
+    LaunchedEffect(busy) {
+        slow = false
+        delay(SLOW_AFTER_MS)
+        slow = true
+    }
+    val crash = remember { CrashLog.read(context) }
+    val c = Eclipse.colors
     EclipseBackground {
-        Column(
-            Modifier.fillMaxSize().safeDrawingPadding().padding(32.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center,
-        ) {
-            EclipseDisc(coverage = 0.5f, size = 160.dp, showProgress = false)
-            Spacer(Modifier.height(24.dp))
-            Text(stringResource(R.string.first_sync), style = MaterialTheme.typography.titleLarge, color = Eclipse.colors.text, textAlign = TextAlign.Center)
-            Spacer(Modifier.height(16.dp))
-            LinearProgressIndicator(Modifier.fillMaxWidth().widthIn(max = 360.dp))
+        BoxWithConstraints(Modifier.fillMaxSize().safeDrawingPadding()) {
+            Column(
+                Modifier.fillMaxWidth().heightIn(min = maxHeight).verticalScroll(rememberScrollState()).padding(32.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center,
+            ) {
+                EclipseDisc(coverage = 0.5f, size = 160.dp, showProgress = false)
+                Spacer(Modifier.height(24.dp))
+                val title = when {
+                    failed -> R.string.first_sync_failed
+                    waiting && !running -> R.string.first_sync_waiting
+                    else -> R.string.first_sync
+                }
+                Text(stringResource(title), style = MaterialTheme.typography.titleLarge, color = c.text, textAlign = TextAlign.Center)
+                Spacer(Modifier.height(16.dp))
+                if (failed) {
+                    Text(error.orEmpty(), style = MaterialTheme.typography.bodyMedium, color = c.textSecondary, textAlign = TextAlign.Center)
+                } else {
+                    LinearProgressIndicator(Modifier.fillMaxWidth().widthIn(max = 360.dp))
+                    if (slow) {
+                        Spacer(Modifier.height(16.dp))
+                        Text(stringResource(R.string.first_sync_slow), style = MaterialTheme.typography.bodyMedium, color = c.textSecondary, textAlign = TextAlign.Center)
+                    }
+                }
+                if (failed || slow) {
+                    Spacer(Modifier.height(24.dp))
+                    PrimaryButton(stringResource(R.string.first_sync_retry), onRetry, Modifier.fillMaxWidth().widthIn(max = 360.dp))
+                    Spacer(Modifier.height(8.dp))
+                    SecondaryButton(stringResource(R.string.first_sync_logout), onLogout, Modifier.fillMaxWidth().widthIn(max = 360.dp))
+                    crash?.let {
+                        Spacer(Modifier.height(24.dp))
+                        Text(stringResource(R.string.crash_last), style = MaterialTheme.typography.labelLarge, color = c.textSecondary)
+                        Text(it, style = MaterialTheme.typography.bodySmall, color = c.textSecondary)
+                    }
+                }
+            }
         }
     }
 }
+
+private const val SLOW_AFTER_MS = 30_000L
 
 /** Krótki ekran z wyjaśnieniem przed prośbą o zgodę na powiadomienia (SPEC 9, Android 13+). */
 @Composable

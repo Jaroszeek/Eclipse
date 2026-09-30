@@ -12,6 +12,7 @@ import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import java.util.concurrent.TimeUnit
 
 class LibrusException(message: String, val kind: Kind = Kind.OTHER) : Exception(message) {
     /** Rodzaj błędu — ekran logowania pokazuje na jego podstawie komunikat po polsku. */
@@ -34,6 +35,7 @@ class LibrusClient {
     private val http = OkHttpClient.Builder()
         .cookieJar(cookieJar)
         .followRedirects(false) // przekierowania obsługujemy sami, żeby złapać app://librus?code=
+        .callTimeout(30, TimeUnit.SECONDS) // całe zapytanie razem z DNS — synchronizacja nie może zawisnąć
         .addInterceptor { chain ->
             chain.proceed(chain.request().newBuilder().header("User-Agent", USER_AGENT).build())
         }

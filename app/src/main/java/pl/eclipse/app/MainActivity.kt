@@ -14,6 +14,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import kotlinx.coroutines.launch
 import pl.eclipse.app.data.AppSettings
 import pl.eclipse.app.notify.Notifier
 import pl.eclipse.app.ui.EclipseRoot
@@ -42,6 +43,11 @@ class MainActivity : ComponentActivity() {
                 EclipseRoot(route)
             }
         }
+    }
+
+    override fun onStart() {
+        super.onStart()
+        container.scope.launch { container.account.syncIfStale() }
     }
 
     /** Aplikacja jest tylko po polsku — polskie zasady odmiany („2 dni”, „5 dni”) niezależnie od języka telefonu. */

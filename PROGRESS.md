@@ -50,6 +50,8 @@ Aktualizowane po każdym kroku. Szczegóły etapów: `SPEC.md`, sekcja 14.
 - [x] Ikona aplikacji (adaptacyjna + monochromatyczna, wektor) i ekran startowy (systemowy Android 12+, bez dodatkowej biblioteki)
 - [x] Podpisana wersja release (klucz w `~/.eclipse-signing/`, poza repozytorium; R8 włączony; release przetestowany na emulatorze — wszystkie ekrany bez błędów)
 - [x] Wydanie v1.0 na GitHubie z plikiem `Eclipse-1.0.apk` (prywatne repo) — https://github.com/Jaroszeek/Eclipse/releases/tag/v1.0
+- [x] Wydanie v1.1: naprawa zawieszonego ekranu pierwszej synchronizacji (zgłoszenie z telefonu: „Pobieram dane z Librusa…” bez końca, wymuszone zatrzymanie nie pomagało) — https://github.com/Jaroszeek/Eclipse/releases/tag/v1.1
+- [ ] Potwierdzenie na telefonie, że pierwsza synchronizacja w v1.1 kończy się danymi (albo zrzut ekranu z błędem)
 - [ ] Instalacja na telefonie przez USB (instrukcja w README; czeka na użytkownika)
 - [ ] Całodniowy test synchronizacji w tle i powiadomień z godzinami ciszy (czeka na użytkownika)
 - [ ] Kryteria akceptacji Etapu 3
@@ -79,6 +81,14 @@ Aktualizowane po każdym kroku. Szczegóły etapów: `SPEC.md`, sekcja 14.
 - 2026-09-30: Etap 3 — klucz release wygenerowany skryptem z losowym hasłem zapisanym wyłącznie w `~/.eclipse-signing/keystore.properties` (hasło nie pojawiło się w czacie ani w logach). R8 w AGP 9 wymaga flagi `android.r8.gradual.support=true`.
 - 2026-09-30: trasy z powiadomień jako jednorazowe żądania (`RouteRequest`) — wcześniej drugie kliknięcie tej samej trasy przy otwartej aplikacji nic nie robiło.
 - 2026-09-30: `LibrusClient` ma własny prosty magazyn ciasteczek w pamięci; zapisywanie sesji dojdzie w `LibrusSource`.
+- 2026-09-30: v1.1 — pierwsza synchronizacja nie może już utknąć bez wyjścia:
+  - każde uruchomienie `SyncWorker` kończy się wpisem w `sync_runs`, także przy nieoczekiwanym błędzie (opis: nazwa błędu i miejsce w kodzie, bez treści) i przy przerwaniu;
+  - ręczna synchronizacja („Odśwież”, pierwsza po zalogowaniu, przy otwarciu) startuje od razu jako zadanie pilne (expedited), bez warunku sieci — bez internetu kończy się szybko błędem „Brak połączenia”; nie ponawia się sama. Okresowa zostaje z warunkiem sieci i ponawianiem;
+  - ekran pierwszej synchronizacji pokazuje stan (czeka / pobiera / błąd z przyczyną); przy błędzie albo po 30 s — „Spróbuj ponownie” (zastępuje zadanie w kolejce) i „Wyloguj się”. Zostaje do pierwszej udanej synchronizacji, a po nieudanej — dopóki nie ma żadnych danych;
+  - limit 30 s na całe zapytanie do Librusa (`callTimeout`, razem z DNS);
+  - synchronizacja przy otwarciu aplikacji, gdy ostatnia próba była ponad godzinę temu (SPEC 4.3), przeniesiona z ekranu Diagnostyka do `MainActivity.onStart` — działała tylko po wejściu w Diagnostykę;
+  - ostatnia awaria aplikacji zapisywana w pliku (nazwy klas i miejsca w kodzie, bez komunikatów) i pokazywana w Diagnostyce oraz na ekranie pierwszej synchronizacji — na telefonie nie ma Logcata;
+  - R8 bez zaciemniania nazw (`app/src/main/keepRules/eclipse.keep`), żeby opisy błędów z telefonu były czytelne. Numery linii R8 przenumerowuje — dokładne miejsce: `retrace` z `mapping.txt` z builda tego samego commita.
 - 2026-09-29: kod trafia do prywatnego repozytorium na GitHubie (konto Jaroszeek), autor commitów: Jaroszek.
 
 ## Otwarte kwestie
@@ -87,9 +97,10 @@ Z `SPEC.md`, sekcja 2:
 2. Ile procent liczy się jedynka (domyślnie 0%) i czy plusy i minusy coś zmieniają (domyślnie nie)?
 3. Przy ocenach punktowych: średnia z procentów czy suma punktów? (porównać z procentem z Librusa)
 4. ~~Wersja Androida~~ — Android 16.
-5. ~~Login e-mailem czy loginem Synergii~~ — loginem Synergii.
+5. ~~Login e-mailem czy loginem Synergii~~ — e-mailem Konta LIBRUS (zmiana 2026-09-30, patrz SPEC 4.1).
 
 ## Znane problemy
+- v1.0 na telefonie: pierwsza synchronizacja zawisała bez wpisu w `sync_runs`. Dokładna przyczyna nieustalona. Na emulatorze wersja release działa, również z prawdziwym logowaniem do portalu (błędne dane → komunikat, brak internetu → komunikat). Podejrzane: zadanie czekające na warunek sieci albo przerwane bez wpisu. v1.1 usuwa obie drogi i pokazuje stan — czekam na wynik z telefonu.
 - Wiadomości (wiadomosci.librus.pl) jeszcze niepodłączone — osobny serwis z własnym logowaniem; `LibrusSource.messages()` zwraca pustą listę.
 - Zadania domowe: `HomeWorkAssignments` puste w szkole użytkownika — mapowanie dopiero po pierwszym wpisie.
 - Uwagi: znaczenie `Positive` (1 = pozytywna, 0 = negatywna) do potwierdzenia.

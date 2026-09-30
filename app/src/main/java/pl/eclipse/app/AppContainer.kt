@@ -22,6 +22,8 @@ import kotlinx.coroutines.launch
 import pl.eclipse.core.source.DataSource
 import pl.eclipse.core.source.demo.DemoSource
 import pl.eclipse.core.source.librus.LibrusSource
+import java.io.File
+import java.time.Instant
 
 /** Ręczne składanie zależności (bez Hilta) — jedno miejsce, gdzie powstają bazy i źródła danych. */
 class AppContainer(context: Context) {
@@ -50,6 +52,7 @@ class EclipseApp : Application() {
 
     override fun onCreate() {
         super.onCreate()
+        CrashLog.install(this)
         container = AppContainer(this)
         container.notifier.createChannels()
         container.scope.launch {
@@ -63,3 +66,29 @@ class EclipseApp : Application() {
 }
 
 val Context.container: AppContainer get() = (applicationContext as EclipseApp).container
+
+/**
+ * Ostatnia awaria aplikacji — widoczna na ekranie, bo na telefonie nie ma Logcata. Zapisujemy tylko nazwy klas
+ * i miejsca w kodzie, bez komunikatów błędów, które mogą zawierać dane z Librusa.
+ */
+object CrashLog {
+    private const val FILE = "last-crash.txt"
+
+    fun install(context: Context) {
+        val file = File(context.filesDir, FILE)
+        val default = Thread.getDefaultUncaughtExceptionHandler()
+        Thread.setDefaultUncaughtExceptionHandler { thread, e ->
+            runCatching { file.writeText(report(e)) }
+            default?.uncaughtException(thread, e)
+        }
+    }
+
+    fun read(context: Context): String? = File(context.filesDir, FILE).takeIf { it.exists() }?.readText()
+
+    private fun report(e: Throwable) = "${Instant.now()} (${BuildConfig.VERSION_NAME})\n" +
+        generateSequence(e) { it.cause }.take(3).joinToString("\n") { t ->
+            // Początek śladu i miejsca w kodzie Eclipse — reszta to zwykle wnętrze Androida i bibliotek.
+            val frames = t.stackTrace.take(4) + t.stackTrace.drop(4).filter { it.className.startsWith("pl.eclipse") }.take(6)
+            t.javaClass.name + frames.joinToString("") { "\n  $it" }
+        }
+}

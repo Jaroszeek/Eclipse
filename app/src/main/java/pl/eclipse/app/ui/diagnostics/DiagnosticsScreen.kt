@@ -28,6 +28,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -35,6 +36,7 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import pl.eclipse.app.CrashLog
 import pl.eclipse.app.R
 import java.time.Instant
 import java.time.ZoneId
@@ -48,6 +50,8 @@ private val TIME = DateTimeFormatter.ofPattern("dd.MM HH:mm").withZone(ZoneId.of
 fun DiagnosticsScreen(onOpenRecon: () -> Unit, modifier: Modifier = Modifier, viewModel: DiagnosticsViewModel = viewModel()) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val permission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {}
+    val context = LocalContext.current
+    val crash = remember { CrashLog.read(context) }
 
     Column(
         modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
@@ -97,6 +101,11 @@ fun DiagnosticsScreen(onOpenRecon: () -> Unit, modifier: Modifier = Modifier, vi
             Text("${TIME.format(Instant.ofEpochMilli(run.startedAt))} — $status", style = MaterialTheme.typography.labelLarge)
             if (run.summary.isNotBlank()) Text(run.summary, style = MaterialTheme.typography.bodySmall)
             if (run.errors.isNotBlank()) Text(run.errors, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
+        }
+        crash?.let {
+            HorizontalDivider()
+            Text(stringResource(R.string.crash_last), style = MaterialTheme.typography.titleMedium)
+            Text(it, style = MaterialTheme.typography.bodySmall)
         }
 
         HorizontalDivider()

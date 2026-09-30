@@ -5,7 +5,7 @@ Prywatny planer szkolny na Androida na danych z Librus Synergia: plan lekcji ze 
 Aplikacja jest prywatna i nie trafia do żadnego sklepu.
 
 ## Pobranie gotowej wersji
-Gotowy plik `.apk` jest w wydaniach repozytorium: **GitHub → Jaroszeek/Eclipse → Releases** (np. https://github.com/Jaroszeek/Eclipse/releases/tag/v1.0). Repozytorium jest prywatne, więc na telefonie trzeba być zalogowanym na GitHubie w przeglądarce. Instalacja — patrz niżej, „Bez kabla”.
+Gotowy plik `.apk` jest w wydaniach repozytorium: **GitHub → Jaroszeek/Eclipse → Releases** (najnowsza: https://github.com/Jaroszeek/Eclipse/releases/latest). Repozytorium jest prywatne, więc na telefonie trzeba być zalogowanym na GitHubie w przeglądarce. Instalacja — patrz niżej, „Bez kabla”.
 
 ## Wymagania
 - Android Studio 2026.1 lub nowsze (z dołączonym JDK 21)

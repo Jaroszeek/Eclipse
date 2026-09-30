@@ -25,6 +25,10 @@ data class ShellState(
     val askPermission: Boolean = false,
     val settings: AppSettings = AppSettings(),
     val syncRunning: Boolean = false,
+    /** Ręczna synchronizacja czeka w kolejce i jeszcze nie ruszyła. */
+    val syncWaiting: Boolean = false,
+    /** Błędy ostatniej synchronizacji, jeśli się nie udała. */
+    val lastSyncError: String? = null,
     val syncFailing: Boolean = false,
     val lastSyncAt: Long? = null,
     val newGrades: Int = 0,
@@ -41,18 +45,21 @@ class ShellViewModel(application: Application) : AndroidViewModel(application) {
         container.settings.settings,
         container.snapshot,
         container.user,
-        combine(container.sync.running, container.visits.observe("grades")) { running, gradesVisit -> running to gradesVisit },
-    ) { hasCredentials, settings, snapshot, user, (running, gradesVisit) ->
+        combine(container.sync.running, container.sync.waiting, container.visits.observe("grades"), ::Triple),
+    ) { hasCredentials, settings, snapshot, user, (running, waiting, gradesVisit) ->
         val loggedIn = hasCredentials || settings.demoMode
         val insights = Insights(snapshot, user, settings)
         val read = user.keys(Flags.READ)
         ShellState(
             ready = true,
             loggedIn = loggedIn,
-            firstSyncPending = loggedIn && snapshot.lastSync == null,
+            // Do pierwszej udanej synchronizacji; po nieudanej — dopóki nie ma żadnych danych (ekran pokazuje błąd).
+            firstSyncPending = loggedIn && snapshot.lastSuccessAt == null && (snapshot.lastSync == null || snapshot.isEmpty),
             askPermission = loggedIn && !settings.permissionAsked && !notificationsGranted(),
             settings = settings,
             syncRunning = running,
+            syncWaiting = waiting,
+            lastSyncError = snapshot.lastSync?.takeIf { !it.success }?.errors,
             // po 3 nieudanych próbach z rzędu — baner (SPEC 4.3)
             syncFailing = snapshot.recentRuns.size >= 3 && snapshot.recentRuns.take(3).none { it.success },
             lastSyncAt = snapshot.lastSuccessAt,
@@ -65,6 +72,13 @@ class ShellViewModel(application: Application) : AndroidViewModel(application) {
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), ShellState())
 
     fun syncNow() = container.sync.syncNow()
+
+    /** „Spróbuj ponownie” na ekranie pierwszej synchronizacji: zastępuje zadanie, które mogło utknąć w kolejce. */
+    fun retrySync() = container.sync.syncNow(replace = true)
+
+    fun logout() {
+        viewModelScope.launch { container.account.logout() }
+    }
 
     fun permissionAsked() {
         viewModelScope.launch { container.settings.update { it.copy(permissionAsked = true) } }

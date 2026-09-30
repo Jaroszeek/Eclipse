@@ -395,6 +395,12 @@
     <string name="login_error_maintenance">Portal Librusa ma przerwę techniczną. Spróbuj później.</string>
     <string name="login_error_other">Nie udało się zalogować do Librusa. Spróbuj ponownie, a jeśli błąd wróci — sprawdź Diagnostykę w ustawieniach.</string>
     <string name="first_sync">Pobieram dane z Librusa…</string>
+    <string name="first_sync_waiting">Czekam na rozpoczęcie pobierania…</string>
+    <string name="first_sync_failed">Nie udało się pobrać danych z Librusa</string>
+    <string name="first_sync_slow">To trwa dłużej niż zwykle. Sprawdź internet i spróbuj ponownie.</string>
+    <string name="first_sync_retry">Spróbuj ponownie</string>
+    <string name="first_sync_logout">Wyloguj się</string>
+    <string name="crash_last">Ostatnia awaria aplikacji</string>
     <string name="permission_title">Powiadomienia</string>
     <string name="permission_body">Eclipse powie Ci o nowej ocenie, przeniesionym sprawdzianie i zmianie w planie na dziś lub jutro, a dzień przed sprawdzianem przypomni o nim. Powiadomienia tworzy sama aplikacja — nic nie jest wysyłane poza Librusa. Każdy rodzaj możesz wyłączyć w ustawieniach.</string>
     <string name="permission_allow">Włącz powiadomienia</string>

@@ -145,7 +145,10 @@ fun EclipseRoot(initialRoute: RouteRequest?, viewModel: ShellViewModel = viewMod
     when {
         !state.ready -> EclipseBackground()
         !state.loggedIn -> LoginScreen()
-        state.firstSyncPending -> FirstSyncScreen()
+        state.firstSyncPending -> FirstSyncScreen(
+            state.syncRunning, state.syncWaiting, state.lastSyncError,
+            onStart = viewModel::syncNow, onRetry = viewModel::retrySync, onLogout = viewModel::logout,
+        )
         state.askPermission -> NotificationPermissionScreen(onDone = viewModel::permissionAsked)
         else -> MainShell(state, viewModel, initialRoute)
     }

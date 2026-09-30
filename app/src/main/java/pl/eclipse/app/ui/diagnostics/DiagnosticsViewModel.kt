@@ -17,7 +17,6 @@ import pl.eclipse.app.container
 import pl.eclipse.app.data.RecordType
 import pl.eclipse.app.data.SyncRunEntity
 import pl.eclipse.app.sync.SyncWorker
-import java.util.concurrent.TimeUnit
 
 data class DiagnosticsState(
     val hasCredentials: Boolean = false,
@@ -60,15 +59,6 @@ class DiagnosticsViewModel(application: Application) : AndroidViewModel(applicat
             message = local.message,
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), DiagnosticsState())
-
-    init {
-        // Przy otwarciu aplikacji: synchronizuj, jeśli dane mają ponad godzinę (SPEC 4.3).
-        viewModelScope.launch {
-            val ready = container.settings.current().demoMode || container.credentials.read() != null
-            val last = container.database.syncRuns().latestOnce(1).firstOrNull()?.startedAt ?: 0
-            if (ready && System.currentTimeMillis() - last > TimeUnit.HOURS.toMillis(1)) SyncWorker.syncNow(getApplication())
-        }
-    }
 
     fun login(email: String, password: String) {
         local.update { it.copy(loggingIn = true, message = null) }

@@ -6,6 +6,7 @@ import androidx.work.WorkManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 import pl.eclipse.app.security.CredentialStore
@@ -14,6 +15,7 @@ import pl.eclipse.app.sync.SyncWorker
 import pl.eclipse.core.source.librus.LibrusException
 import pl.eclipse.core.source.librus.LibrusSource
 import java.io.IOException
+import java.util.concurrent.TimeUnit
 
 /** Powód nieudanego logowania — ekran pokazuje na jego podstawie komunikat z `strings.xml` (SPEC 12.9). */
 enum class LoginError { CREDENTIALS, NETWORK, SERVER, CAPTCHA, MAINTENANCE, OTHER }
@@ -63,6 +65,13 @@ class Account(
         settings.update { it.copy(demoMode = false) }
     }
 
+    /** Przy otwarciu aplikacji: synchronizuj, jeśli ostatnia próba była ponad godzinę temu (SPEC 4.3). */
+    suspend fun syncIfStale() {
+        val ready = settings.current().demoMode || hasCredentials.first()
+        val last = db.syncRuns().latestOnce(1).firstOrNull()?.startedAt ?: 0
+        if (ready && System.currentTimeMillis() - last > TimeUnit.HOURS.toMillis(1)) SyncWorker.syncNow(context)
+    }
+
     /** „Wyczyść dane z Librusa i pobierz od nowa” — dane użytkownika zostają. */
     suspend fun refetch() {
         db.records().clear()
@@ -87,8 +96,12 @@ class SyncStatus(private val context: Context) {
         work.getWorkInfosForUniqueWorkFlow(SyncWorker.MANUAL),
     ) { periodic, manual -> (periodic + manual).any { it.state == WorkInfo.State.RUNNING } }
 
+    /** Ręczna synchronizacja czeka w kolejce WorkManagera i jeszcze nie ruszyła. */
+    val waiting: Flow<Boolean> =
+        work.getWorkInfosForUniqueWorkFlow(SyncWorker.MANUAL).map { list -> list.any { it.state == WorkInfo.State.ENQUEUED } }
+
     val periodicScheduled: Flow<Boolean> =
         work.getWorkInfosForUniqueWorkFlow(SyncWorker.PERIODIC).map { list -> list.any { !it.state.isFinished } }
 
-    fun syncNow() = SyncWorker.syncNow(context)
+    fun syncNow(replace: Boolean = false) = SyncWorker.syncNow(context, replace)
 }

@@ -1,0 +1,5 @@
+# Prywatna aplikacja: czytelne nazwy klas i metod w opisach błędów na telefonie są ważniejsze
+# niż zaciemnianie kodu. R8 dalej usuwa nieużywany kod i optymalizuje. Numery linii R8 przenumerowuje —
+# dokładne miejsce odtwarza `retrace` z plikiem mapping.txt z builda tego samego commita.
+-dontobfuscate
+-keepattributes SourceFile,LineNumberTable

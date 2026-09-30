@@ -1,21 +1,28 @@
+@file:UseSerializers(LocalDateSerializer::class, LocalTimeSerializer::class, InstantSerializer::class)
+
 package pl.eclipse.core.model
 
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.UseSerializers
 import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalTime
 
 // Modele domenowe (SPEC 5). `sourceKey` to stabilny klucz rekordu z Librusa (SPEC 4.4).
 
+@Serializable
 data class StudentInfo(
     val schoolYearStart: LocalDate,
     val firstSemesterEnd: LocalDate,
     val schoolYearEnd: LocalDate,
 )
 
+@Serializable
 data class Subject(val sourceKey: String, val name: String, val short: String)
 
 enum class LessonStatus { NORMAL, SUBSTITUTION, CANCELLED }
 
+@Serializable
 data class Lesson(
     val sourceKey: String,
     val date: LocalDate,
@@ -31,6 +38,7 @@ data class Lesson(
 
 enum class EventType { TEST, QUIZ, TRIP, DAY_OFF, OTHER }
 
+@Serializable
 data class SchoolEvent(
     val sourceKey: String,
     val date: LocalDate,
@@ -42,6 +50,7 @@ data class SchoolEvent(
     val description: String,
 )
 
+@Serializable
 data class Homework(
     val sourceKey: String,
     val subjectKey: String?,
@@ -53,6 +62,7 @@ data class Homework(
 
 enum class GradeKind { REGULAR, POINT, PROPOSED, SEMESTER, FINAL, DESCRIPTIVE }
 
+@Serializable
 data class Grade(
     val sourceKey: String,
     val subjectKey: String,
@@ -71,6 +81,7 @@ data class Grade(
 
 enum class AttendanceCategory { PRESENT, ABSENT, ABSENT_EXCUSED, LATE, RELEASED, SCHOOL_DUTY, OTHER }
 
+@Serializable
 data class Attendance(
     val sourceKey: String,
     val date: LocalDate,
@@ -83,6 +94,7 @@ data class Attendance(
 
 enum class NoteKind { POSITIVE, NEGATIVE, NEUTRAL }
 
+@Serializable
 data class Note(
     val sourceKey: String,
     val date: LocalDate,
@@ -92,6 +104,7 @@ data class Note(
     val text: String,
 )
 
+@Serializable
 data class Announcement(
     val sourceKey: String,
     val date: LocalDate,
@@ -100,6 +113,7 @@ data class Announcement(
     val content: String,
 )
 
+@Serializable
 data class Message(
     val sourceKey: String,
     val sentAt: Instant,
@@ -108,4 +122,5 @@ data class Message(
     val content: String?,
 )
 
+@Serializable
 data class LuckyNumber(val date: LocalDate, val number: Int)

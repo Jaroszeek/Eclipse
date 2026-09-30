@@ -25,7 +25,7 @@ Aktualizowane po każdym kroku. Szczegóły etapów: `SPEC.md`, sekcja 14.
 - [x] 1b: `DemoSource` (uczeń technikum, dzwonki jak w szkole użytkownika, rok szkolny demo zaczyna się 10 tygodni przed dziś; scenariusze Important: chemia < 40%, fizyka 40–50%, historia ze spadkiem, biologia z frekwencją ok. 53%, świeża jedynka z matematyki, geografia 53%)
 - [x] 1b: obliczenia z testami (sekcje 6–8): `core/calc/Grades.kt`, `Attendance.kt`, `Important.kt`; 24 testy w `:core:test`
 - [x] 1b: `LibrusSource` według mapowania (test na zmyślonych odpowiedziach o strukturze z rekonesansu; przy 401 jedno ponowne logowanie)
-- [ ] 1b: Room i repozytoria
+- [x] 1b: Room i repozytoria (`app/data`: jedna tabela `records` na dane z Librusa jako JSON modeli z `:core` + tabele danych użytkownika; `SettingsStore` w DataStore; `AppContainer`)
 - [ ] 1b: `SyncWorker` z wykrywaniem zmian
 - [ ] 1b: magazyn danych logowania (DataStore + Tink)
 - [ ] 1b: powiadomienia lokalne
@@ -63,6 +63,7 @@ Aktualizowane po każdym kroku. Szczegóły etapów: `SPEC.md`, sekcja 14.
 - 2026-09-30: mapowanie z `docs/librus-rekonesans.md` zaakceptowane; „uroczystość nieobecność” nie liczy się do limitu nieobecności.
 - 2026-09-30: obliczenia — samodzielne „+” i „−” liczą się tylko, gdy mają własną wartość w tabeli symboli (to jest przełącznik z SPEC 12.8). Procent z opisu oceny pominięty (rekonesans: opisy nie zawierają procentów). Ustawienie „poprawy” (licz obie / tylko poprawę / lepszą) odłożone — Librus nie pokazał powiązania oceny z poprawą; na razie liczone są obie, a ręczne „poprawiona / pomiń” działa w Important.
 - 2026-09-30: reguła „zagrożenie od nauczyciela” pominięta — w API nie ma takiej informacji; zostaje „proponowana ocena 1”.
+- 2026-09-30: baza — dane z Librusa w jednej tabeli `records` (typ, klucz, JSON, czasy zmian) zamiast osobnej tabeli na każdy rodzaj: jedno miejsce wykrywania zmian, mniej kodu; danych jest mało, więc filtrujemy w pamięci. Dane użytkownika w osobnych tabelach. Ustawienia jako jeden JSON w DataStore.
 - 2026-09-30: `LibrusClient` ma własny prosty magazyn ciasteczek w pamięci; zapisywanie sesji dojdzie w `LibrusSource`.
 - 2026-09-29: kod trafia do prywatnego repozytorium na GitHubie (konto Jaroszeek), autor commitów: Jaroszek.
 

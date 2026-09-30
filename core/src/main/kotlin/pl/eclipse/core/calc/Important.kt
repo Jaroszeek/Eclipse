@@ -1,5 +1,6 @@
 package pl.eclipse.core.calc
 
+import kotlinx.serialization.Serializable
 import pl.eclipse.core.model.EventType
 import pl.eclipse.core.model.Grade
 import pl.eclipse.core.model.GradeKind
@@ -23,6 +24,7 @@ enum class WarningRule(val level: WarningLevel) {
     UPCOMING_TEST(WarningLevel.WARNING),
 }
 
+@Serializable
 data class ImportantSettings(
     val justAbove3Max: Double = 53.0,
     val freshDays: Long = 14,

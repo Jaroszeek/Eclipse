@@ -1,5 +1,6 @@
 package pl.eclipse.core.calc
 
+import kotlinx.serialization.Serializable
 import pl.eclipse.core.model.Grade
 import pl.eclipse.core.model.GradeKind
 import java.time.LocalDate
@@ -14,6 +15,7 @@ enum class AverageMethod { AUTO, MEAN_PERCENT, POINTS_SUM }
 
 enum class Period { FIRST, SECOND, YEAR }
 
+@Serializable
 data class GradingRules(
     /** Tabela przeliczeń: ocena → % (SPEC 6.2). */
     val table: Map<Int, Double> = mapOf(6 to 100.0, 5 to 90.0, 4 to 75.0, 3 to 50.0, 2 to 40.0, 1 to 0.0),

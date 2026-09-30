@@ -3,6 +3,7 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 // Czysty Kotlin/JVM — bez zależności od Androida, żeby ten sam kod posłużył później wersji na komputer.
 plugins {
     alias(libs.plugins.kotlin.jvm)
+    alias(libs.plugins.kotlin.serialization)
 }
 
 java {
@@ -16,7 +17,7 @@ kotlin {
 
 dependencies {
     implementation(libs.okhttp)
-    implementation(libs.kotlinx.serialization.json)
+    api(libs.kotlinx.serialization.json)
     testImplementation(platform(libs.junit.bom))
     testImplementation(kotlin("test"))
     testRuntimeOnly(libs.junit.platform.launcher)

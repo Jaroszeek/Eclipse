@@ -35,6 +35,8 @@ object Recon {
                 return@buildString
             }
             appendLine("Logowanie: OK")
+            appendLine("Odpowiedź na logowanie, klucze: ${client.loginResponseKeys}; goTo: ${client.goTo?.substringBefore('?')}")
+            if (!gatewayWorks(client)) return@buildString
 
             val monday = today.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
             for (resource in GATEWAY_RESOURCES + "Timetables?weekStart=$monday") {
@@ -43,6 +45,42 @@ object Recon {
             call("Wiadomości: wejście przez Synergię") { client.fetch("https://synergia.librus.pl/wiadomosci3") }
             call("Wiadomości: inbox/messages") { client.fetch("https://wiadomosci.librus.pl/api/inbox/messages?page=1&limit=10") }
         }
+
+    /** Sprawdza, czy dziennik odpowiada; jeśli nie, próbuje znanych sposobów dokończenia logowania. */
+    private fun StringBuilder.gatewayWorks(client: LibrusClient): Boolean {
+        val attempts = listOf<Pair<String, () -> Unit>>(
+            "bez dodatkowych kroków" to {},
+            "przejście pod goTo" to { client.goTo?.let { client.fetch(client.apiUrl(it)) } },
+            "strona ucznia" to { page(client, "https://synergia.librus.pl/uczen/index") },
+            "strona przeniesienia z portalu" to { page(client, "https://synergia.librus.pl/loguj/przenies") },
+        )
+        for ((name, step) in attempts) {
+            val before = client.trace.size
+            try {
+                step()
+                Thread.sleep(PAUSE_MS)
+                val (code, _) = client.gateway("Me")
+                appendLine("\nPróba „$name”: gateway Me → HTTP $code")
+                client.trace.drop(before).forEach { appendLine("  $it") }
+                if (code in 200..299) {
+                    appendLine("Ciasteczka: ${client.cookieNames()}")
+                    return true
+                }
+            } catch (e: IOException) {
+                appendLine("\nPróba „$name”: błąd połączenia (${e.javaClass.simpleName})")
+            }
+        }
+        appendLine("\nDziennik nie odpowiada. Przebieg logowania:")
+        client.trace.take(12).forEach { appendLine("  $it") }
+        appendLine("Ciasteczka: ${client.cookieNames()}")
+        return false
+    }
+
+    private fun StringBuilder.page(client: LibrusClient, url: String) {
+        val (code, body) = client.fetch(url)
+        val title = TITLE.find(body)?.groupValues?.get(1)?.trim()?.take(80)
+        appendLine("Strona $url → HTTP $code, ${body.length} znaków, tytuł: $title")
+    }
 
     private fun StringBuilder.call(name: String, request: () -> Pair<Int, String>) {
         Thread.sleep(PAUSE_MS) // zapytania po kolei, z przerwą — szanujemy serwery Librusa
@@ -164,6 +202,7 @@ private fun sampleOf(v: JsonElement): JsonElement? = when (v) {
     else -> null
 }
 
+private val TITLE = Regex("""<title>(.*?)</title>""", setOf(RegexOption.IGNORE_CASE, RegexOption.DOT_MATCHES_ALL))
 private const val PAUSE_MS = 400L
 private const val MAX_VALUES = 25
 private val SKIPPED_KEYS = setOf("Resources", "Url")

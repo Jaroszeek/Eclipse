@@ -15,6 +15,7 @@ Aktualizowane po każdym kroku. Szczegóły etapów: `SPEC.md`, sekcja 14.
 ## Etap 1 — logika i dane
 - [x] 1a: rekonesans w aplikacji: ekran logowania + raport z przyciskiem „Kopiuj raport” (logowanie sprawdzone na emulatorze zmyślonym loginem — Librus odpowiada „Nieprawidłowy login i/lub hasło”)
 - [ ] 1a: użytkownik uruchamia rekonesans na telefonie i wkleja raport
+  - 2026-09-30, próba 1: logowanie OK, ale każdy zasób gateway → 401 „Request is denied”. Wersja 2 rekonesansu pokazuje przebieg logowania i próbuje dokończyć sesję (goTo, strona ucznia, /loguj/przenies).
 - [ ] 1a: `docs/librus-rekonesans.md` i akceptacja mapowania
 - [ ] 1b: modele i `DataSource`
 - [ ] 1b: `DemoSource`

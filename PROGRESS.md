@@ -14,11 +14,13 @@ Aktualizowane po każdym kroku. Szczegóły etapów: `SPEC.md`, sekcja 14.
 
 ## Etap 1 — logika i dane
 - [x] 1a: rekonesans w aplikacji: ekran logowania + raport z przyciskiem „Kopiuj raport” (logowanie sprawdzone na emulatorze zmyślonym loginem — Librus odpowiada „Nieprawidłowy login i/lub hasło”)
-- [ ] 1a: użytkownik uruchamia rekonesans na telefonie i wkleja raport
+- [x] 1a: użytkownik uruchamia rekonesans na telefonie i wkleja raport
+  - 2026-09-30, próba 5: logowanie e-mailem działa, wszystkie zasoby API 2.0 odpowiadają (poza `TeacherFreeDays` — 403, niepotrzebne).
   - 2026-09-30, próba 1: logowanie OK, ale każdy zasób gateway → 401 „Request is denied”. Wersja 2 rekonesansu pokazuje przebieg logowania i próbuje dokończyć sesję (goTo, strona ucznia, /loguj/przenies).
   - Próba 3: po poprawce Synergia i tak odsyła do portalu (konto połączone z Kontem LIBRUS). Decyzja użytkownika: logowanie e-mailem przez Konto LIBRUS (SPEC 4.1 zaktualizowana). Wersja 4 sprawdzona na emulatorze zmyślonym e-mailem: portal odpowiada, błędne dane dają czytelny komunikat.
   - Próba 2: logowanie każe iść pod goTo = /OAuth/Authorization/2FA (krok logowania, nie weryfikacja dwuetapowa); wejście od razu pod Grant odsyła do portalu. Gateway nadal 401. Wersja 3: logowanie idzie pod goTo, rekonesans sprawdza też strony HTML dziennika (plan B z SPEC 4.1).
-- [ ] 1a: `docs/librus-rekonesans.md` i akceptacja mapowania
+- [x] 1a: `docs/librus-rekonesans.md`
+- [ ] 1a: akceptacja mapowania przez użytkownika
 - [ ] 1b: modele i `DataSource`
 - [ ] 1b: `DemoSource`
 - [ ] 1b: obliczenia z testami (sekcje 6–8)

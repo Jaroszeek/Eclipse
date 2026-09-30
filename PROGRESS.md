@@ -10,7 +10,7 @@ Aktualizowane po każdym kroku. Szczegóły etapów: `SPEC.md`, sekcja 14.
 - [x] `PROGRESS.md`, szkic `README.md`
 - [x] Repozytorium git i pierwszy commit
 - [ ] Prywatne repozytorium na GitHubie (Jaroszeek/Eclipse) i wysłanie kodu
-- [ ] Pusta aplikacja uruchomiona na emulatorze albo telefonie
+- [x] Pusta aplikacja uruchomiona na emulatorze („gympixel”, Android 15)
 - [ ] Użytkownik utworzył `librus-dev.properties`
 
 ## Etap 1 — logika i dane
@@ -65,4 +65,4 @@ Z `SPEC.md`, sekcja 2:
 5. ~~Login e-mailem czy loginem Synergii~~ — loginem Synergii.
 
 ## Znane problemy
-- Brak.
+- Emulator „gympixel” ma wyłączoną grafikę sprzętową (`hw.gpu.enabled = no`) i startuje bardzo wolno. Z opcją `-gpu host` Android wstaje w ok. 20 s. Stała poprawka: Device Manager → gympixel → Edit → Graphics: Hardware.

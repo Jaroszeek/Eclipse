@@ -24,7 +24,7 @@ Aktualizowane po każdym kroku. Szczegóły etapów: `SPEC.md`, sekcja 14.
 - [x] 1b: modele i `DataSource` (`core/model/Models.kt`, `core/source/DataSource.kt`; funkcje blokujące, wołane w tle)
 - [x] 1b: `DemoSource` (uczeń technikum, dzwonki jak w szkole użytkownika, rok szkolny demo zaczyna się 10 tygodni przed dziś; scenariusze Important: chemia < 40%, fizyka 40–50%, historia ze spadkiem, biologia z frekwencją ok. 53%, świeża jedynka z matematyki, geografia 53%)
 - [x] 1b: obliczenia z testami (sekcje 6–8): `core/calc/Grades.kt`, `Attendance.kt`, `Important.kt`; 24 testy w `:core:test`
-- [ ] 1b: `LibrusSource` według mapowania
+- [x] 1b: `LibrusSource` według mapowania (test na zmyślonych odpowiedziach o strukturze z rekonesansu; przy 401 jedno ponowne logowanie)
 - [ ] 1b: Room i repozytoria
 - [ ] 1b: `SyncWorker` z wykrywaniem zmian
 - [ ] 1b: magazyn danych logowania (DataStore + Tink)
@@ -75,4 +75,7 @@ Z `SPEC.md`, sekcja 2:
 5. ~~Login e-mailem czy loginem Synergii~~ — loginem Synergii.
 
 ## Znane problemy
+- Wiadomości (wiadomosci.librus.pl) jeszcze niepodłączone — osobny serwis z własnym logowaniem; `LibrusSource.messages()` zwraca pustą listę.
+- Zadania domowe: `HomeWorkAssignments` puste w szkole użytkownika — mapowanie dopiero po pierwszym wpisie.
+- Uwagi: znaczenie `Positive` (1 = pozytywna, 0 = negatywna) do potwierdzenia.
 - Emulator „gympixel” ma wyłączoną grafikę sprzętową (`hw.gpu.enabled = no`) i startuje bardzo wolno. Z opcją `-gpu host` Android wstaje w ok. 20 s. Stała poprawka: Device Manager → gympixel → Edit → Graphics: Hardware.

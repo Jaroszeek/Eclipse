@@ -61,7 +61,9 @@ Aktualizowane po każdym kroku. Szczegóły etapów: `SPEC.md`, sekcja 14.
 - [x] Wiadomości krok 1: raporty nr 1 i 2 → mapowanie w `docs/librus-rekonesans.md` → odczyt w Skrzynce (v1.8)
 - [x] Raport nr 3: treść na liście to base64 zwykłego tekstu (podgląd), pełna treść w szczegółach (`data.Message`)
 - [x] Wydanie v1.9: rekonesans nr 4 — doczytywane części kodu strony (adresy wysyłania i odbiorców), porównanie podglądu z pełną treścią
-- [ ] Potwierdzenie na telefonie, że wiadomości są w Skrzynce (i czy treść jest urwana), raport nr 4
+- [x] Raport nr 4: adresy wysyłania i odbiorców z doczytywanej części kodu strony; lista wiadomości najpewniej ma całą treść
+- [x] Wydanie v2.0: rekonesans nr 5 — odbiorcy dostępni dla ucznia i fragmenty kodu wysyłania
+- [ ] Potwierdzenie na telefonie, że wiadomości są w Skrzynce, raport nr 5 → wysyłanie z potwierdzeniem
 - [ ] Wiadomości krok 2: wysyłanie z ekranem potwierdzenia (wymaga zmiany SPEC 12.7 „tylko odczyt” — za zgodą użytkownika)
 - [ ] Instalacja na telefonie przez USB (instrukcja w README; czeka na użytkownika)
 - [ ] Całodniowy test synchronizacji w tle i powiadomień z godzinami ciszy (czeka na użytkownika)

@@ -32,6 +32,12 @@ class MessagesReconTest {
     }
 
     @Test
+    fun codeAroundShowsFragmentNearPath() {
+        assertEquals("""post("/messages",{topic""", codeAround("""x.post("/messages",{topic:t})""", "/messages", before = 5, after = 7))
+        assertEquals(null, codeAround("""x.get("/inbox")""", "/messages"))
+    }
+
+    @Test
     fun chunkNamesAreFoundAndComposeGoesFirst() {
         val script = """m=["assets/Inbox-Qw3rT5yU.js","assets/index-C2RJQZaC.js"];x=()=>import("./Compose-AbC12xYz.js")"""
         assertEquals(listOf("Compose-AbC12xYz.js", "Inbox-Qw3rT5yU.js"), chunkNames(script))

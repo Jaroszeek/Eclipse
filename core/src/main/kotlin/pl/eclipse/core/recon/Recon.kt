@@ -51,8 +51,75 @@ object Recon {
             for (resource in GATEWAY_RESOURCES + "Timetables?weekStart=$monday") {
                 call(resource) { client.gateway(resource) }
             }
-            appendLine("\nWiadomości (wiadomosci.librus.pl) sprawdzimy osobno, gdy API działa.")
+            appendLine("\nWiadomości sprawdza osobny przycisk „Sprawdź wiadomości”.")
         }
+
+    /**
+     * Rekonesans serwisu wiadomości (wiadomosci.librus.pl): droga logowania przez Synergię, adresy API
+     * zapisane w kodzie strony i struktura odpowiedzi. Treść, tematy i nadawcy są zamaskowani, tokeny ukryte.
+     */
+    fun messages(email: String, password: String, today: LocalDate = LocalDate.now(ZoneId.of("Europe/Warsaw"))): String =
+        buildString {
+            appendLine("Rekonesans wiadomości Librusa, $today")
+            val client = LibrusClient()
+            try {
+                client.login(email, password)
+            } catch (e: LibrusException) {
+                appendLine("Logowanie: nie udało się. ${e.message}")
+                return@buildString
+            } catch (e: IOException) {
+                appendLine("Logowanie: brak połączenia z Librusem (${e.javaClass.simpleName}).")
+                return@buildString
+            }
+            appendLine("Logowanie: OK")
+            try {
+                val (code, body) = client.autoLoginToken()
+                val json = runCatching { Json.parseToJsonElement(body) as? JsonObject }.getOrNull()
+                val token = (json?.get("Token") as? JsonPrimitive)?.content
+                appendLine("\n## AutoLoginToken: HTTP $code; pola: ${json?.keys.orEmpty()}; token: ${if (token != null) "jest" else "brak"}")
+                if (token == null) return@buildString
+                pause()
+                appendPage("Synergia (wejście tokenem)", client.page("https://synergia.librus.pl/loguj/token/$token/przenies"))
+                pause()
+                val landing = client.page("https://synergia.librus.pl/wiadomosci3")
+                appendPage("Wiadomości", landing)
+
+                val origin = landing.url.substringBefore("://") + "://" + landing.url.substringAfter("://").substringBefore('/')
+                val paths = sortedSetOf<String>().apply { addAll(apiPaths(landing.body)) }
+                SCRIPT_SRC.findAll(landing.body).map { it.groupValues[1] }.take(MAX_SCRIPTS).forEach { src ->
+                    pause()
+                    val script = client.page(resolve(landing.url, src))
+                    appendLine("Skrypt ${script.url.substringAfterLast('/').substringBefore('?').take(40)}: HTTP ${script.code}, ${script.body.length} znaków")
+                    paths += apiPaths(script.body)
+                }
+                appendLine("\nAdresy API w kodzie strony (${paths.size}):")
+                paths.forEach { appendLine("  $it") }
+
+                val probes = (paths.filter { '{' !in it && ':' !in it && '$' !in it } + PROBES).distinct().take(MAX_PROBES)
+                for (path in probes) call(path) { client.page(origin + path).let { it.code to it.body } }
+            } catch (e: IOException) {
+                appendLine("\nBłąd połączenia (${e.javaClass.simpleName}).")
+            } catch (e: LibrusException) {
+                appendLine("\n${e.message}")
+            }
+            appendLine("\nPrzebieg (bez parametrów, tokeny ukryte):")
+            client.trace.forEach { appendLine("  $it") }
+            appendLine("Ciasteczka: ${client.cookieNames()}")
+        }
+
+    private fun pause() = Thread.sleep(PAUSE_MS)
+
+    private fun StringBuilder.appendPage(name: String, page: LibrusClient.Page) {
+        appendLine("\n## $name")
+        page.hops.forEach { appendLine("  $it") }
+        // Tytuł może zawierać imię i nazwisko — pokazujemy tylko, które znane słowa w nim są.
+        val title = TITLE.find(page.body)?.groupValues?.get(1).orEmpty()
+        val words = TITLE_WORDS.filter { title.contains(it, ignoreCase = true) }.ifEmpty { listOf("—") }
+        appendLine(
+            "Koniec: HTTP ${page.code}, ${page.body.length} znaków, tytuł zawiera: $words, " +
+                "formularze: ${FORM_TAG.findAll(page.body).count()}, skrypty: ${SCRIPT_SRC.findAll(page.body).count()}",
+        )
+    }
 
     private var lastOk = false
 
@@ -78,7 +145,8 @@ object Recon {
 
 internal fun describe(resource: String, code: Int, body: String): String = buildString {
     val name = resource.substringBefore('?')
-    val json = runCatching { Json.parseToJsonElement(body) }.getOrNull()
+    // odpowiedź będąca samą listą opisujemy jak obiekt z jednym polem „lista”
+    val json = runCatching { Json.parseToJsonElement(body) }.getOrNull().let { if (it is JsonArray) JsonObject(mapOf("lista" to it)) else it }
     if (json !is JsonObject) {
         appendLine("\n## $resource: HTTP $code, odpowiedź nie jest JSON-em (${body.length} znaków)")
         return@buildString
@@ -185,6 +253,25 @@ private fun sampleOf(v: JsonElement): JsonElement? = when (v) {
 }
 
 private const val PAUSE_MS = 400L
+private const val MAX_SCRIPTS = 3
+private const val MAX_PROBES = 10
+
+/** Ścieżki „/api/…” zapisane w kodzie strony (bez danych — to tylko adresy). */
+internal fun apiPaths(text: String): Set<String> = API_PATH.findAll(text).map { it.groupValues[1].trimEnd('/') }.toSortedSet()
+
+private fun resolve(base: String, src: String): String = when {
+    src.startsWith("http") -> src
+    src.startsWith("//") -> "https:$src"
+    src.startsWith("/") -> base.substringBefore("://") + "://" + base.substringAfter("://").substringBefore('/') + src
+    else -> base.substringBeforeLast('/') + "/" + src
+}
+
+private val API_PATH = Regex("""["'`](/api/[A-Za-z0-9_\-/{}:$.]+)["'`?]""")
+private val SCRIPT_SRC = Regex("""<script[^>]+src="([^"]+)"""")
+private val TITLE = Regex("""<title>([^<]*)</title>""", RegexOption.IGNORE_CASE)
+private val FORM_TAG = Regex("""<form\b""", RegexOption.IGNORE_CASE)
+private val TITLE_WORDS = listOf("Wiadomości", "Librus", "Synergia", "Zaloguj", "Logowanie", "Błąd")
+private val PROBES = listOf("/api/me", "/api/inbox/messages?page=1&limit=5", "/api/outbox/messages?page=1&limit=5", "/api/receivers")
 private const val MAX_VALUES = 25
 private val SKIPPED_KEYS = setOf("Resources", "Url")
 private val SHOWN_KEYS = setOf(

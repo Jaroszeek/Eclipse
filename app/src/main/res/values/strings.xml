@@ -9,6 +9,8 @@
     <string name="recon_start">Zaloguj i sprawdź dane</string>
     <string name="recon_running">Sprawdzam dane, to potrwa ok. pół minuty…</string>
     <string name="recon_copy">Kopiuj raport</string>
+    <string name="recon_messages">Sprawdź wiadomości (zapisane logowanie)</string>
+    <string name="recon_messages_no_login">Najpierw zaloguj się w aplikacji — rekonesans wiadomości używa zapisanego logowania.</string>
     <string name="recon_copied">Skopiowano raport</string>
 
     <!-- Nawigacja (SPEC 12.0) -->

@@ -42,7 +42,7 @@ class LibrusClient {
         .addNetworkInterceptor { chain ->
             val request = chain.request()
             chain.proceed(request).also { response ->
-                trace += "${request.method} ${request.url.host}${request.url.encodedPath} → ${response.code}"
+                trace += "${request.method} ${request.url.hidden()} → ${response.code}"
             }
         }
         .build()
@@ -66,6 +66,29 @@ class LibrusClient {
         apiToken = (accounts.firstOrNull { it.group != "parent" } ?: accounts.firstOrNull())?.accessToken
             ?: throw LibrusException("Do Konta LIBRUS nie jest dodane żadne konto ucznia w Synergii.")
     }
+
+    /** Strona po przejściu przekierowań: każdy krok (kod i adres bez parametrów), końcowy adres i treść. */
+    class Page(val code: Int, val url: String, val body: String, val hops: List<String>)
+
+    /** GET z ciasteczkami sesji i ręcznym przechodzeniem przekierowań — strony Synergii i serwisu wiadomości. */
+    fun page(url: String): Page {
+        var current = url
+        val hops = mutableListOf<String>()
+        repeat(MAX_STEPS) {
+            val (response, body) = request(current, null)
+            hops += "${response.code} ${current.toHttpUrl().hidden()}"
+            val next = response.header("Location")?.let { current.toHttpUrl().resolve(it) }
+                ?: return Page(response.code, current, body, hops)
+            current = next.toString()
+        }
+        throw LibrusException("Za dużo przekierowań.")
+    }
+
+    /** Jednorazowy token do stron Synergii — tak aplikacja mobilna Librusa otwiera wiadomości. */
+    fun autoLoginToken(): Pair<Int, String> = send(
+        Request.Builder().url(API_URL + "AutoLoginToken").header("Authorization", "Bearer $apiToken")
+            .post(FormBody.Builder().build()).build(),
+    )
 
     /** Zasób API Librusa, np. "Grades" → https://api.librus.pl/2.0/Grades. */
     fun gateway(path: String): Pair<Int, String> =
@@ -221,3 +244,9 @@ private class MemoryCookieJar : CookieJar {
     override fun loadForRequest(url: HttpUrl): List<Cookie> =
         cookies.filter { it.expiresAt > System.currentTimeMillis() && it.matches(url) }
 }
+
+/** Host i ścieżka bez parametrów; długie fragmenty ścieżki (tokeny, identyfikatory sesji) ukryte. */
+internal fun HttpUrl.hidden(): String = host + encodedPathSegments.joinToString("/", prefix = "/") { if (isSecret(it)) "‹…›" else it }
+
+/** Token albo identyfikator sesji: bardzo długi fragment albo długi z cyframi (zwykłe nazwy jak „SynergiaAccounts” zostają). */
+private fun isSecret(segment: String) = segment.length >= 24 || (segment.length >= 16 && segment.any(Char::isDigit))

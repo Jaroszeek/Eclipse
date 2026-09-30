@@ -36,6 +36,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import pl.eclipse.app.R
+import pl.eclipse.app.container
 import pl.eclipse.core.recon.Recon
 
 // ponytail: tymczasowy ekran bez ViewModelu, tylko na czas rekonesansu (Etap 1a);
@@ -51,6 +52,7 @@ fun ReconScreen(modifier: Modifier = Modifier) {
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
     val copiedMessage = stringResource(R.string.recon_copied)
+    val noLogin = stringResource(R.string.recon_messages_no_login)
 
     Column(
         modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
@@ -98,6 +100,25 @@ fun ReconScreen(modifier: Modifier = Modifier) {
             modifier = Modifier.fillMaxWidth(),
         ) {
             Text(stringResource(if (running) R.string.recon_running else R.string.recon_start))
+        }
+        // Wiadomości: z logowaniem zapisanym w aplikacji — hasła nie trzeba wpisywać drugi raz.
+        OutlinedButton(
+            onClick = {
+                running = true
+                report = null
+                scope.launch {
+                    val saved = context.container.credentials.read()
+                    report = if (saved == null) noLogin else withContext(Dispatchers.IO) {
+                        runCatching { Recon.messages(saved.email, saved.password) }
+                            .getOrElse { "Rekonesans przerwany: ${it.javaClass.simpleName}" }
+                    }
+                    running = false
+                }
+            },
+            enabled = !running,
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            Text(stringResource(R.string.recon_messages))
         }
         report?.let { text ->
             OutlinedButton(

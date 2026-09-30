@@ -24,8 +24,8 @@ android {
         applicationId = "pl.eclipse.app"
         minSdk = 31
         targetSdk = 37
-        versionCode = 5
-        versionName = "1.4"
+        versionCode = 6
+        versionName = "1.5"
     }
 
     signingConfigs {

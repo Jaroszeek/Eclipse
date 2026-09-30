@@ -55,6 +55,9 @@ Aktualizowane po każdym kroku. Szczegóły etapów: `SPEC.md`, sekcja 14.
 - [x] Wydanie v1.2: przejścia „Zaćmienie” (wybór użytkownika z 3 propozycji)
 - [x] Wydanie v1.3: przycisk „Oznacz wszystkie jako przeczytane” w Skrzynce
 - [x] Wydanie v1.4: „Kalkulator ocen”, kolejność kafelków Pulpitu, własne zadania domowe i korepetycje w kalendarzu
+- [x] Wydanie v1.5: rekonesans wiadomości (przycisk „Sprawdź wiadomości” w ekranie rekonesansu)
+- [ ] Wiadomości krok 1: raport z rekonesansu wiadomości od użytkownika → mapowanie → odczyt w Skrzynce
+- [ ] Wiadomości krok 2: wysyłanie z ekranem potwierdzenia (wymaga zmiany SPEC 12.7 „tylko odczyt” — za zgodą użytkownika)
 - [ ] Instalacja na telefonie przez USB (instrukcja w README; czeka na użytkownika)
 - [ ] Całodniowy test synchronizacji w tle i powiadomień z godzinami ciszy (czeka na użytkownika)
 - [ ] Kryteria akceptacji Etapu 3
@@ -106,6 +109,7 @@ Aktualizowane po każdym kroku. Szczegóły etapów: `SPEC.md`, sekcja 14.
   - Pulpit: przycisk „Zmień kolejność kafelków” na dole otwiera arkusz ze strzałkami w górę i w dół; kolejność w ustawieniach (`AppSettings.homeOrder`), zmiany od razu, „Przywróć domyślną kolejność”. Strzałki zamiast przeciągania — prostsze i działają przy dużej czcionce;
   - kalendarz: przycisk „+” (dodaj zadanie domowe / korepetycje / wydarzenie) i wybór rodzaju w arkuszu edycji. Własny wpis ma rodzaj `CustomKind` (baza v3, automatyczna migracja z v2 — stare wpisy to zwykłe wydarzenia). Zadanie domowe: na dzień, bez godziny, niebieski kolor zadań i ikona książki, pokazuje się też w „Zadaniach na 3 dni” na Pulpicie. Korepetycje: z godziną, domyślnie 16:00–17:00 i tytuł „Korepetycje”, ikona czapki;
   - bez odhaczania „zrobione” przy zadaniu domowym — wykonane zadanie można usunąć; odhaczanie dojdzie, jeśli będzie potrzebne.
+- 2026-09-30: wysyłanie wiadomości — użytkownik wybrał wersję etapami (z trzech: etapami / przycisk do Librusa / od razu z wysyłaniem). Najpierw rekonesans serwisu wiadomości, potem odczyt, na końcu wysyłanie z potwierdzeniem. Rekonesans (`Recon.messages`) używa zapisanego logowania: AutoLoginToken → Synergia → /wiadomosci3, wypisuje przekierowania (bez parametrów, tokeny ukryte), ścieżki „/api/…” z kodu strony i strukturę odpowiedzi (treść zamaskowana, z tytułu strony tylko znane słowa).
 - 2026-09-29: kod trafia do prywatnego repozytorium na GitHubie (konto Jaroszeek), autor commitów: Jaroszek.
 
 ## Otwarte kwestie

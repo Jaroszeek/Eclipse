@@ -11,7 +11,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
@@ -50,6 +50,7 @@ import pl.eclipse.core.calc.WarningLevel
 import pl.eclipse.core.model.EventType
 import pl.eclipse.core.model.LessonStatus
 
+@OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
 @Composable
 fun HomeScreen(
     contentPadding: PaddingValues,
@@ -92,7 +93,7 @@ fun HomeScreen(
                 if (state.topWarnings.isEmpty()) {
                     Text(stringResource(R.string.home_important_none), style = MaterialTheme.typography.bodyMedium, color = c.textSecondary)
                 } else {
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    androidx.compose.foundation.layout.FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                         WarningLevel.entries.reversed().forEach { level ->
                             val count = state.warningCounts[level] ?: 0
                             Tag("${stringResource(level.word)}: $count", levelColor(level))
@@ -196,7 +197,7 @@ private fun LessonLine(row: LessonRow) {
             .padding(horizontal = 12.dp, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text(row.time, style = MaterialTheme.typography.titleSmall.merge(TabularNumbers), color = c.textSecondary, modifier = Modifier.width(48.dp))
+        Text(row.time, style = MaterialTheme.typography.titleSmall.merge(TabularNumbers), color = c.textSecondary, maxLines = 1, softWrap = false, modifier = Modifier.widthIn(min = 48.dp).padding(end = 6.dp))
         Box(Modifier.size(10.dp).clip(CircleShape).background(row.color))
         Column(Modifier.padding(start = 10.dp).weight(1f)) {
             Text(

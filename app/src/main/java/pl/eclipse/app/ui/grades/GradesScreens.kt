@@ -2,6 +2,7 @@
 
 package pl.eclipse.app.ui.grades
 
+import pl.eclipse.app.ui.components.ChoiceChips
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -26,9 +27,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.InputChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.SegmentedButton
-import androidx.compose.material3.SegmentedButtonDefaults
-import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -88,13 +86,7 @@ fun distanceText(d: ThresholdDistance): String = listOfNotNull(
 @Composable
 private fun PeriodSwitch(period: Period, onPeriod: (Period) -> Unit) {
     val options = listOf(Period.FIRST to R.string.period_first, Period.SECOND to R.string.period_second, Period.YEAR to R.string.period_year)
-    SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
-        options.forEachIndexed { i, (value, label) ->
-            SegmentedButton(selected = period == value, onClick = { onPeriod(value) }, shape = SegmentedButtonDefaults.itemShape(i, options.size), icon = {}) {
-                Text(stringResource(label), maxLines = 1)
-            }
-        }
-    }
+    ChoiceChips(options.map { (value, label) -> value to stringResource(label) }, period, onPeriod)
 }
 
 @Composable
@@ -111,11 +103,11 @@ fun GradesScreen(
         LazyColumn(contentPadding = contentPadding, verticalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.padding(horizontal = 16.dp)) {
             item { PeriodSwitch(state.period, viewModel::setPeriod) }
             item {
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    listOf(GradeSort.NAME to R.string.sort_name, GradeSort.LOWEST to R.string.sort_lowest, GradeSort.RECENT to R.string.sort_recent).forEach { (s, label) ->
-                        FilterChip(selected = state.sort == s, onClick = { viewModel.setSort(s) }, label = { Text(stringResource(label)) })
-                    }
-                }
+                ChoiceChips(
+                    listOf(GradeSort.NAME to R.string.sort_name, GradeSort.LOWEST to R.string.sort_lowest, GradeSort.RECENT to R.string.sort_recent)
+                        .map { (s, label) -> s to stringResource(label) },
+                    state.sort, viewModel::setSort,
+                )
             }
             item {
                 EclipseCard {
@@ -278,10 +270,10 @@ private fun Calculator(state: SubjectState, viewModel: GradesViewModel) {
             Text(stringResource(R.string.calculator), style = MaterialTheme.typography.titleLarge, color = c.text, modifier = Modifier.padding(start = 8.dp))
         }
         Text(stringResource(R.string.calculator_hint), style = MaterialTheme.typography.bodySmall, color = c.textSecondary)
-        SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth().padding(vertical = 8.dp)) {
-            SegmentedButton(selected = !calc.goalMode, onClick = { viewModel.setGoalMode(false) }, shape = SegmentedButtonDefaults.itemShape(0, 2), icon = {}) { Text(stringResource(R.string.calc_add)) }
-            SegmentedButton(selected = calc.goalMode, onClick = { viewModel.setGoalMode(true) }, shape = SegmentedButtonDefaults.itemShape(1, 2), icon = {}) { Text(stringResource(R.string.calc_goal)) }
-        }
+        ChoiceChips(
+            listOf(false to stringResource(R.string.calc_add), true to stringResource(R.string.calc_goal)),
+            calc.goalMode, viewModel::setGoalMode, Modifier.padding(vertical = 8.dp),
+        )
         if (!calc.goalMode) {
             Text(stringResource(R.string.calc_add_grade), style = MaterialTheme.typography.titleSmall, color = c.text)
             FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -395,16 +387,10 @@ private fun SubjectSettings(state: SubjectState, viewModel: GradesViewModel) {
         )
         Text(stringResource(R.string.average_method), style = MaterialTheme.typography.titleSmall, color = c.text, modifier = Modifier.padding(top = 8.dp))
         val methods = listOf(AverageMethod.AUTO to R.string.method_auto, AverageMethod.MEAN_PERCENT to R.string.method_mean, AverageMethod.POINTS_SUM to R.string.method_points)
-        SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
-            methods.forEachIndexed { i, (m, label) ->
-                SegmentedButton(
-                    selected = prefs.averageMethod == m.name,
-                    onClick = { viewModel.savePrefs(prefs.copy(averageMethod = m.name)) },
-                    shape = SegmentedButtonDefaults.itemShape(i, methods.size),
-                    icon = {},
-                ) { Text(stringResource(label), maxLines = 1) }
-            }
-        }
+        ChoiceChips(
+            methods.map { (m, label) -> m.name to stringResource(label) },
+            prefs.averageMethod, { name -> viewModel.savePrefs(prefs.copy(averageMethod = name)) },
+        )
         Text(stringResource(R.string.method_hint), style = MaterialTheme.typography.bodySmall, color = c.textSecondary)
         HorizontalDivider(Modifier.padding(vertical = 8.dp), color = c.border)
         Row(verticalAlignment = Alignment.CenterVertically) {

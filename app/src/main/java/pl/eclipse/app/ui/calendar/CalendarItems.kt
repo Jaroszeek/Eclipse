@@ -9,7 +9,6 @@ import pl.eclipse.app.ui.Insights
 import pl.eclipse.app.ui.components.BlockKind
 import pl.eclipse.app.ui.components.BlockStatus
 import pl.eclipse.app.ui.theme.Palette
-import pl.eclipse.app.ui.theme.eventColor
 import pl.eclipse.core.model.EventType
 import pl.eclipse.core.model.Homework
 import pl.eclipse.core.model.Lesson
@@ -106,7 +105,7 @@ fun calendarItems(i: Insights, from: LocalDate, to: LocalDate, since: Long): Lis
             end = l.end,
             lessonNo = l.lessonNo,
             subjectKey = l.subjectKey,
-            typeColor = test?.let { eventColor(it.type) } ?: own.firstOrNull()?.let { Color(it.label.color) } ?: Palette.Test,
+            typeColor = test?.let { i.typeColor(it.type) } ?: own.firstOrNull()?.let { Color(it.label.color) } ?: i.typeColor("TEST"),
             subjectColor = i.color(l.subjectKey),
             status = when (l.status) {
                 LessonStatus.NORMAL -> BlockStatus.NORMAL
@@ -148,8 +147,8 @@ fun calendarItems(i: Insights, from: LocalDate, to: LocalDate, since: Long): Lis
             end = if (e.type == EventType.DAY_OFF) null else end,
             lessonNo = e.lessonNo,
             subjectKey = e.subjectKey,
-            typeColor = eventColor(e.type),
-            subjectColor = e.subjectKey?.let(i::color) ?: eventColor(e.type),
+            typeColor = i.typeColor(e.type),
+            subjectColor = e.subjectKey?.let(i::color) ?: i.typeColor(e.type),
             status = when {
                 stored.removedAt != null -> BlockStatus.REMOVED
                 moved != null -> BlockStatus.CHANGED
@@ -176,7 +175,7 @@ fun calendarItems(i: Insights, from: LocalDate, to: LocalDate, since: Long): Lis
             end = null,
             lessonNo = null,
             subjectKey = h.subjectKey,
-            typeColor = Palette.Homework,
+            typeColor = i.typeColor("HOMEWORK"),
             subjectColor = i.color(h.subjectKey),
             status = BlockStatus.NORMAL,
             labels = emptyList(),
@@ -192,7 +191,7 @@ fun calendarItems(i: Insights, from: LocalDate, to: LocalDate, since: Long): Lis
         val start = runCatching { LocalDateTime.parse(ce.start) }.getOrNull() ?: return@forEach
         val end = runCatching { LocalDateTime.parse(ce.end) }.getOrNull() ?: start.plusHours(1)
         if (start.toLocalDate() !in from..to) return@forEach
-        val color = ce.color?.let(::Color) ?: Palette.Custom
+        val color = ce.color?.let(::Color) ?: i.typeColor("CUSTOM")
         result += CalendarItem(
             id = "custom|${ce.id}",
             kind = BlockKind.CUSTOM,
@@ -203,7 +202,7 @@ fun calendarItems(i: Insights, from: LocalDate, to: LocalDate, since: Long): Lis
             end = if (ce.allDay) null else end.toLocalTime(),
             lessonNo = null,
             subjectKey = ce.subjectKey,
-            typeColor = Palette.Custom,
+            typeColor = i.typeColor("CUSTOM"),
             subjectColor = ce.subjectKey?.let(i::color) ?: color,
             status = BlockStatus.NORMAL,
             labels = attached("CUSTOM_EVENT", ce.id.toString()),

@@ -1,5 +1,6 @@
 package pl.eclipse.app.ui.style
 
+import pl.eclipse.app.ui.components.ChoiceChips
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -20,9 +21,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.SegmentedButton
-import androidx.compose.material3.SegmentedButtonDefaults
-import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -89,15 +87,7 @@ fun StyleScreen(contentPadding: PaddingValues) {
     ) {
         SectionTitle(stringResource(R.string.style_theme))
         val modes = listOf(ThemeMode.SYSTEM to R.string.theme_system, ThemeMode.LIGHT to R.string.theme_light, ThemeMode.DARK to R.string.theme_dark)
-        SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
-            modes.forEachIndexed { i, (mode, label) ->
-                SegmentedButton(
-                    selected = settings.themeMode == mode,
-                    onClick = { update { it.copy(themeMode = mode) } },
-                    shape = SegmentedButtonDefaults.itemShape(i, modes.size),
-                ) { Text(stringResource(label)) }
-            }
-        }
+        ChoiceChips(modes.map { (mode, label) -> mode to stringResource(label) }, settings.themeMode, { mode -> update { it.copy(themeMode = mode) } })
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(stringResource(R.string.less_transparency), style = MaterialTheme.typography.bodyLarge, color = c.text, modifier = Modifier.weight(1f))
             Switch(checked = settings.lessTransparency, onCheckedChange = { v -> update { it.copy(lessTransparency = v) } })
@@ -167,7 +157,7 @@ fun StyleScreen(contentPadding: PaddingValues) {
         }
 
         SectionTitle(stringResource(R.string.style_levels))
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             WarningLevel.entries.reversed().forEach { Tag(stringResource(it.word), levelColor(it)) }
         }
 

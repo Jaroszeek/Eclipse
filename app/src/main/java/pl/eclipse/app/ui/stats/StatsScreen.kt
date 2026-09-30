@@ -2,6 +2,7 @@
 
 package pl.eclipse.app.ui.stats
 
+import pl.eclipse.app.ui.components.ChoiceChips
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -20,9 +21,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.SegmentedButton
-import androidx.compose.material3.SegmentedButtonDefaults
-import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -62,13 +60,7 @@ fun StatsScreen(contentPadding: PaddingValues, viewModel: StatsViewModel = viewM
     LazyColumn(contentPadding = contentPadding, verticalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.padding(horizontal = 16.dp)) {
         item {
             val options = listOf(Period.FIRST to R.string.period_first, Period.SECOND to R.string.period_second, Period.YEAR to R.string.period_year)
-            SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
-                options.forEachIndexed { i, (value, label) ->
-                    SegmentedButton(selected = state.period == value, onClick = { viewModel.setPeriod(value) }, shape = SegmentedButtonDefaults.itemShape(i, options.size), icon = {}) {
-                        Text(stringResource(label), maxLines = 1)
-                    }
-                }
-            }
+            ChoiceChips(options.map { (value, label) -> value to stringResource(label) }, state.period, viewModel::setPeriod)
         }
 
         item {

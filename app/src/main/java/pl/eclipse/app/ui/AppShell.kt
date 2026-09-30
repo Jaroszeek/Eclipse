@@ -79,7 +79,6 @@ import pl.eclipse.app.ui.calendar.CalendarScreen
 import pl.eclipse.app.ui.components.CountBadge
 import pl.eclipse.app.ui.components.EclipseBackground
 import pl.eclipse.app.ui.components.EclipseDisc
-import pl.eclipse.app.ui.components.EmptyState
 import pl.eclipse.app.ui.components.GlassState
 import pl.eclipse.app.ui.components.Tag
 import pl.eclipse.app.ui.components.glass
@@ -90,10 +89,13 @@ import pl.eclipse.app.ui.grades.GradesScreen
 import pl.eclipse.app.ui.grades.SubjectScreen
 import pl.eclipse.app.ui.home.HomeScreen
 import pl.eclipse.app.ui.important.ImportantScreen
+import pl.eclipse.app.ui.inbox.InboxScreen
+import pl.eclipse.app.ui.inbox.NotificationsScreen
 import pl.eclipse.app.ui.login.FirstSyncScreen
 import pl.eclipse.app.ui.login.LoginScreen
 import pl.eclipse.app.ui.login.NotificationPermissionScreen
 import pl.eclipse.app.ui.stats.StatsScreen
+import pl.eclipse.app.ui.settings.SettingsScreen
 import pl.eclipse.app.ui.style.StyleScreen
 import pl.eclipse.app.ui.tests.TestsScreen
 import pl.eclipse.app.ui.theme.Eclipse
@@ -220,9 +222,16 @@ private fun MainShell(state: ShellState, viewModel: ShellViewModel, initialRoute
                     }
                     composable<StatsRoute> { StatsScreen(contentPadding) }
                     composable<ImportantRoute> { ImportantScreen(contentPadding, onOpenSubject = { nav.navigate(SubjectRoute(it)) }) }
-                    composable<InboxRoute> { ComingSoon(contentPadding) }
-                    composable<SettingsRoute> { ComingSoon(contentPadding) }
-                    composable<NotificationsRoute> { ComingSoon(contentPadding) }
+                    composable<InboxRoute> { InboxScreen(contentPadding) }
+                    composable<SettingsRoute> {
+                        SettingsScreen(
+                            contentPadding,
+                            onOpenSubject = { nav.navigate(SubjectRoute(it)) },
+                            onOpenStyle = { nav.navigate(StyleRoute) },
+                            onOpenDiagnostics = { nav.navigate(DiagnosticsRoute) },
+                        )
+                    }
+                    composable<NotificationsRoute> { NotificationsScreen(contentPadding, onOpenRoute = { r -> routeFor(r)?.let { nav.navigateTop(it) } }) }
                     composable<StyleRoute> { StyleScreen(contentPadding) }
                     composable<DiagnosticsRoute> {
                         DiagnosticsScreen(onOpenRecon = { nav.navigate(ReconRoute) }, modifier = Modifier.padding(contentPadding))
@@ -421,7 +430,3 @@ private fun DrawerItem(label: String, @DrawableRes icon: Int, selected: Boolean,
     }
 }
 
-@Composable
-private fun ComingSoon(contentPadding: PaddingValues) {
-    Box(Modifier.fillMaxSize().padding(contentPadding).padding(16.dp)) { EmptyState(stringResource(R.string.coming_soon)) }
-}

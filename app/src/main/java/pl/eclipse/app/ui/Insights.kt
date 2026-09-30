@@ -36,6 +36,11 @@ class Insights(val snapshot: SchoolSnapshot, val user: UserData, val settings: A
     val colors: Map<String, Color> = subjectColors(subjectNames, user.prefs.mapNotNull { (k, v) -> v.color?.let { k to it } }.toMap())
     val methods: Map<String, AverageMethod> = user.prefs.mapValues { runCatching { AverageMethod.valueOf(it.value.averageMethod) }.getOrDefault(AverageMethod.AUTO) }
 
+    /** Kolor typu wydarzenia: własny z ustawień albo domyślny (SPEC 11.3). */
+    fun typeColor(key: String): Color = settings.typeColors[key]?.let { Color(it) } ?: defaultTypeColor(key)
+
+    fun typeColor(type: EventType): Color = typeColor(typeKey(type))
+
     fun name(key: String?) = key?.let(subjectNames::get).orEmpty()
     fun short(key: String?) = key?.let(subjectShorts::get).orEmpty()
     fun color(key: String?): Color = key?.let(colors::get) ?: Color.Gray
@@ -82,6 +87,24 @@ class Insights(val snapshot: SchoolSnapshot, val user: UserData, val settings: A
 
     fun hoursUntil(event: SchoolEvent): Long =
         Duration.between(LocalDateTime.now(WARSAW), event.date.atTime(event.time ?: startOf(event.date, event.lessonNo))).toHours()
+}
+
+val TYPE_KEYS = listOf("TEST", "QUIZ", "HOMEWORK", "EVENT", "DAY_OFF", "CUSTOM")
+
+fun typeKey(type: EventType) = when (type) {
+    EventType.TEST -> "TEST"
+    EventType.QUIZ -> "QUIZ"
+    EventType.DAY_OFF -> "DAY_OFF"
+    EventType.TRIP, EventType.OTHER -> "EVENT"
+}
+
+fun defaultTypeColor(key: String): Color = when (key) {
+    "TEST" -> pl.eclipse.app.ui.theme.Palette.Test
+    "QUIZ" -> pl.eclipse.app.ui.theme.Palette.Quiz
+    "HOMEWORK" -> pl.eclipse.app.ui.theme.Palette.Homework
+    "EVENT" -> pl.eclipse.app.ui.theme.Palette.SchoolEvent
+    "DAY_OFF" -> pl.eclipse.app.ui.theme.Palette.DayOff
+    else -> pl.eclipse.app.ui.theme.Palette.Custom
 }
 
 /** Klucz powodu ostrzeżenia do „Ukryj ten powód”: zawiera wartość, więc powód wraca, gdy dane się zmienią. */

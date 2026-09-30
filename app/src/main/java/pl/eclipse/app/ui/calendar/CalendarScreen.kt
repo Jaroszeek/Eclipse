@@ -1,5 +1,6 @@
 package pl.eclipse.app.ui.calendar
 
+import pl.eclipse.app.ui.components.ChoiceChips
 import android.content.ClipData
 import android.content.ClipDescription
 import androidx.compose.animation.AnimatedVisibility
@@ -40,9 +41,6 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.SegmentedButton
-import androidx.compose.material3.SegmentedButtonDefaults
-import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
@@ -107,7 +105,11 @@ import java.util.Locale
 
 private val POLISH: Locale = Locale.forLanguageTag("pl-PL")
 private val MIN_DP = 1.2.dp
-private val TIME_COLUMN = 38.dp
+private val TIME_COLUMN_BASE = 38.dp
+
+/** Szerokość kolumny godzin rośnie z czcionką systemową, żeby „10:15” się nie łamało. */
+private val TIME_COLUMN: Dp
+    @Composable get() = TIME_COLUMN_BASE * LocalDensity.current.fontScale.coerceAtLeast(1f)
 
 /** Co pokazuje arkusz nad kalendarzem. */
 sealed interface CalendarSheet {
@@ -207,16 +209,7 @@ private fun ViewSwitcher(view: CalendarView, onView: (CalendarView) -> Unit) {
         CalendarView.DAY to R.string.cal_day,
         CalendarView.LIST to R.string.cal_list,
     )
-    SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp)) {
-        options.forEachIndexed { index, (value, label) ->
-            SegmentedButton(
-                selected = view == value,
-                onClick = { onView(value) },
-                shape = SegmentedButtonDefaults.itemShape(index, options.size),
-                icon = {},
-            ) { Text(stringResource(label), maxLines = 1) }
-        }
-    }
+    ChoiceChips(options.map { (value, label) -> value to stringResource(label) }, view, onView, Modifier.padding(horizontal = 16.dp))
 }
 
 private fun dropText(event: DragAndDropEvent): String? = event.toAndroidDragEvent().clipData?.takeIf { it.itemCount > 0 }?.getItemAt(0)?.text?.toString()
@@ -335,6 +328,8 @@ private fun TimeAxis(state: CalendarState) {
                 "%d:%02d".format(times.first.hour, times.first.minute),
                 style = MaterialTheme.typography.labelSmall.merge(TabularNumbers),
                 color = c.textSecondary,
+                maxLines = 1,
+                softWrap = false,
                 modifier = Modifier.offset(y = MIN_DP * minute).padding(start = 4.dp),
             )
         }

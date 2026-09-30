@@ -187,6 +187,12 @@ interface UserDao {
     @Query("SELECT COUNT(*) FROM labels")
     suspend fun labelCount(): Int
 
+    @Delete
+    suspend fun deleteLabel(label: LabelEntity)
+
+    @Query("DELETE FROM label_assignments WHERE labelId = :labelId")
+    suspend fun deleteAssignmentsOf(labelId: Long)
+
     @Query("SELECT * FROM label_assignments")
     fun assignments(): Flow<List<LabelAssignmentEntity>>
 
@@ -213,6 +219,9 @@ interface UserDao {
 
     @Query("SELECT COUNT(*) FROM event_templates")
     suspend fun templateCount(): Int
+
+    @Delete
+    suspend fun deleteTemplate(template: EventTemplateEntity)
 
     @Query("SELECT * FROM user_flags")
     fun flags(): Flow<List<UserFlagEntity>>

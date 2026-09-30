@@ -42,8 +42,8 @@ Aktualizowane po każdym kroku. Szczegóły etapów: `SPEC.md`, sekcja 14.
 - [x] 2b: Oceny z kalkulatorem (okresy, sortowanie, średnia ogólna, karty, ekran przedmiotu z wykresem Vico, kalkulator w obu trybach, ustawienia przedmiotu, „poprawiona / pomiń”)
 - [x] 2b: Statystyki (frekwencja ogólna i z przedmiotów, spóźnienia i nieusprawiedliwione, średnia w czasie z pasami progów, obciążenie, zapas nieobecności)
 - [x] 2b: Important (karty z poziomem, powodami, podpowiedziami z szablonów; „Oznacz jako trudny”, „Ukryj ten powód”, przejście do ocen)
-- [ ] 2b: Skrzynka
-- [ ] 2b: Ustawienia
+- [x] 2b: Skrzynka (wiadomości, ogłoszenia, uwagi; nieprzeczytane wyróżnione) + centrum powiadomień (dzwonek)
+- [x] 2b: Ustawienia (konto, wygląd, kolory typów, etykiety i szablony, zasady oceniania, frekwencja, Important, powiadomienia, synchronizacja, dane)
 - [ ] Kryteria akceptacji Etapu 2
 
 ## Etap 3 — telefon na co dzień
@@ -70,6 +70,9 @@ Aktualizowane po każdym kroku. Szczegóły etapów: `SPEC.md`, sekcja 14.
 - 2026-09-30: Etap 2 — Haze 2.0.1 (`haze-blur`), Vico 3.3.1, kizitonwose Calendar 2.10.1, navigation-compose 2.10.2 (API sprawdzone w źródłach bibliotek). Rozmycie tylko na dużych panelach; Przybornik ma własne źródło szkła, bo Haze nie rozmywa warstwy, w której sam leży.
 - 2026-09-30: Kalendarz — oś czasu od pierwszego do ostatniego dzwonka (rozszerzana o własne wydarzenia); widok listy pomija zwykłe lekcje bez zmian i etykiet, żeby lista 14 dni była czytelna.
 - 2026-09-30: aplikacja wymusza polskie zasady odmiany liczebników (telefon może mieć inny język), bo jest tylko po polsku.
+- 2026-09-30: przyciski segmentowe zastąpione wspólnym wyborem z chipów (`ChoiceChips`) — przy 360 dp i czcionce 130% segmenty ucinały napisy; chipy zawijają się i mają znacznik ✓.
+- 2026-09-30: Frekwencja w ustawieniach — mapowanie typów z Librusa na kategorie jest stałe (z rekonesansu, pokazane w ustawieniach); edytowalne jest, które kategorie liczą się do limitu. Pełna edycja mapowania — gdy okaże się potrzebna.
+- 2026-09-30: „Nowe od ostatniej wizyty” — przy pierwszej wizycie ekranu nic nie jest oznaczane jako nowe.
 - 2026-09-30: `LibrusClient` ma własny prosty magazyn ciasteczek w pamięci; zapisywanie sesji dojdzie w `LibrusSource`.
 - 2026-09-29: kod trafia do prywatnego repozytorium na GitHubie (konto Jaroszeek), autor commitów: Jaroszek.
 

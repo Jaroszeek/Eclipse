@@ -20,6 +20,8 @@ data class AppSettings(
     /** Kolor akcentu ARGB; domyślnie Korona #E9B949. */
     val accent: Long = 0xFFE9B949,
     val lessTransparency: Boolean = false,
+    /** Własne kolory typów wydarzeń (SPEC 11.3): TEST, QUIZ, HOMEWORK, EVENT, DAY_OFF, CUSTOM → ARGB. */
+    val typeColors: Map<String, Long> = emptyMap(),
     val demoMode: Boolean = false,
     val myDiaryNumber: Int? = null,
     val syncIntervalHours: Int = 3,

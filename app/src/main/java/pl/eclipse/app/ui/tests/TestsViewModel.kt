@@ -34,6 +34,7 @@ data class TestEntry(
     val subjectKey: String?,
     val subject: String,
     val subjectColor: Color,
+    val typeColor: Color,
     val description: String,
     val date: LocalDate,
     val lessonNo: Int?,
@@ -102,6 +103,7 @@ class TestsViewModel(application: Application) : AndroidViewModel(application) {
                     subjectKey = e.subjectKey,
                     subject = i.name(e.subjectKey).ifBlank { e.category },
                     subjectColor = i.color(e.subjectKey),
+                    typeColor = i.typeColor(e.type),
                     description = e.description.ifBlank { e.category },
                     date = e.date,
                     lessonNo = e.lessonNo,
@@ -119,7 +121,7 @@ class TestsViewModel(application: Application) : AndroidViewModel(application) {
             val h = stored.value
             TestEntry(
                 key = h.sourceKey, type = null, isHomework = true, subjectKey = h.subjectKey, subject = i.name(h.subjectKey),
-                subjectColor = i.color(h.subjectKey), description = h.title, date = h.dueDate, lessonNo = null,
+                subjectColor = i.color(h.subjectKey), typeColor = i.typeColor("HOMEWORK"), description = h.title, date = h.dueDate, lessonNo = null,
                 daysUntil = h.dueDate.toEpochDay() - today.toEpochDay(), hoursUntil = null, average = null, hint = null,
                 movedFrom = null, removed = false, grades = emptyList(), group = group(h.dueDate),
             )

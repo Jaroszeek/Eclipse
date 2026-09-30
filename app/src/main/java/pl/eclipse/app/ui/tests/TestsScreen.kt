@@ -42,10 +42,10 @@ import pl.eclipse.app.ui.components.Tag
 import pl.eclipse.app.ui.theme.Eclipse
 import pl.eclipse.app.ui.theme.Palette
 import pl.eclipse.app.ui.theme.TabularNumbers
-import pl.eclipse.app.ui.theme.eventColor
 import pl.eclipse.core.calc.GoalResult
 import pl.eclipse.core.model.EventType
 
+@OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
 @Composable
 fun TestsScreen(
     contentPadding: PaddingValues,
@@ -58,9 +58,14 @@ fun TestsScreen(
     PullToRefreshBox(isRefreshing = syncing, onRefresh = onRefresh, modifier = Modifier.fillMaxSize()) {
         LazyColumn(contentPadding = contentPadding, verticalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.padding(horizontal = 16.dp)) {
             item {
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                androidx.compose.foundation.layout.FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     listOf(TestFilter.TESTS to R.string.filter_tests, TestFilter.QUIZZES to R.string.filter_quizzes, TestFilter.HOMEWORK to R.string.filter_homework)
-                        .forEach { (f, label) -> FilterChip(selected = f in state.filters, onClick = { viewModel.toggle(f) }, label = { Text(stringResource(label)) }) }
+                        .forEach { (f, label) ->
+                            FilterChip(
+                                selected = f in state.filters, onClick = { viewModel.toggle(f) }, label = { Text(stringResource(label)) },
+                                leadingIcon = if (f in state.filters) ({ Icon(painterResource(R.drawable.ic_check), null, Modifier.size(18.dp)) }) else null,
+                            )
+                        }
                 }
             }
             if (!state.loading && state.upcoming.isEmpty()) item { EmptyState(stringResource(R.string.tests_empty)) }
@@ -91,7 +96,7 @@ private val TestGroup.title
 @Composable
 private fun TestCard(entry: TestEntry, onOpenCalculator: (String) -> Unit) {
     val c = Eclipse.colors
-    val typeColor = entry.type?.let(::eventColor) ?: Palette.Homework
+    val typeColor = entry.typeColor
     val icon = when {
         entry.isHomework -> R.drawable.ic_menu_book
         entry.type == EventType.QUIZ -> R.drawable.ic_bolt

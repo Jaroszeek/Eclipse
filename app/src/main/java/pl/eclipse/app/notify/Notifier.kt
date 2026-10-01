@@ -34,6 +34,7 @@ import pl.eclipse.app.sync.SyncOutcome
 import pl.eclipse.core.calc.AverageMethod
 import pl.eclipse.core.calc.WarningLevel
 import pl.eclipse.core.calc.gradePercent
+import pl.eclipse.core.calc.PercentSource
 import pl.eclipse.core.calc.importantWarnings
 import pl.eclipse.core.calc.subjectStatuses
 import pl.eclipse.core.model.Attendance
@@ -250,7 +251,8 @@ class Notifier(private val context: Context, private val db: EclipseDatabase) {
         db.records().all(type).filter { it.removedAt == null }.map { JSON.decodeFromString(serializer, it.json) }
 
     private fun gradeText(g: Grade, settings: AppSettings): String {
-        val percent = gradePercent(g, settings.grading).percent
+        // procent tylko przy ocenach punktowych — przy zwykłych sama ocena mówi wszystko
+        val percent = gradePercent(g, settings.grading).takeIf { it.source == PercentSource.POINTS }?.percent
         val symbol = if (g.kind == GradeKind.POINT) "${g.symbol}/${g.maxPoints?.let(::formatNumber) ?: "?"}" else g.symbol
         return percent?.let { "$symbol (${formatPercent(it)})" } ?: symbol
     }

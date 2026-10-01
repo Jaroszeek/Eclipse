@@ -228,9 +228,12 @@ private fun GradeRowView(row: GradeRow, onToggleSkip: (() -> Unit)?) {
                     style = MaterialTheme.typography.bodySmall, color = c.textSecondary,
                 )
             }
-            Column(horizontalAlignment = Alignment.End) {
-                Text(row.percent?.let(::formatPercent) ?: "—", style = MaterialTheme.typography.titleMedium.merge(TabularNumbers), color = c.text)
-                Text(stringResource(row.source.word), style = MaterialTheme.typography.labelSmall, color = c.textSecondary)
+            // Procent pokazujemy tylko przy ocenach punktowych — przy zwykłych wystarczy sama ocena na kafelku.
+            if (row.source == PercentSource.POINTS) {
+                Column(horizontalAlignment = Alignment.End) {
+                    Text(row.percent?.let(::formatPercent) ?: "—", style = MaterialTheme.typography.titleMedium.merge(TabularNumbers), color = c.text)
+                    Text(stringResource(row.source.word), style = MaterialTheme.typography.labelSmall, color = c.textSecondary)
+                }
             }
         }
         row.description?.takeIf { it.isNotBlank() }?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = c.text, modifier = Modifier.padding(top = 6.dp)) }

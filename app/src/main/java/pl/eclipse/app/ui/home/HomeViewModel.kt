@@ -19,6 +19,7 @@ import pl.eclipse.app.formatPercent
 import pl.eclipse.app.ui.Insights
 import pl.eclipse.app.ui.WARSAW
 import pl.eclipse.core.calc.WarningLevel
+import pl.eclipse.core.calc.PercentSource
 import pl.eclipse.core.calc.gradePercent
 import pl.eclipse.core.model.EventType
 import pl.eclipse.core.model.LessonStatus
@@ -112,7 +113,8 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         val since = visit ?: Long.MAX_VALUE
         val newItems = buildList {
             snapshot.grades.filter { it.removedAt == null && it.firstSeenAt.toEpochMilli() > since }.forEach { g ->
-                val p = gradePercent(g.value, settings.grading).percent
+                // procent tylko przy ocenach punktowych
+                val p = gradePercent(g.value, settings.grading).takeIf { it.source == PercentSource.POINTS }?.percent
                 add(NewItem(i.name(g.value.subjectKey), g.value.symbol + (p?.let { " (${formatPercent(it)})" } ?: ""), NewKind.GRADE))
             }
             snapshot.events.filter { it.removedAt == null && (it.value.type == EventType.TEST || it.value.type == EventType.QUIZ) }.forEach { e ->

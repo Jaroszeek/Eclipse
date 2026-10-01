@@ -64,6 +64,7 @@ import androidx.compose.ui.draganddrop.mimeTypes
 import androidx.compose.ui.draganddrop.toAndroidDragEvent
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
@@ -437,15 +438,17 @@ private fun DayColumn(state: CalendarState, date: LocalDate, actions: CalendarAc
                     drawLine(c.border, Offset(0f, y), Offset(size.width, y), 1f)
                     m += 60
                 }
-                // linia „teraz”
-                if (date == state.today) {
-                    val now = LocalTime.now(WARSAW)
-                    val minute = now.hour * 60 + now.minute
-                    if (minute in state.rangeStart..state.rangeEnd) {
-                        val y = (minute - state.rangeStart) * MIN_DP.toPx()
-                        drawLine(c.accent, Offset(0f, y), Offset(size.width, y), 2.dp.toPx())
-                        drawCircle(c.accent, 4.dp.toPx(), Offset(2.dp.toPx(), y))
-                    }
+            }
+            // linia „teraz” rysowana po blokach, inaczej chowała się pod kafelkami lekcji
+            .drawWithContent {
+                drawContent()
+                if (date != state.today) return@drawWithContent
+                val now = LocalTime.now(WARSAW)
+                val minute = now.hour * 60 + now.minute
+                if (minute in state.rangeStart..state.rangeEnd) {
+                    val y = (minute - state.rangeStart) * MIN_DP.toPx()
+                    drawLine(c.accent, Offset(0f, y), Offset(size.width, y), 2.dp.toPx())
+                    drawCircle(c.accent, 4.dp.toPx(), Offset(2.dp.toPx(), y))
                 }
             },
     ) {

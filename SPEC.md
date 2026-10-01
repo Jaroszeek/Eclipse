@@ -430,12 +430,12 @@ Szczegóły w sekcji 13.
 ### 12.4 Oceny
 - Przełącznik okresu: I półrocze, II półrocze, Cały rok. Sortowanie: nazwa, najniższa średnia, ostatnia zmiana. Na górze średnia ogólna.
 - Karta przedmiotu: nazwa z kolorem, duży % (Unbounded), prognozowana ocena, pasek 0–100% z kreskami progów i znacznikiem średniej, „do 4 brakuje 3,2 pp”, ostatnie oceny jako kafelki (kolor według %, punktowe jako „17/20”, kropka przy nowych), ikona ostrzeżenia, jeśli przedmiot jest w Important.
-- Dotknięcie karty otwiera ekran przedmiotu: lista ocen (data, ocena, %, źródło %, kategoria, opis, nauczyciel, czy liczona), wykres średniej w czasie z liniami progów, oceny proponowane i końcowe, kalkulator „co jeśli” (6.5), ustawienia przedmiotu (kolor, skrót, metoda średniej, „trudny”).
+- Dotknięcie karty otwiera ekran przedmiotu: lista ocen (data, ocena, kategoria, opis, nauczyciel, czy liczona; procent i jego źródło tylko przy ocenach punktowych — przy zwykłych sama ocena mówi wszystko, a przelicznik jest w ustawieniach), wykres średniej w czasie z liniami progów, oceny proponowane i końcowe, kalkulator „co jeśli” (6.5), ustawienia przedmiotu (kolor, skrót, metoda średniej, „trudny”).
 
 ### 12.5 Statystyki
 Tylko elementy wybrane przez użytkownika:
 - Frekwencja ogólna: duża liczba i podział (obecności, spóźnienia, usprawiedliwione, nieusprawiedliwione), przełącznik okresu.
-- Frekwencja z przedmiotów: poziome paski posortowane rosnąco, linia 50%, strefa ostrzegawcza do 60%.
+- Frekwencja z przedmiotów: poziome paski posortowane rosnąco, linia 50%, strefa ostrzegawcza do 60%. Dotknięcie przedmiotu rozwija dokładne liczby wpisów (obecności, spóźnienia, nieobecności usprawiedliwione i nieusprawiedliwione, zwolnienia).
 - Spóźnienia i nieusprawiedliwione nieobecności: liczniki i lista (data, lekcja, przedmiot).
 - Średnia w czasie: linia średniej ogólnej i wybranych przedmiotów, pasy progów w tle (wykres Vico).
 - Obciążenie: słupki sprawdzianów i kartkówek na tydzień (4 tygodnie wstecz, 8 naprzód); tydzień z co najmniej 3 sprawdzianami wyróżniony.
@@ -473,7 +473,7 @@ Zakładki Wiadomości, Ogłoszenia, Uwagi, Wysłane. Lista z podglądem, nieprze
   - Dzień: jedna kolumna, większe bloki ze szczegółami.
   - Miesiąc: `HorizontalCalendar` z biblioteki kizitonwose Calendar z własnymi komórkami dni.
   - Lista: najbliższe 14 dni w `LazyColumn` z nagłówkami dni.
-- Zakres godzin z dzwonków (np. 7:30–16:30), linia „teraz”, bieżąca lekcja wyróżniona.
+- Zakres godzin z dzwonków (np. 7:30–16:30), linia „teraz” rysowana nad blokami, bieżąca lekcja wyróżniona. Godziny lekcji w prawym dolnym rogu bloku, poza układem tekstu, żeby długa nazwa przedmiotu ich nie wypchnęła.
 - Bloki według 11.5. Na telefonie kolumny tygodnia są wąskie, więc bloki pokazują skrót przedmiotu i ikonę typu; pełne nazwy są w widoku dnia i w szczegółach.
 - Sprawdzian z numerem lekcji pokazuj na bloku tej lekcji (znacznik i poświata), a nie jako osobny blok, który ją zasłania. Wpis bez numeru lekcji trafia na pasek całodniowy nad siatką.
 - Widok miesiąca: dzień ze sprawdzianem ma tło zabarwione kolorem typu (przy kartkówce słabiej), inne wpisy jako kropki.

@@ -10,6 +10,7 @@ import pl.eclipse.core.model.Message
 import pl.eclipse.core.model.Note
 import pl.eclipse.core.model.Recipient
 import pl.eclipse.core.model.SchoolEvent
+import pl.eclipse.core.model.SentMessage
 import pl.eclipse.core.model.StudentInfo
 import pl.eclipse.core.model.Subject
 import java.time.Instant
@@ -32,6 +33,9 @@ interface DataSource {
     fun announcements(since: Instant?): List<Announcement>
     fun messages(since: Instant?): List<Message>
     fun luckyNumber(): LuckyNumber?
+
+    /** Wiadomości wysłane przez ucznia (SPEC 12.7). Pobierane na żądanie — synchronizacja ich nie zapisuje. */
+    fun sentMessages(): List<SentMessage>
 
     /** Kto może dostać wiadomość od ucznia (SPEC 12.7). */
     fun messageRecipients(): List<Recipient>

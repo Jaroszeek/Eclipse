@@ -22,6 +22,7 @@ import pl.eclipse.core.model.Note
 import pl.eclipse.core.model.Recipient
 import pl.eclipse.core.model.NoteKind
 import pl.eclipse.core.model.SchoolEvent
+import pl.eclipse.core.model.SentMessage
 import pl.eclipse.core.model.StudentInfo
 import pl.eclipse.core.model.Subject
 import pl.eclipse.core.source.DataSource
@@ -225,6 +226,31 @@ class LibrusSource(
 
     private var messagesOpen = false
 
+    /**
+     * Wysłane wiadomości. Librus nie pokazał ich przy rekonesansie (skrzynka nadawcza była pusta), więc odbiorcę
+     * czytamy z kilku możliwych pól — gdy żadnego nie ma, zostaje sam temat i data.
+     */
+    override fun sentMessages(): List<SentMessage> {
+        openMessagesOnce()
+        val (code, body) = client.messagesApi("outbox/messages?page=1&limit=$MESSAGES_PAGE")
+        if (code !in 200..299) {
+            throw LibrusException(
+                "Librus nie oddał wysłanych wiadomości (HTTP $code).",
+                if (code >= 500) LibrusException.Kind.SERVER else LibrusException.Kind.OTHER,
+            )
+        }
+        return Json.parseToJsonElement(body).obj["data"].arr.map { it.obj }.mapNotNull { m ->
+            val id = m["messageId"].strOrNull ?: return@mapNotNull null
+            SentMessage(
+                sourceKey = "sent-$id",
+                sentAt = m["sendDate"].strOrNull?.let(::warsawInstant) ?: return@mapNotNull null,
+                recipients = receiversOf(m),
+                title = m["topic"].strOrNull.orEmpty(),
+                content = m["content"].strOrNull?.let(::messageText),
+            )
+        }.sortedByDescending { it.sentAt }
+    }
+
     private fun openMessagesOnce() {
         if (!messagesOpen) {
             client.openMessages()
@@ -346,6 +372,24 @@ internal fun htmlToText(html: String): String = unescapeEntities(
     .lines().joinToString("\n") { it.trim() }
     .replace(Regex("""\n{3,}"""), "\n\n")
     .trim()
+
+/** Odbiorcy wysłanej wiadomości — nazwa, lista nazw albo imię i nazwisko, zależnie od tego, co poda Librus. */
+private fun receiversOf(message: JsonObject): String {
+    RECEIVER_NAME_KEYS.forEach { key ->
+        val element = message[key]
+        val text = when (element) {
+            is JsonArray -> element.mapNotNull { it.obj.let(::personName).takeIf(String::isNotBlank) }.joinToString(", ")
+            else -> element.strOrNull
+        }
+        if (!text.isNullOrBlank()) return text
+    }
+    return personName(message)
+}
+
+private fun personName(o: JsonObject): String = o["receiverName"].strOrNull?.takeIf { it.isNotBlank() }
+    ?: listOfNotNull(o["receiverFirstName"].strOrNull, o["receiverLastName"].strOrNull).joinToString(" ").trim()
+
+private val RECEIVER_NAME_KEYS = listOf("receiverName", "receivers", "receiver", "receiversNames")
 
 private fun base64(text: String): String = Base64.getEncoder().encodeToString(text.toByteArray(Charsets.UTF_8))
 

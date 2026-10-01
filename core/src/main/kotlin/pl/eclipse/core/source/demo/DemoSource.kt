@@ -14,6 +14,7 @@ import pl.eclipse.core.model.Message
 import pl.eclipse.core.model.Note
 import pl.eclipse.core.model.NoteKind
 import pl.eclipse.core.model.Recipient
+import pl.eclipse.core.model.SentMessage
 import pl.eclipse.core.model.SchoolEvent
 import pl.eclipse.core.model.StudentInfo
 import pl.eclipse.core.model.Subject
@@ -165,6 +166,11 @@ class DemoSource(private val today: LocalDate = LocalDate.now(WARSAW)) : DataSou
     }
 
     override fun luckyNumber() = LuckyNumber(today, Random(today.toEpochDay()).nextInt(1, 31))
+
+    override fun sentMessages() = listOf(
+        SentMessage("demo-sent-1", today.minusDays(2).atTime(17, 10).atZone(WARSAW).toInstant(), "Nowak Katarzyna", "Nieobecność", "Byłem u lekarza, przyniosę zwolnienie."),
+        SentMessage("demo-sent-2", today.minusDays(11).atTime(20, 5).atZone(WARSAW).toInstant(), "Sekretariat szkoły", "Legitymacja", "Proszę o przedłużenie legitymacji."),
+    )
 
     override fun messageRecipients() = listOf(
         Recipient("1", "Nowak Katarzyna", "Nauczyciele"),

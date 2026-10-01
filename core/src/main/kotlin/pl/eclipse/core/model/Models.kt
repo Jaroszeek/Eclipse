@@ -125,6 +125,16 @@ data class Message(
     val hasAttachment: Boolean = false,
 )
 
+/** Wysłana wiadomość. [recipients] bywa puste, gdy Librus nie poda odbiorców na liście. */
+@Serializable
+data class SentMessage(
+    val sourceKey: String,
+    val sentAt: Instant,
+    val recipients: String,
+    val title: String,
+    val content: String?,
+)
+
 /** Odbiorca wiadomości w Librusie: [id] to identyfikator z listy odbiorców, [group] — rodzaj („Nauczyciele”, „Pedagog”…). */
 @Serializable
 data class Recipient(val id: String, val name: String, val group: String)

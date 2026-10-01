@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Text
@@ -34,11 +35,13 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import pl.eclipse.app.R
 import pl.eclipse.app.container
@@ -55,23 +58,34 @@ import pl.eclipse.app.ui.theme.Eclipse
 import pl.eclipse.app.ui.theme.Palette
 import pl.eclipse.core.model.NoteKind
 
-enum class InboxTab { MESSAGES, ANNOUNCEMENTS, NOTES }
+enum class InboxTab { MESSAGES, ANNOUNCEMENTS, NOTES, SENT }
 
 data class InboxItem(val key: String, val title: String, val meta: String, val body: String, val unread: Boolean, val note: NoteKind? = null)
+
+/** Wysłane nie są synchronizowane — pobieramy je na żądanie, więc mają własny stan ładowania. */
+data class SentState(
+    val loading: Boolean = false,
+    val loaded: Boolean = false,
+    val error: String? = null,
+    val items: List<InboxItem> = emptyList(),
+)
 
 data class InboxState(
     val messages: List<InboxItem> = emptyList(),
     val announcements: List<InboxItem> = emptyList(),
     val notes: List<InboxItem> = emptyList(),
+    val sent: SentState = SentState(),
 )
 
 class InboxViewModel(application: Application) : AndroidViewModel(application) {
     private val container = application.container
     private val attachment = application.getString(R.string.inbox_attachment)
+    private val sentState = MutableStateFlow(SentState())
 
-    val state: StateFlow<InboxState> = combine(container.snapshot, container.user) { snapshot, user ->
+    val state: StateFlow<InboxState> = combine(container.snapshot, container.user, sentState) { snapshot, user, sent ->
         val read = user.keys(Flags.READ)
         InboxState(
+            sent = sent,
             messages = snapshot.messages.sortedByDescending { it.value.sentAt }.map { m ->
                 val v = m.value
                 val meta = v.sender + " · " + formatDate(v.sentAt.atZone(WARSAW).toLocalDate()) + if (v.hasAttachment) " · $attachment" else ""
@@ -98,6 +112,29 @@ class InboxViewModel(application: Application) : AndroidViewModel(application) {
         val unread = state.value.let { it.messages + it.announcements + it.notes }.filter { it.unread }
         viewModelScope.launch { container.database.user().setFlags(unread.map { UserFlagEntity(Flags.READ, it.key) }) }
     }
+
+    /** Wysłane z Librusa: przy pierwszym wejściu w zakładkę, a potem na żądanie („Odśwież”). */
+    fun loadSent(force: Boolean = false) {
+        val now = sentState.value
+        if (now.loading || (now.loaded && !force)) return
+        sentState.update { it.copy(loading = true, error = null) }
+        viewModelScope.launch {
+            val loaded = runCatching { container.messaging.sent() }
+            sentState.update { s ->
+                loaded.fold(
+                    onSuccess = { list ->
+                        s.copy(loading = false, loaded = true, error = null, items = list.map { sent ->
+                            val date = formatDate(sent.sentAt.atZone(WARSAW).toLocalDate())
+                            val meta = if (sent.recipients.isBlank()) date else getApplication<Application>()
+                                .getString(R.string.inbox_sent_to, sent.recipients) + " · " + date
+                            InboxItem(sent.sourceKey, sent.title, meta, sent.content.orEmpty(), unread = false)
+                        })
+                    },
+                    onFailure = { e -> s.copy(loading = false, error = e.message?.takeIf { it.isNotBlank() } ?: e.javaClass.simpleName) },
+                )
+            }
+        }
+    }
 }
 
 /** Skrzynka (SPEC 12.7): tylko odczyt. */
@@ -110,13 +147,16 @@ fun InboxScreen(contentPadding: PaddingValues, onCompose: () -> Unit = {}, viewM
         InboxTab.MESSAGES -> state.messages
         InboxTab.ANNOUNCEMENTS -> state.announcements
         InboxTab.NOTES -> state.notes
+        InboxTab.SENT -> state.sent.items
     }
+    LaunchedEffect(tab) { if (tab == InboxTab.SENT) viewModel.loadSent() }
     LazyColumn(contentPadding = contentPadding, verticalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(horizontal = 16.dp)) {
         item {
             val tabs = listOf(
                 InboxTab.MESSAGES to (R.string.inbox_messages to state.messages.count { it.unread }),
                 InboxTab.ANNOUNCEMENTS to (R.string.inbox_announcements to state.announcements.count { it.unread }),
                 InboxTab.NOTES to (R.string.inbox_notes to state.notes.count { it.unread }),
+                InboxTab.SENT to (R.string.inbox_sent to 0),
             )
             // chipy zamiast przycisków segmentowych — przy wąskim ekranie i dużej czcionce przenoszą się do nowej linii
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -137,7 +177,13 @@ fun InboxScreen(contentPadding: PaddingValues, onCompose: () -> Unit = {}, viewM
                         Text(stringResource(R.string.inbox_write), color = Eclipse.colors.accentText, modifier = Modifier.padding(start = 8.dp))
                     }
                 }
-                if (tabs.any { it.second.second > 0 }) {
+                if (tab == InboxTab.SENT) {
+                    TextButton(onClick = { viewModel.loadSent(force = true) }, enabled = !state.sent.loading) {
+                        Icon(painterResource(R.drawable.ic_refresh), null, Modifier.size(18.dp), tint = Eclipse.colors.accentText)
+                        Text(stringResource(R.string.inbox_refresh), color = Eclipse.colors.accentText, modifier = Modifier.padding(start = 8.dp))
+                    }
+                }
+                if (tab != InboxTab.SENT && tabs.any { it.second.second > 0 }) {
                     TextButton(onClick = viewModel::markAllRead) {
                         Icon(painterResource(R.drawable.ic_check), null, Modifier.size(18.dp), tint = Eclipse.colors.accentText)
                         Text(stringResource(R.string.inbox_mark_all_read), color = Eclipse.colors.accentText, modifier = Modifier.padding(start = 8.dp))
@@ -145,7 +191,25 @@ fun InboxScreen(contentPadding: PaddingValues, onCompose: () -> Unit = {}, viewM
                 }
             }
         }
-        if (items.isEmpty()) item { EmptyState(stringResource(R.string.inbox_empty)) }
+        if (tab == InboxTab.SENT) {
+            if (state.sent.loading) {
+                item {
+                    Text(stringResource(R.string.inbox_sent_loading), style = MaterialTheme.typography.bodyMedium, color = Eclipse.colors.textSecondary)
+                    LinearProgressIndicator(Modifier.fillMaxWidth().padding(top = 8.dp))
+                }
+            }
+            state.sent.error?.let { error ->
+                item {
+                    EclipseCard {
+                        Text(stringResource(R.string.inbox_sent_failed), style = MaterialTheme.typography.titleSmall, color = Eclipse.colors.text)
+                        Text(error, style = MaterialTheme.typography.bodyMedium, color = Eclipse.colors.textSecondary, modifier = Modifier.padding(top = 4.dp))
+                    }
+                }
+            }
+        }
+        if (items.isEmpty() && !state.sent.loading && (tab != InboxTab.SENT || state.sent.error == null)) {
+            item { EmptyState(stringResource(if (tab == InboxTab.SENT) R.string.inbox_sent_empty else R.string.inbox_empty)) }
+        }
         items(items, key = { it.key }) { item -> InboxRow(item, onOpen = { viewModel.markRead(item.key) }) }
     }
 }

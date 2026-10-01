@@ -291,6 +291,12 @@
     <string name="inbox_messages">Wiadomości</string>
     <string name="inbox_announcements">Ogłoszenia</string>
     <string name="inbox_notes">Uwagi</string>
+    <string name="inbox_sent">Wysłane</string>
+    <string name="inbox_sent_empty">Nie masz jeszcze wysłanych wiadomości.</string>
+    <string name="inbox_sent_loading">Pobieram wysłane wiadomości z Librusa…</string>
+    <string name="inbox_sent_failed">Nie udało się pobrać wysłanych wiadomości</string>
+    <string name="inbox_sent_to">Do: %1$s</string>
+    <string name="inbox_refresh">Odśwież</string>
     <string name="inbox_empty">Brak wpisów w tej zakładce.</string>
     <string name="inbox_note">Uwaga</string>
     <string name="inbox_mark_all_read">Oznacz wszystkie jako przeczytane</string>

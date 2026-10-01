@@ -66,7 +66,8 @@ Aktualizowane po każdym kroku. Szczegóły etapów: `SPEC.md`, sekcja 14.
 - [x] Odczyt wiadomości potwierdzony na telefonie (użytkownik: „wiadomości są i wyglądają dobrze”)
 - [x] Wydanie v2.1: wysyłanie wiadomości z aplikacji (starszy moduł Librusa, wzorzec szkolny-android)
 - [x] Wydanie v2.2: ekran pisania w układzie pocztowym (wiersz „Do” otwiera osobny ekran odbiorców)
-- [ ] Potwierdzenie na telefonie: czy lista odbiorców się wczytuje i czy wysyłanie działa
+- [x] Wydanie v2.3: zakładka „Wysłane” w Skrzynce
+- [ ] Potwierdzenie na telefonie: czy lista odbiorców się wczytuje, czy wysyłanie działa i czy „Wysłane” pokazuje odbiorcę
 - [ ] Wiadomości krok 2: wysyłanie z ekranem potwierdzenia (wymaga zmiany SPEC 12.7 „tylko odczyt” — za zgodą użytkownika)
 - [ ] Instalacja na telefonie przez USB (instrukcja w README; czeka na użytkownika)
 - [ ] Całodniowy test synchronizacji w tle i powiadomień z godzinami ciszy (czeka na użytkownika)
@@ -129,6 +130,7 @@ Aktualizowane po każdym kroku. Szczegóły etapów: `SPEC.md`, sekcja 14.
   - Osobna, zalogowana sesja (`Messaging`) — nie przerywa synchronizacji w tle; jedno zapytanie naraz.
   - Sprawdzone na emulatorze w trybie demo (demo niczego nie wysyła): lista, wybór, potwierdzenie, komunikat o wysłaniu, powrót do Skrzynki. Na prawdziwym koncie **niesprawdzone** — starszy moduł może już nie działać; wtedy lista odbiorców się nie wczyta i nic nie zostanie wysłane.
   - v2.2: układ jak w poczcie — wiersz „Do” z żetonami odbiorców otwiera osobny ekran (`RecipientsRoute`) z szukaniem i listą pogrupowaną jak w Librusie; temat i treść bez ramek, treść wypełnia ekran. Oba ekrany dzielą jeden `ComposeViewModel` (`nav.getBackStackEntry(ComposeRoute)`), więc wybór odbiorców wraca do wiadomości.
+  - v2.3: zakładka „Wysłane” (`/api/outbox/messages`, ten sam interfejs co odebrane). Pobierana na żądanie, nie przez synchronizację — wysłane nie potrzebują powiadomień ani historii zmian, więc nie zajmują miejsca w bazie. Przy rekonesansie skrzynka nadawcza była pusta, więc **nazwy pól odbiorcy nie są potwierdzone**: `receiversOf()` próbuje kolejno `receiverName`, `receivers`, `receiver`, `receiversNames` oraz imienia i nazwiska, a gdy nic nie pasuje — zostaje sam temat i data. Do poprawienia po pierwszej wysłanej wiadomości.
   - SPEC 12.7 zmieniona: Skrzynka nie jest już „tylko odczyt” (zgoda użytkownika: „wolę abyś zrobił tak, że mogę wysłać wiadomość z tej aplikacji”).
 - 2026-09-29: kod trafia do prywatnego repozytorium na GitHubie (konto Jaroszeek), autor commitów: Jaroszek.
 

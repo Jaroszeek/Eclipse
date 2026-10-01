@@ -6,6 +6,7 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import pl.eclipse.app.security.CredentialStore
 import pl.eclipse.core.model.Recipient
+import pl.eclipse.core.model.SentMessage
 import pl.eclipse.core.source.DataSource
 import pl.eclipse.core.source.SendResult
 import pl.eclipse.core.source.librus.LibrusException
@@ -21,6 +22,8 @@ class Messaging(
 ) {
     private val lock = Mutex() // jedno zapytanie naraz — szanujemy serwery Librusa
     private var session: DataSource? = null
+
+    suspend fun sent(): List<SentMessage> = withSession { it.sentMessages() }
 
     suspend fun recipients(): List<Recipient> = withSession { it.messageRecipients() }
 

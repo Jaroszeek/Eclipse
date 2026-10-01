@@ -26,7 +26,8 @@ Eclipse to prywatna aplikacja na Androida (.apk) jednego ucznia: kalendarz z pla
 - Do gita nie trafiają: `librus-dev.properties`, `local.properties`, klucze podpisu (`*.jks`, `*.keystore`) i ich hasła, surowe odpowiedzi z Librusa. Sprawdź `.gitignore` przed pierwszym commitem.
 - Nie loguj (Logcat, pliki) haseł, tokenów ani ciasteczek sesji. W release wyłącz logi debug.
 - Testując połączenie z Librusem, wypisuj strukturę, nazwy pól i liczby rekordów — bez treści wiadomości i uwag, bez nazwisk. Fixtures do testów anonimizuj.
-- Tylko HTTPS. Aplikacja nie wysyła danych nigdzie poza Librusa (bez analityki, bez zewnętrznych serwerów).
+- Tylko HTTPS. Aplikacja nie wysyła o użytkowniku żadnych danych nigdzie — ani do Librusa ponad to, co konieczne, ani nigdzie indziej. Bez analityki.
+- Jedyny wyjątek od „tylko Librus” (zgoda użytkownika 1.10.2026): **pobieranie** rozkładów jazdy z ZTP Kraków (`gtfs.ztp.krakow.pl`) na potrzeby zakładki Dojazd. Wolno wyłącznie pobierać publiczne pliki rozkładów. Nigdy nie wysyłaj tam lokalizacji, wyszukiwań, danych z Librusa ani niczego, co identyfikuje użytkownika. Wyszukiwanie połączeń liczy się w telefonie, na pobranych danych.
 - Szanuj serwery Librusa: synchronizacja w tle nie częściej niż co godzinę (domyślnie co 3 h), zapytania po kolei, ponawianie z rosnącym odstępem, jedna synchronizacja naraz.
 - Aplikacja jest prywatna — nie publikuj jej w Google Play ani w innym sklepie.
 

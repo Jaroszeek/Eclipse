@@ -526,10 +526,36 @@ Zakładki Wiadomości, Ogłoszenia, Uwagi, Wysłane. Lista z podglądem, nieprze
 - Kryteria akceptacji: aplikacja działa na telefonie użytkownika; synchronizacja w tle działa przez cały dzień (widać to w historii synchronizacji); powiadomienia przychodzą zgodnie z ustawieniami, łącznie z godzinami ciszy; bez internetu widać ostatnie dane z godziną synchronizacji; `README.md` opisuje, jak zbudować i zainstalować nową wersję.
 
 ## 15. Poza zakresem (teraz)
-Eksport do Google Calendar i plików .ics, wysyłanie wiadomości, konto rodzica i wielu użytkowników, publikacja w sklepach, funkcje AI, zmiany danych w Librusie, widżety na ekran główny (pomysł na później), wersja na komputer (sekcja 16).
+Eksport do Google Calendar i plików .ics, konto rodzica i wielu użytkowników, publikacja w sklepach, funkcje AI, zmiany danych w Librusie, widżety na ekran główny (pomysł na później), wersja na komputer (sekcja 16).
 
 ## 16. Na później: wersja na komputer
 - Strona internetowa nie może łączyć się z Librusem prosto z przeglądarki (przeglądarki blokują takie zapytania do cudzych serwisów), więc będzie potrzebować małego serwera w internecie, nie na komputerze użytkownika. Serwer uruchomi ten sam moduł `:core` i poda dane stronie.
 - Alternatywa bez serwera: aplikacja na komputer (Compose Multiplatform Desktop), która korzysta z `:core` bezpośrednio.
 - Dlatego już teraz `:core` nie ma żadnych zależności od Androida. Haze, Vico i kizitonwose Calendar mają wersje multiplatformowe, co ułatwi przeniesienie interfejsu.
 - Decyzję podejmie użytkownik po Etapie 3.
+
+## 17. Dojazd — komunikacja miejska w Krakowie
+Dodane 1.10.2026 na prośbę użytkownika. Jedyna część aplikacji, która łączy się poza Librusa — i tylko po to, żeby **pobrać** publiczne rozkłady.
+
+### 17.1 Dane
+- Źródło: ZTP Kraków, format GTFS: autobusy `GTFS_KRK_A.zip`, tramwaje `GTFS_KRK_T.zip` z `gtfs.ztp.krakow.pl`.
+- Pobieranie wyłącznie na żądanie użytkownika i przy odświeżaniu rozkładów. Nigdy nie wysyłamy tam lokalizacji, wyszukiwań ani niczego z Librusa.
+- Rozkłady leżą w **osobnej bazie** (`transit.db`), żeby dało się je skasować i pobrać od nowa bez ruszania danych szkolnych i własnych.
+- Pomijamy `shapes.txt` (potrzebny tylko do rysowania tras na mapie). Identyfikatory tekstowe z GTFS zamieniamy przy imporcie na liczby — bez tego baza byłaby kilka razy większa.
+- Przystanki o tej samej nazwie (perony, np. „Rondo Mogilskie 01” i „02”) łączymy w jeden **węzeł**; użytkownik wybiera węzeł, nie peron.
+- Po imporcie wszystko działa bez internetu. Pokazujemy datę rozkładu i przycisk „Odśwież rozkłady”.
+
+### 17.2 Wyszukiwanie połączeń
+- Użytkownik podaje skąd, dokąd i czas wyjazdu (domyślnie teraz).
+- Szukamy połączeń **bezpośrednich i z jedną przesiadką** — w Krakowie to pokrywa prawie wszystkie trasy.
+- Sposób: z przystanku początkowego zbieramy kursy odjeżdżające w oknie czasowym i stacje, do których dowożą; z przystanku docelowego zbieramy kursy, które do niego dojeżdżają, i stacje, z których wyruszają. Połączenie z przesiadką to wspólna stacja, gdzie odjazd jest co najmniej 2 minuty po przyjeździe.
+- Wynik: godzina odjazdu, godzina przyjazdu, czas podróży, numery linii, przystanek przesiadkowy i czas na przesiadkę.
+- Godziny są rozkładowe. Opóźnień na żywo nie pokazujemy (wymagałyby GTFS-RT) — mówimy o tym wprost w interfejsie.
+- Obowiązujący rozkład na dany dzień wynika z `calendar.txt` i `calendar_dates.txt` (dni robocze, soboty, niedziele, święta).
+
+### 17.3 Ekran
+- Nowa zakładka **Dojazd** w pasku bocznym.
+- Dwa pola wyboru przystanku z szukaniem po nazwie, przycisk zamiany miejscami, wybór godziny.
+- Lista połączeń: godziny, czas podróży, linie jako kolorowe żetony (tramwaj i autobus różnymi kolorami), przesiadka opisana wprost.
+- Gdy rozkładów jeszcze nie ma: ekran z przyciskiem „Pobierz rozkłady” i informacją, ile to zajmie.
+

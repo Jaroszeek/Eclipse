@@ -25,7 +25,19 @@ import pl.eclipse.core.model.AttendanceCategory
 import pl.eclipse.core.model.EventType
 import java.time.LocalDate
 
-data class SubjectAttendance(val key: String, val name: String, val color: Color, val percent: Double, val entries: Int)
+data class SubjectAttendance(
+    val key: String,
+    val name: String,
+    val color: Color,
+    val percent: Double,
+    val entries: Int,
+    /** Dokładne liczby wpisów po rozwinięciu przedmiotu (SPEC 7). */
+    val present: Int = 0,
+    val late: Int = 0,
+    val absent: Int = 0,
+    val excused: Int = 0,
+    val released: Int = 0,
+)
 
 data class AbsenceRow(val date: LocalDate, val lessonNo: Int, val subject: String)
 
@@ -75,7 +87,20 @@ class StatsViewModel(application: Application) : AndroidViewModel(application) {
         val counters = attendanceCounters(entries)
         val bySubject = snapshot.subjects.mapNotNull { s ->
             val list = entries.filter { it.subjectKey == s.sourceKey }
-            attendancePercent(list, counted)?.let { SubjectAttendance(s.sourceKey, s.name, i.color(s.sourceKey), it, list.size) }
+            attendancePercent(list, counted)?.let {
+                SubjectAttendance(
+                    key = s.sourceKey,
+                    name = s.name,
+                    color = i.color(s.sourceKey),
+                    percent = it,
+                    entries = list.size,
+                    present = list.count { e -> e.category == AttendanceCategory.PRESENT },
+                    late = list.count { e -> e.category == AttendanceCategory.LATE },
+                    absent = list.count { e -> e.category == AttendanceCategory.ABSENT },
+                    excused = list.count { e -> e.category == AttendanceCategory.ABSENT_EXCUSED },
+                    released = list.count { e -> e.category == AttendanceCategory.RELEASED },
+                )
+            }
         }.sortedBy { it.percent }
 
         // średnia w czasie: ogólna (średnia ze średnich przedmiotów do danego dnia) + wybrane przedmioty

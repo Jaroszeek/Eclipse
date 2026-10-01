@@ -13,8 +13,10 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -143,14 +145,34 @@ class InboxViewModel(application: Application) : AndroidViewModel(application) {
 fun InboxScreen(contentPadding: PaddingValues, onCompose: () -> Unit = {}, viewModel: InboxViewModel = viewModel()) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     var tab by rememberSaveable { mutableStateOf(InboxTab.MESSAGES) }
-    val items = when (tab) {
+    var query by rememberSaveable { mutableStateOf("") }
+    val all = when (tab) {
         InboxTab.MESSAGES -> state.messages
         InboxTab.ANNOUNCEMENTS -> state.announcements
         InboxTab.NOTES -> state.notes
         InboxTab.SENT -> state.sent.items
     }
+    // szukanie po nadawcy, temacie i treści — w zakładce, która jest otwarta
+    val needle = query.trim()
+    val items = if (needle.isEmpty()) all else all.filter {
+        it.title.contains(needle, true) || it.meta.contains(needle, true) || it.body.contains(needle, true)
+    }
     LaunchedEffect(tab) { if (tab == InboxTab.SENT) viewModel.loadSent() }
     LazyColumn(contentPadding = contentPadding, verticalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(horizontal = 16.dp)) {
+        item {
+            OutlinedTextField(
+                value = query,
+                onValueChange = { query = it },
+                label = { Text(stringResource(R.string.inbox_search)) },
+                singleLine = true,
+                trailingIcon = if (query.isEmpty()) null else ({
+                    IconButton(onClick = { query = "" }) {
+                        Icon(painterResource(R.drawable.ic_close), stringResource(R.string.inbox_search_clear), Modifier.size(18.dp))
+                    }
+                }),
+                modifier = Modifier.fillMaxWidth(),
+            )
+        }
         item {
             val unread = mapOf(
                 InboxTab.MESSAGES to state.messages.count { it.unread },
@@ -206,7 +228,15 @@ fun InboxScreen(contentPadding: PaddingValues, onCompose: () -> Unit = {}, viewM
             }
         }
         if (items.isEmpty() && !state.sent.loading && (tab != InboxTab.SENT || state.sent.error == null)) {
-            item { EmptyState(stringResource(if (tab == InboxTab.SENT) R.string.inbox_sent_empty else R.string.inbox_empty)) }
+            item {
+                EmptyState(
+                    when {
+                        needle.isNotEmpty() -> stringResource(R.string.inbox_search_none, needle)
+                        tab == InboxTab.SENT -> stringResource(R.string.inbox_sent_empty)
+                        else -> stringResource(R.string.inbox_empty)
+                    },
+                )
+            }
         }
         items(items, key = { it.key }) { item -> InboxRow(item, onOpen = { viewModel.markRead(item.key) }) }
     }

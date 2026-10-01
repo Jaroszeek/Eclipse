@@ -4,6 +4,7 @@ package pl.eclipse.app.ui.stats
 
 import pl.eclipse.app.ui.components.ChoiceChips
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -20,6 +21,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -27,15 +29,18 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -174,10 +179,17 @@ private fun AttendanceBar(s: SubjectAttendance, critical: Double, near: Double) 
         s.percent < near -> Palette.Warning
         else -> Palette.DayOff
     }
-    Column(Modifier.padding(vertical = 5.dp)) {
-        Row {
+    var expanded by rememberSaveable(s.key) { mutableStateOf(false) }
+    Column(Modifier.clickable { expanded = !expanded }.padding(vertical = 5.dp)) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
             Text(s.name, style = MaterialTheme.typography.bodyMedium, color = c.text, modifier = Modifier.weight(1f))
             Text(formatPercent(s.percent), style = MaterialTheme.typography.titleSmall.merge(TabularNumbers), color = c.readable(color))
+            Icon(
+                painterResource(R.drawable.ic_chevron_right),
+                stringResource(if (expanded) R.string.stats_hide_details else R.string.stats_show_details),
+                Modifier.size(18.dp).padding(start = 2.dp).rotate(if (expanded) 90f else 0f),
+                tint = c.textSecondary,
+            )
         }
         Box(
             Modifier.fillMaxWidth().height(10.dp).padding(top = 3.dp).clip(RoundedCornerShape(3.dp)).background(c.text.copy(alpha = 0.08f))
@@ -189,6 +201,30 @@ private fun AttendanceBar(s: SubjectAttendance, critical: Double, near: Double) 
                     drawLine(c.text.copy(alpha = 0.7f), Offset(x, 0f), Offset(x, size.height), 1.5.dp.toPx())
                 },
         )
+        if (expanded) {
+            // dokładne liczby wpisów — zera pomijamy, żeby lista była krótka
+            val rows = listOfNotNull(
+                (R.string.stats_count_present to s.present).takeIf { s.present > 0 },
+                (R.string.stats_count_late to s.late).takeIf { s.late > 0 },
+                (R.string.stats_count_absent to s.absent).takeIf { s.absent > 0 },
+                (R.string.stats_count_excused to s.excused).takeIf { s.excused > 0 },
+                (R.string.stats_count_released to s.released).takeIf { s.released > 0 },
+            )
+            Column(Modifier.padding(top = 6.dp, start = 2.dp)) {
+                rows.forEach { (label, count) ->
+                    Row {
+                        Text(stringResource(label), style = MaterialTheme.typography.bodySmall, color = c.textSecondary, modifier = Modifier.weight(1f))
+                        Text(count.toString(), style = MaterialTheme.typography.bodySmall.merge(TabularNumbers), color = c.text)
+                    }
+                }
+                Text(
+                    stringResource(R.string.stats_count_all, s.entries),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = c.textSecondary,
+                    modifier = Modifier.padding(top = 2.dp),
+                )
+            }
+        }
     }
 }
 

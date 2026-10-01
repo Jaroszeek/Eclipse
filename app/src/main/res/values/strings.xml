@@ -248,6 +248,14 @@
     <string name="stats_excused">usprawiedliwione</string>
     <string name="stats_unexcused">nieusprawiedliwione</string>
     <string name="stats_by_subject">Frekwencja z przedmiotów</string>
+    <string name="stats_show_details">Pokaż szczegóły frekwencji</string>
+    <string name="stats_hide_details">Ukryj szczegóły frekwencji</string>
+    <string name="stats_count_present">Obecności</string>
+    <string name="stats_count_late">Spóźnienia</string>
+    <string name="stats_count_absent">Nieobecności nieusprawiedliwione</string>
+    <string name="stats_count_excused">Nieobecności usprawiedliwione</string>
+    <string name="stats_count_released">Zwolnienia</string>
+    <string name="stats_count_all">Razem wpisów: %1$d</string>
     <string name="stats_rule_hint">Nieobecność przekraczająca połowę zajęć z przedmiotu może oznaczać nieklasyfikowanie. Pionowa kreska to 50%, pomarańczowa strefa — do 60%.</string>
     <string name="stats_unexcused_title">Nieusprawiedliwione nieobecności</string>
     <string name="stats_unexcused_none">Brak nieusprawiedliwionych nieobecności.</string>
@@ -303,6 +311,9 @@
     <string name="hint_upcoming">%1$s za %3$d %4$s (%2$s), a to przedmiot z ostrzeżeniem.</string>
 
     <!-- Skrzynka i powiadomienia (SPEC 12.7, 9) -->
+    <string name="inbox_search">Szukaj w wiadomościach</string>
+    <string name="inbox_search_clear">Wyczyść szukanie</string>
+    <string name="inbox_search_none">Nic nie pasuje do „%1$s”.</string>
     <string name="inbox_messages">Odebrane</string>
     <string name="inbox_announcements">Ogłoszenia</string>
     <string name="inbox_notes">Uwagi</string>

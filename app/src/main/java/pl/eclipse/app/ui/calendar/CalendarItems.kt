@@ -138,14 +138,18 @@ fun calendarItems(i: Insights, from: LocalDate, to: LocalDate, since: Long): Lis
             EventType.TRIP, EventType.OTHER -> BlockKind.EVENT
         }
         val moved = stored.previous?.date?.takeIf { it != e.date }
+        // Sprawdzian i kartkówka nigdy nie stają obok lekcji w siatce — dzieliłyby okienko na pół i ani lekcji,
+        // ani sprawdzianu nie dało się odczytać (SPEC 13). Albo są znacznikiem na bloku lekcji (wyżej, gdy numer
+        // lekcji się zgadza), albo trafiają na pasek całodniowy nad siatką. Dzień wolny też jest całodniowy.
+        val inGrid = e.type != EventType.DAY_OFF && e.type != EventType.TEST && e.type != EventType.QUIZ
         result += CalendarItem(
             id = "event|${e.sourceKey}",
             kind = kind,
             title = listOf(i.name(e.subjectKey), e.category).filter { it.isNotBlank() }.joinToString(" — "),
             short = i.short(e.subjectKey).ifBlank { e.category.take(4) },
             date = e.date,
-            start = if (e.type == EventType.DAY_OFF) null else start,
-            end = if (e.type == EventType.DAY_OFF) null else end,
+            start = if (inGrid) start else null,
+            end = if (inGrid) end else null,
             lessonNo = e.lessonNo,
             subjectKey = e.subjectKey,
             typeColor = i.typeColor(e.type),

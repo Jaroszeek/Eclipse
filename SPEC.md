@@ -436,10 +436,10 @@ Szczegóły w sekcji 13.
 Tylko elementy wybrane przez użytkownika:
 - Frekwencja ogólna: duża liczba i podział (obecności, spóźnienia, usprawiedliwione, nieusprawiedliwione), przełącznik okresu.
 - Frekwencja z przedmiotów: poziome paski posortowane rosnąco, linia 50%, strefa ostrzegawcza do 60%. Dotknięcie przedmiotu rozwija dokładne liczby wpisów (obecności, spóźnienia, nieobecności usprawiedliwione i nieusprawiedliwione, zwolnienia).
-- Spóźnienia i nieusprawiedliwione nieobecności: liczniki i lista (data, lekcja, przedmiot).
+- Spóźnienia i nieusprawiedliwione nieobecności: liczniki i lista (data, lekcja, przedmiot; gdy nazwa przedmiotu nie mieści się w wierszu — jego skrót).
 - Średnia w czasie: linia średniej ogólnej i wybranych przedmiotów, pasy progów w tle (wykres Vico).
 - Obciążenie: słupki sprawdzianów i kartkówek na tydzień (4 tygodnie wstecz, 8 naprzód); tydzień z co najmniej 3 sprawdzianami wyróżniony.
-- Zapas nieobecności: przedmioty z „możesz opuścić jeszcze ok. N lekcji”, kolory według progów z sekcji 8.
+- Zapas nieobecności: nazwa przedmiotu, a pod nią „możesz opuścić jeszcze ok. N lekcji”; kolory według progów z sekcji 8.
 
 ### 12.6 Important
 Szczegóły w sekcji 8.
@@ -478,7 +478,7 @@ Zakładki Wiadomości, Ogłoszenia, Uwagi, Wysłane. Lista z podglądem, nieprze
 - Sprawdzian z numerem lekcji pokazuj na bloku tej lekcji (znacznik i poświata), a nie jako osobny blok, który ją zasłania. Wpis bez numeru lekcji trafia na pasek całodniowy nad siatką.
 - Widok miesiąca: dzień ze sprawdzianem ma tło zabarwione kolorem typu (przy kartkówce słabiej), inne wpisy jako kropki.
 - Dotknięcie elementu otwiera arkusz szczegółów (przedmiot, godziny, sala, nauczyciel, opis z Librusa, historia zmian, etykiety z notatkami, powiązana ocena po sprawdzianie) z akcjami „Dodaj etykietę”, a przy własnych wydarzeniach także „Edytuj” i „Usuń”.
-- Własne wydarzenia: dotknięcie wolnego miejsca tworzy wydarzenie z godziną z tego miejsca (tytuł, czas, kolor lub etykieta, notatka, opcjonalnie przedmiot) w arkuszu edycji; tam też zmiana godziny. Przesuwanie bloków palcem — opcjonalnie, jeśli okaże się proste. Wpisów z Librusa nie da się zmieniać.
+- Własne wydarzenia: dotknięcie wolnego miejsca tworzy wydarzenie z godziną z tego miejsca (tytuł, czas, kolor lub etykieta, notatka, opcjonalnie przedmiot) w arkuszu edycji; tam też zmiana godziny. Przesuwanie bloków palcem — opcjonalnie, jeśli okaże się proste. Nowy wpis można powtórzyć co tydzień przez 4, 8 albo 16 tygodni (np. stałe korepetycje); edycja jednego wpisu nie zmienia reszty serii. Wpisów z Librusa nie da się zmieniać.
 - Przybornik (panel z prawej, przycisk [P] w Kalendarzu):
   - Etykiety: kolorowe żetony. Przytrzymaj i przeciągnij na lekcję lub wydarzenie; gdy przeciąganie się zaczyna, panel się chowa. Po upuszczeniu na lekcję pytanie: „Tylko ta lekcja” albo „Wszystkie lekcje: {przedmiot}”, do tego opcjonalna notatka (np. „cyrkiel”). Przycisk „Nowa etykieta” (nazwa, kolor). Technicznie: `Modifier.dragAndDropSource` i `Modifier.dragAndDropTarget` z Compose — sprawdź aktualne API w dokumentacji.
   - Szablony wydarzeń: przeciągnięte na dzień lub godzinę tworzą własne wydarzenie z domyślną długością, od razu otwarte do edycji.

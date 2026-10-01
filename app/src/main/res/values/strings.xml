@@ -129,6 +129,14 @@
     <string name="save_event">Zapisz wydarzenie</string>
     <string name="delete_event">Usuń wydarzenie</string>
     <string name="event_title">Tytuł</string>
+    <string name="event_repeat">Powtarzaj co tydzień</string>
+    <string name="event_repeat_once">Nie powtarzaj</string>
+    <plurals name="weeks">
+        <item quantity="one">tydzień</item>
+        <item quantity="few">tygodnie</item>
+        <item quantity="many">tygodni</item>
+        <item quantity="other">tygodnia</item>
+    </plurals>
     <string name="event_note">Notatka</string>
     <string name="event_color">Kolor</string>
     <string name="event_subject">Przedmiot (opcjonalnie)</string>
@@ -299,6 +307,7 @@
     <string name="reason_reserve_low">Zapas nieobecności jest mały.</string>
     <string name="reason_drop">Średnia spadła o %1$s pp w ciągu 28 dni.</string>
     <string name="reason_above_3">Średnia %1$s — tuż nad progiem oceny 3.</string>
+    <string name="reason_missed">Ocena nb z %1$s — sprawdzian do napisania.</string>
     <string name="reason_difficult">Oznaczony przez Ciebie jako trudny.</string>
     <string name="reason_upcoming">%1$s %2$s (%3$s).</string>
     <string name="hint_from_test">z najbliższego sprawdzianu (%1$s)</string>
@@ -406,6 +415,7 @@
     <string name="semester_dates">Rok szkolny od %1$s, I półrocze do %2$s, koniec roku %3$s (z Librusa).</string>
     <string name="imp_above3">Tuż nad progiem 3 — do</string>
     <string name="imp_fresh_days">Świeża ocena — ostatnie</string>
+    <string name="imp_missed_days">Przypominaj o nb przez</string>
     <string name="imp_attendance_near">Frekwencja blisko granicy — poniżej</string>
     <string name="imp_reserve_near">Mały zapas nieobecności — do</string>
     <string name="imp_drop">Spadek średniej w 28 dni — od</string>
@@ -417,6 +427,7 @@
     <string name="rule_attendance_near">Frekwencja blisko granicy</string>
     <string name="rule_drop">Spadek średniej</string>
     <string name="rule_above_3">Średnia tuż nad progiem oceny 3</string>
+    <string name="rule_missed">Ocena nb (zaległy sprawdzian)</string>
     <string name="rule_difficult">Przedmiot oznaczony jako trudny</string>
     <string name="rule_upcoming">Sprawdzian z przedmiotu z ostrzeżeniem</string>
     <string name="notif_permission_on">Powiadomienia systemowe są włączone.</string>

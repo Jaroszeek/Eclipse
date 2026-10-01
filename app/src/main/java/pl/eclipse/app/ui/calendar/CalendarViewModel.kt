@@ -21,6 +21,7 @@ import pl.eclipse.app.ui.today
 import pl.eclipse.core.model.EventType
 import pl.eclipse.core.model.Subject
 import java.time.LocalDate
+import java.time.LocalDateTime
 import java.time.LocalTime
 
 enum class CalendarView { MONTH, WEEK, DAY, LIST }
@@ -94,8 +95,25 @@ class CalendarViewModel(application: Application) : AndroidViewModel(application
 
     fun shiftDay(days: Long) = ui.update { it.copy(day = it.day.plusDays(days)) }
 
-    fun saveCustomEvent(event: CustomEventEntity) {
-        viewModelScope.launch { container.database.user().upsertCustomEvent(event) }
+    /** Zapisuje wpis, a przy [repeatWeeks] > 1 także kopie w kolejnych tygodniach (np. cotygodniowe korepetycje). */
+    fun saveCustomEvent(event: CustomEventEntity, repeatWeeks: Int = 1) {
+        viewModelScope.launch {
+            val dao = container.database.user()
+            dao.upsertCustomEvent(event)
+            // Powtarzamy tylko nowe wpisy — edycja jednego nie powiela całej serii.
+            if (event.id != 0L || repeatWeeks <= 1) return@launch
+            val start = runCatching { LocalDateTime.parse(event.start) }.getOrNull() ?: return@launch
+            val end = runCatching { LocalDateTime.parse(event.end) }.getOrNull() ?: return@launch
+            (1 until repeatWeeks).forEach { week ->
+                dao.upsertCustomEvent(
+                    event.copy(
+                        id = 0,
+                        start = start.plusWeeks(week.toLong()).toString(),
+                        end = end.plusWeeks(week.toLong()).toString(),
+                    ),
+                )
+            }
+        }
     }
 
     fun deleteCustomEvent(event: CustomEventEntity) {

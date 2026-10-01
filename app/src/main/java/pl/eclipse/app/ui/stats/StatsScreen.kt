@@ -42,6 +42,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -145,12 +146,20 @@ fun StatsScreen(contentPadding: PaddingValues, viewModel: StatsViewModel = viewM
                         r.reserve <= state.reserveNear -> Palette.Warning
                         else -> c.text
                     }
-                    Row(Modifier.padding(vertical = 5.dp), verticalAlignment = Alignment.CenterVertically) {
-                        Box(Modifier.size(10.dp).clip(CircleShape).background(r.color))
-                        Text(r.name, style = MaterialTheme.typography.bodyMedium, color = c.text, modifier = Modifier.padding(start = 10.dp).weight(1f))
+                    Column(Modifier.padding(vertical = 6.dp)) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Box(Modifier.size(10.dp).clip(CircleShape).background(r.color))
+                            Text(r.name, style = MaterialTheme.typography.titleSmall, color = c.text, modifier = Modifier.padding(start = 10.dp))
+                        }
                         Text(
-                            if (r.reserve <= 0) stringResource(R.string.reserve_none) else stringResource(R.string.reserve_left, r.reserve, pluralStringResource(R.plurals.lessons, r.reserve)),
-                            style = MaterialTheme.typography.bodyMedium.merge(TabularNumbers), color = c.readable(color),
+                            if (r.reserve <= 0) {
+                                stringResource(R.string.reserve_none)
+                            } else {
+                                stringResource(R.string.reserve_left, r.reserve, pluralStringResource(R.plurals.lessons, r.reserve))
+                            },
+                            style = MaterialTheme.typography.bodyMedium.merge(TabularNumbers),
+                            color = c.readable(color),
+                            modifier = Modifier.padding(start = 20.dp, top = 1.dp),
                         )
                     }
                 }
@@ -234,6 +243,16 @@ private fun AbsenceLine(row: AbsenceRow) {
     Row(Modifier.padding(vertical = 3.dp)) {
         Text(formatDate(row.date), style = MaterialTheme.typography.bodyMedium.merge(TabularNumbers), color = c.textSecondary, modifier = Modifier.width(96.dp))
         Text(stringResource(R.string.lesson_no, row.lessonNo), style = MaterialTheme.typography.bodyMedium, color = c.textSecondary, modifier = Modifier.width(80.dp))
-        Text(row.subject, style = MaterialTheme.typography.bodyMedium, color = c.text, modifier = Modifier.weight(1f))
+        // długa nazwa (np. „urządzenia techniki komputerowej”) łamała wiersz na trzy linie — wtedy skrót
+        var short by remember(row.subject) { mutableStateOf(false) }
+        Text(
+            if (short) row.short.ifBlank { row.subject } else row.subject,
+            style = MaterialTheme.typography.bodyMedium,
+            color = c.text,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            onTextLayout = { if (!short && it.hasVisualOverflow) short = true },
+            modifier = Modifier.weight(1f),
+        )
     }
 }

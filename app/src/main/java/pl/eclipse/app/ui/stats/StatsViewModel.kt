@@ -39,7 +39,7 @@ data class SubjectAttendance(
     val released: Int = 0,
 )
 
-data class AbsenceRow(val date: LocalDate, val lessonNo: Int, val subject: String)
+data class AbsenceRow(val date: LocalDate, val lessonNo: Int, val subject: String, val short: String)
 
 data class ReserveRow(val name: String, val color: Color, val reserve: Int, val planned: Int)
 
@@ -135,8 +135,10 @@ class StatsViewModel(application: Application) : AndroidViewModel(application) {
             excused = counters.excused,
             unexcused = counters.unexcused.size,
             bySubject = bySubject,
-            unexcusedList = counters.unexcused.sortedByDescending { it.date }.map { AbsenceRow(it.date, it.lessonNo, i.name(it.subjectKey)) },
-            lateList = entries.filter { it.category == AttendanceCategory.LATE }.sortedByDescending { it.date }.map { AbsenceRow(it.date, it.lessonNo, i.name(it.subjectKey)) },
+            unexcusedList = counters.unexcused.sortedByDescending { it.date }
+                .map { AbsenceRow(it.date, it.lessonNo, i.name(it.subjectKey), i.short(it.subjectKey)) },
+            lateList = entries.filter { it.category == AttendanceCategory.LATE }.sortedByDescending { it.date }
+                .map { AbsenceRow(it.date, it.lessonNo, i.name(it.subjectKey), i.short(it.subjectKey)) },
             subjects = snapshot.subjects.map { Triple(it.sourceKey, it.name, i.color(it.sourceKey)) },
             selected = ui.selected,
             averageLines = lines,

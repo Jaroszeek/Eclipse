@@ -355,6 +355,7 @@ private fun ImportantSection(s: AppSettings, set: ((AppSettings) -> AppSettings)
     Section(stringResource(R.string.nav_important)) {
         Stepper(stringResource(R.string.imp_above3), i.justAbove3Max.toInt(), 50..60, { "$it%" }) { v -> set { it.copy(important = it.important.copy(justAbove3Max = v.toDouble())) } }
         Stepper(stringResource(R.string.imp_fresh_days), i.freshDays.toInt(), 3..30, { "$it dni" }) { v -> set { it.copy(important = it.important.copy(freshDays = v.toLong())) } }
+        Stepper(stringResource(R.string.imp_missed_days), i.missedDays.toInt(), 7..90, { "$it dni" }) { v -> set { it.copy(important = it.important.copy(missedDays = v.toLong())) } }
         Stepper(stringResource(R.string.imp_attendance_near), i.attendanceNear.toInt(), 51..80, { "$it%" }) { v -> set { it.copy(important = it.important.copy(attendanceNear = v.toDouble())) } }
         Stepper(stringResource(R.string.imp_reserve_near), i.reserveNear, 1..10) { v -> set { it.copy(important = it.important.copy(reserveNear = v)) } }
         Stepper(stringResource(R.string.imp_drop), i.dropPp.toInt(), 1..20, { "$it pp" }) { v -> set { it.copy(important = it.important.copy(dropPp = v.toDouble())) } }
@@ -373,6 +374,7 @@ private val WarningRule.label
         WarningRule.ATTENDANCE_CRITICAL -> R.string.rule_attendance_critical
         WarningRule.AVERAGE_IN_2 -> R.string.rule_in_2
         WarningRule.FRESH_LOW_GRADE -> R.string.rule_fresh
+        WarningRule.MISSED_TEST -> R.string.rule_missed
         WarningRule.ATTENDANCE_NEAR -> R.string.rule_attendance_near
         WarningRule.AVERAGE_DROP -> R.string.rule_drop
         WarningRule.JUST_ABOVE_3 -> R.string.rule_above_3

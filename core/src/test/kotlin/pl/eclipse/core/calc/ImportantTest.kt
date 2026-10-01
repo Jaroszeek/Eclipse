@@ -16,6 +16,32 @@ class ImportantTest {
     private fun rulesOf(status: SubjectStatus) = rules(status)?.reasons?.map { it.rule }.orEmpty()
 
     @Test
+    fun missedTestIsAWarning() {
+        // „nb” nie wchodzi do średniej, więc musi je złapać osobna reguła
+        val good = listOf(g("5", 40), g("5", 30))
+        assertEquals(listOf(WarningRule.MISSED_TEST), rulesOf(SubjectStatus("bio", good + g("nb", 3))))
+    }
+
+    @Test
+    fun oldMissedTestIsForgotten() {
+        val good = listOf(g("5", 40), g("5", 30))
+        assertEquals(emptyList(), rulesOf(SubjectStatus("bio", good + g("nb", 60))))
+    }
+
+    @Test
+    fun skippedMissedTestIsIgnored() {
+        val good = listOf(g("5", 40), g("5", 30))
+        val nb = g("nb", 3)
+        assertEquals(emptyList(), rulesOf(SubjectStatus("bio", good + nb, skippedGradeKeys = setOf(nb.sourceKey))))
+    }
+
+    @Test
+    fun missedSymbolIsRecognised() {
+        listOf("nb", "NB", " nb ", "nb.").forEach { assertTrue(isMissed(it), it) }
+        listOf("np", "bz", "4", "").forEach { assertTrue(!isMissed(it), it) }
+    }
+
+    @Test
     fun averageBelow2IsCritical() {
         val w = assertNotNull(rules(SubjectStatus("che", listOf(g("1", 40), g("2", 30)))))
         assertEquals(WarningLevel.CRITICAL, w.level)

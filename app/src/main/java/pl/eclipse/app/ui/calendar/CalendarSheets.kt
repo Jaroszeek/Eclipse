@@ -50,6 +50,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
@@ -98,8 +99,8 @@ fun CalendarSheets(sheet: CalendarSheet?, state: CalendarState, viewModel: Calen
             initial = sheet.event,
             subjects = state.subjects.map { it.sourceKey to it.name },
             onDismiss = { onChange(null) },
-            onSave = {
-                viewModel.saveCustomEvent(it)
+            onSave = { event, repeatWeeks ->
+                viewModel.saveCustomEvent(event, repeatWeeks)
                 onChange(null)
             },
             onDelete = {
@@ -235,6 +236,9 @@ private val BlockKind.word
         BlockKind.TUTORING -> R.string.kind_tutoring
     }
 
+/** Ile tygodni z rzędu powtórzyć wpis (1 = tylko raz). */
+private val REPEAT_OPTIONS = listOf(1, 4, 8, 16)
+
 private val EVENT_COLORS = listOf(Palette.Custom, Palette.Homework, Palette.SchoolEvent, Palette.DayOff, Palette.Quiz, Palette.Subjects[1], Palette.Subjects[3])
 
 /** Arkusz edycji własnego wydarzenia: tytuł, czas, kolor, notatka, opcjonalnie przedmiot (SPEC 13). */
@@ -243,7 +247,7 @@ private fun EditSheet(
     initial: CustomEventEntity,
     subjects: List<Pair<String, String>>,
     onDismiss: () -> Unit,
-    onSave: (CustomEventEntity) -> Unit,
+    onSave: (CustomEventEntity, Int) -> Unit,
     onDelete: (CustomEventEntity) -> Unit,
 ) {
     val c = Eclipse.colors
@@ -259,6 +263,7 @@ private fun EditSheet(
     var subject by remember { mutableStateOf(initial.subjectKey) }
     var kind by remember { mutableStateOf(initial.kind) }
     var picker by remember { mutableStateOf<String?>(null) }
+    var repeatWeeks by remember { mutableStateOf(1) }
     val tutoringName = stringResource(R.string.kind_tutoring)
     val heading = when (kind) {
         CustomKind.EVENT -> if (initial.id == 0L) R.string.add_event else R.string.edit_event
@@ -318,6 +323,21 @@ private fun EditSheet(
                 FilterChip(selected = subject == null, onClick = { subject = null }, label = { Text(stringResource(R.string.no_subject)) })
                 subjects.forEach { (key, name) -> FilterChip(selected = subject == key, onClick = { subject = key }, label = { Text(name) }) }
             }
+            // Seria powtórzeń tylko przy nowym wpisie — przy edycji nie chcemy powielać istniejącej serii.
+            if (initial.id == 0L) {
+                Text(stringResource(R.string.event_repeat), style = MaterialTheme.typography.titleSmall, color = c.text)
+                ChoiceChips(
+                    REPEAT_OPTIONS.map { weeks ->
+                        weeks to if (weeks == 1) {
+                            stringResource(R.string.event_repeat_once)
+                        } else {
+                            "$weeks " + pluralStringResource(R.plurals.weeks, weeks)
+                        }
+                    },
+                    repeatWeeks,
+                    { repeatWeeks = it },
+                )
+            }
             OutlinedTextField(note, { note = it }, label = { Text(stringResource(R.string.event_note)) }, modifier = Modifier.fillMaxWidth())
             val valid = title.isNotBlank() && (allDay || end.isAfter(start))
             if (!valid && title.isNotBlank()) Text(stringResource(R.string.event_time_error), color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
@@ -333,6 +353,7 @@ private fun EditSheet(
                         subjectKey = subject,
                         kind = kind,
                     ),
+                    repeatWeeks,
                 )
             }, Modifier.fillMaxWidth(), enabled = valid)
             if (initial.id != 0L) SecondaryButton(stringResource(R.string.delete_event), { onDelete(initial) }, Modifier.fillMaxWidth())

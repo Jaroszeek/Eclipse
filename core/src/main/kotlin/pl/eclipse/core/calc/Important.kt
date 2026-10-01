@@ -23,6 +23,8 @@ enum class WarningRule(val level: WarningLevel) {
     ATTENDANCE_CRITICAL(WarningLevel.CRITICAL),
     AVERAGE_IN_2(WarningLevel.WARNING),
     FRESH_LOW_GRADE(WarningLevel.WARNING),
+    /** Ocena „nb” — uczeń nie był na sprawdzianie i trzeba go napisać. */
+    MISSED_TEST(WarningLevel.WARNING),
     ATTENDANCE_NEAR(WarningLevel.WARNING),
     AVERAGE_DROP(WarningLevel.WATCH),
     JUST_ABOVE_3(WarningLevel.WATCH),
@@ -35,6 +37,8 @@ data class ImportantSettings(
     val justAbove3Max: Double = 53.0,
     val freshDays: Long = 14,
     val freshBelowPercent: Double = 50.0,
+    /** Przez ile dni przypominamy o ocenie „nb”. */
+    val missedDays: Long = 30,
     val attendanceCritical: Double = 50.0,
     val attendanceNear: Double = 60.0,
     val reserveNear: Int = 3,
@@ -115,6 +119,12 @@ private fun warningFor(s: SubjectStatus, today: LocalDate, rules: GradingRules, 
             (gradePercent(g, rules).percent ?: 100.0) < settings.freshBelowPercent
     }.forEach { add(Reason(WarningRule.FRESH_LOW_GRADE, gradePercent(it, rules).percent, grade = it)) }
 
+    // „nb” nie wchodzi do średniej, więc żadna inna reguła go nie widzi — a oznacza zaległy sprawdzian.
+    s.grades.filter { g ->
+        g.sourceKey !in s.skippedGradeKeys && isMissed(g.symbol) &&
+            g.date > today.minusDays(settings.missedDays) && g.date <= today
+    }.forEach { add(Reason(WarningRule.MISSED_TEST, grade = it)) }
+
     trend(s.grades, today, s.method, rules)?.takeIf { it <= -settings.dropPp }
         ?.let { add(Reason(WarningRule.AVERAGE_DROP, it)) }
     if (s.isDifficult) add(Reason(WarningRule.MARKED_DIFFICULT))
@@ -176,3 +186,6 @@ fun subjectStatuses(
         )
     }
 }
+
+/** Czy symbol oznacza nieobecność na sprawdzianie („nb”, czasem z kropkami lub wielką literą). */
+internal fun isMissed(symbol: String) = symbol.trim().lowercase().replace(".", "") == "nb"

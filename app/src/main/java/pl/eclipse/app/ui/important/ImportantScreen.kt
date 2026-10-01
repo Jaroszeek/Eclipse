@@ -246,6 +246,7 @@ private fun reasonText(reason: Reason, reserve: Int?): String {
         WarningRule.ATTENDANCE_NEAR -> value?.let { stringResource(R.string.reason_attendance_near, formatPercent(it)) } ?: stringResource(R.string.reason_reserve_low)
         WarningRule.AVERAGE_DROP -> stringResource(R.string.reason_drop, formatPp(-(value ?: 0.0)))
         WarningRule.JUST_ABOVE_3 -> stringResource(R.string.reason_above_3, value?.let(::formatPercent).orEmpty())
+        WarningRule.MISSED_TEST -> stringResource(R.string.reason_missed, reason.grade?.date?.let(::formatDate).orEmpty())
         WarningRule.MARKED_DIFFICULT -> stringResource(R.string.reason_difficult)
         WarningRule.UPCOMING_TEST -> reason.event?.let { e ->
             // dni liczone ze sprawdzianu z tego powodu, nie z najbliższego w przedmiocie

@@ -67,7 +67,8 @@ Aktualizowane po każdym kroku. Szczegóły etapów: `SPEC.md`, sekcja 14.
 - [x] Wydanie v2.1: wysyłanie wiadomości z aplikacji (starszy moduł Librusa, wzorzec szkolny-android)
 - [x] Wydanie v2.2: ekran pisania w układzie pocztowym (wiersz „Do” otwiera osobny ekran odbiorców)
 - [x] Wydanie v2.3: zakładka „Wysłane” w Skrzynce
-- [ ] Potwierdzenie na telefonie: czy lista odbiorców się wczytuje, czy wysyłanie działa i czy „Wysłane” pokazuje odbiorcę
+- [x] Potwierdzenie na telefonie: wysyłanie wiadomości działa na prawdziwym koncie (użytkownik, 2026-10-01) — czyli starszy moduł `wiadomosci.librus.pl/module/…` nadal żyje, a lista odbiorców się wczytuje
+- [ ] Do potwierdzenia: czy w zakładce „Wysłane” widać „Do: …” (nazwy pól odbiorcy nie były potwierdzone)
 - [x] Wiadomości krok 2: wysyłanie z ekranem potwierdzenia (v2.1; SPEC 12.7 zmieniona za zgodą użytkownika)
 - [ ] Instalacja na telefonie przez USB (instrukcja w README; czeka na użytkownika)
 - [ ] Całodniowy test synchronizacji w tle i powiadomień z godzinami ciszy (czeka na użytkownika)

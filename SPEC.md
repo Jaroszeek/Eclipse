@@ -182,6 +182,14 @@ Dla wybranego przedmiotu i okresu. Niczego nie zapisuje w danych.
 - Seria do wykresu: dla każdego dnia, w którym przybyła ocena, średnia ze wszystkich ocen do tego dnia (w danym okresie).
 - Trend: średnia dziś minus średnia sprzed 28 dni, o ile wtedy były co najmniej 3 liczone oceny.
 
+### 6.7 Punktacja przedmiotu
+Librus nigdzie nie podaje wprost, za co ile punktów można dostać, a każdy nauczyciel punktuje inaczej. Wyliczamy to z ocen punktowych:
+dla każdego przedmiotu i kategorii (Sprawdzian, Kartkówka, Projekt…) bierzemy najczęstsze maksimum punktów, a przy remisie wyższe.
+- Pokazujemy: kategorię, maksimum punktów, z ilu ocen to wynika i czy maksima bywały różne.
+- Liczone z całego roku, nie tylko z wybranego okresu — więcej ocen to pewniejszy wynik.
+- Przedmioty bez ocen punktowych nie mają tej sekcji; nie każdy przedmiot ma punktację.
+- Największe maksimum przedmiotu podpowiadamy w kalkulatorze „co jeśli” jako punkty najbliższego sprawdzianu (6.5); można je nadpisać.
+
 ## 7. Frekwencja
 
 - Mapowanie typów frekwencji z Librusa na kategorie powstaje w rekonesansie i jest edytowalne. Domyślnie do limitu nieobecności liczą się nieobecności nieusprawiedliwione i usprawiedliwione. Nie liczą się: spóźnienia (to obecność), zwolnienia, nieobecności z przyczyn szkolnych (np. zawody).

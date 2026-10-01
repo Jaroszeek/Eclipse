@@ -20,6 +20,8 @@ import pl.eclipse.core.calc.AverageMethod
 import pl.eclipse.core.calc.GoalResult
 import pl.eclipse.core.calc.PercentSource
 import pl.eclipse.core.calc.Period
+import pl.eclipse.core.calc.PointScale
+import pl.eclipse.core.calc.pointScales
 import pl.eclipse.core.calc.ThresholdDistance
 import pl.eclipse.core.calc.WarningLevel
 import pl.eclipse.core.calc.averageSeries
@@ -105,6 +107,8 @@ data class SubjectState(
     val prefs: SubjectPrefsEntity = SubjectPrefsEntity(""),
     val short: String = "",
     val allPoints: Boolean = false,
+    /** Punktacja przedmiotu wyliczona z ocen: za co ile punktów (SPEC 6.7). */
+    val scales: List<PointScale> = emptyList(),
     val calculator: CalculatorState = CalculatorState(),
 )
 
@@ -177,6 +181,10 @@ class GradesViewModel(application: Application) : AndroidViewModel(application) 
         val rows = grades.sortedByDescending { it.date }.map { row(it, settings.grading, it.sourceKey in skipped) }
         val counted = grades.filter { countsToAverage(it, settings.grading) }
         val allPoints = counted.isNotEmpty() && counted.all { it.kind == GradeKind.POINT }
+        // Punktacja z całego roku, nie tylko z wybranego półrocza — więcej ocen to pewniejszy wynik.
+        val scales = pointScales(snapshot.grades.filter { it.removedAt == null && it.value.subjectKey == key }.map { it.value })
+        // Maksimum do kalkulatora: największe, jakie zdarza się w tym przedmiocie (zwykle sprawdzian).
+        val testMax = ui.testMax ?: scales.maxByOrNull { it.maxPoints }?.maxPoints
 
         // kalkulator, tryb „Dodaj oceny”: hipotetyczne oceny jako punkty z maksimum (zwykła ocena i % to punkty na 100)
         val extraAvg = if (ui.extra.isEmpty()) null else if (method == AverageMethod.POINTS_SUM && allPoints) {
@@ -184,7 +192,7 @@ class GradesViewModel(application: Application) : AndroidViewModel(application) 
         } else {
             (counted.mapNotNull { gradePercent(it, settings.grading).percent } + ui.extra.map { it.first / it.second * 100 }).average()
         }
-        val result = goal(grades, ui.target, method, settings.grading, testMaxPoints = ui.testMax)
+        val result = goal(grades, ui.target, method, settings.grading, testMaxPoints = testMax)
         SubjectState(
             loading = false,
             key = key,
@@ -202,13 +210,14 @@ class GradesViewModel(application: Application) : AndroidViewModel(application) 
             prefs = user.prefs[key] ?: SubjectPrefsEntity(key),
             short = i.short(key),
             allPoints = allPoints,
+            scales = scales,
             calculator = CalculatorState(
                 goalMode = ui.goalMode,
                 extra = ui.extra,
                 extraAverage = extraAvg,
                 extraPredicted = extraAvg?.let { predictedGrade(it, settings.grading) },
                 targetPercent = ui.target,
-                testMaxPoints = ui.testMax,
+                testMaxPoints = testMax,
                 result = result,
             ),
         )

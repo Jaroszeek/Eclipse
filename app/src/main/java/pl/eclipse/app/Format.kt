@@ -14,3 +14,7 @@ fun formatPercent(value: Double): String =
     if (value % 1.0 == 0.0) "${value.toInt()}%" else String.format(POLISH, "%.1f%%", value)
 
 fun formatDate(date: LocalDate): String = date.format(SHORT_DATE)
+
+/** Punkty bez zbędnego zera po przecinku („30”, „7,5”). */
+fun formatPoints(value: Double): String =
+    value.toBigDecimal().stripTrailingZeros().toPlainString().replace('.', ',')

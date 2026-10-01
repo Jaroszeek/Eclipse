@@ -43,6 +43,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.input.KeyboardType
@@ -52,6 +53,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import pl.eclipse.app.R
 import pl.eclipse.app.formatDate
 import pl.eclipse.app.formatPercent
+import pl.eclipse.app.formatPoints
 import pl.eclipse.app.ui.components.EclipseCard
 import pl.eclipse.app.ui.components.AverageChart
 import pl.eclipse.app.ui.components.EmptyState
@@ -68,6 +70,7 @@ import pl.eclipse.core.calc.AverageMethod
 import pl.eclipse.core.calc.GoalResult
 import pl.eclipse.core.calc.PercentSource
 import pl.eclipse.core.calc.Period
+import pl.eclipse.core.calc.PointScale
 import pl.eclipse.core.calc.ThresholdDistance
 import pl.eclipse.core.model.GradeKind
 import java.util.Locale
@@ -193,6 +196,10 @@ fun SubjectScreen(key: String, contentPadding: PaddingValues, onTitle: (String) 
                 }
             }
         }
+        if (state.scales.isNotEmpty()) {
+            item { SectionTitle(stringResource(R.string.points_scale_title)) }
+            item { PointScales(state.scales) }
+        }
         item { SectionTitle(stringResource(R.string.grades_list)) }
         if (state.rows.isEmpty()) item { EmptyState(stringResource(R.string.no_grades_period)) }
         items(state.rows, key = { it.key }) { row -> GradeRowView(row, onToggleSkip = { viewModel.toggleSkipped(row.key, !row.skipped) }) }
@@ -258,6 +265,42 @@ fun parseScore(text: String): Pair<Double, Double>? {
         return if (a != null && b != null && b > 0 && a in 0.0..b) a to b else null
     }
     return t.toDoubleOrNull()?.takeIf { it in 0.0..100.0 }?.let { it to 100.0 }
+}
+
+/** Za co ile punktów w tym przedmiocie — wyliczone z ocen, bo Librus nigdzie tego nie podaje (SPEC 6.7). */
+@Composable
+private fun PointScales(scales: List<PointScale>) {
+    val c = Eclipse.colors
+    EclipseCard {
+        scales.forEach { scale ->
+            Row(Modifier.padding(vertical = 3.dp), verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.weight(1f)) {
+                    Text(
+                        scale.category.ifBlank { stringResource(R.string.points_scale_other) },
+                        style = MaterialTheme.typography.titleSmall,
+                        color = c.text,
+                    )
+                    Text(
+                        pluralStringResource(R.plurals.points_scale_count, scale.count, scale.count) +
+                            if (scale.varied) " · " + stringResource(R.string.points_scale_varied) else "",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = c.textSecondary,
+                    )
+                }
+                Text(
+                    stringResource(R.string.points_scale_points, formatPoints(scale.maxPoints)),
+                    style = MaterialTheme.typography.titleMedium.merge(TabularNumbers),
+                    color = c.text,
+                )
+            }
+        }
+        Text(
+            stringResource(R.string.points_scale_hint),
+            style = MaterialTheme.typography.bodySmall,
+            color = c.textSecondary,
+            modifier = Modifier.padding(top = 6.dp),
+        )
+    }
 }
 
 @Composable

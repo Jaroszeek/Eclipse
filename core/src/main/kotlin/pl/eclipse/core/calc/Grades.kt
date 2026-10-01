@@ -167,4 +167,34 @@ fun trend(
 
 const val TREND_DAYS = 28L
 
+/** Ile punktów można zdobyć za daną formę sprawdzania w przedmiocie, np. „Sprawdzian — 30 pkt” (SPEC 6.7). */
+data class PointScale(
+    val subjectKey: String,
+    /** Kategoria z Librusa; bywa pusta, gdy nauczyciel jej nie ustawił. */
+    val category: String,
+    /** Najczęstsze maksimum punktów w tej kategorii. */
+    val maxPoints: Double,
+    /** Z ilu ocen to wynika. */
+    val count: Int,
+    /** Czy w tej kategorii trafiały się różne maksima (np. raz 20, raz 25 punktów). */
+    val varied: Boolean,
+)
+
+/**
+ * Punktacja wyliczona z ocen: dla każdego przedmiotu i kategorii najczęstsze maksimum punktów.
+ * Każdy nauczyciel punktuje inaczej, a Librus nie podaje tego wprost — bierzemy to z maksimów przy ocenach.
+ * Przedmioty bez ocen punktowych nie trafiają na listę, bo nie każdy przedmiot ma punktację.
+ */
+fun pointScales(grades: List<Grade>): List<PointScale> = grades
+    .filter { it.kind == GradeKind.POINT }
+    .mapNotNull { grade -> grade.maxPoints?.takeIf { it > 0 }?.let { Triple(grade.subjectKey, grade.category.orEmpty().trim(), it) } }
+    .groupBy { it.first to it.second }
+    .map { (key, list) ->
+        val counts = list.groupingBy { it.third }.eachCount()
+        // najczęstsze maksimum; przy remisie wyższe, bo zwykle oznacza pełny sprawdzian, a nie skróconą wersję
+        val top = counts.entries.maxWith(compareBy({ it.value }, { it.key }))
+        PointScale(key.first, key.second, top.key, list.size, counts.size > 1)
+    }
+    .sortedWith(compareBy({ it.subjectKey }, { -it.maxPoints }, { it.category }))
+
 private fun normalize(symbol: String) = symbol.trim().replace('−', '-').replace('–', '-')

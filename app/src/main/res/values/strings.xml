@@ -189,6 +189,17 @@
     <string name="distance_margin">zapas %1$s pp</string>
     <string name="points_subject">Oceny punktowe</string>
     <string name="average_over_time">Średnia w czasie</string>
+    <string name="points_scale_title">Punktacja</string>
+    <string name="points_scale_hint">Wyliczone z Twoich ocen punktowych z tego przedmiotu.</string>
+    <string name="points_scale_points">%1$s pkt</string>
+    <string name="points_scale_other">Bez kategorii</string>
+    <string name="points_scale_varied">bywa różnie</string>
+    <plurals name="points_scale_count">
+        <item quantity="one">z %1$d oceny</item>
+        <item quantity="few">z %1$d ocen</item>
+        <item quantity="many">z %1$d ocen</item>
+        <item quantity="other">z %1$d oceny</item>
+    </plurals>
     <string name="grades_list">Oceny</string>
     <string name="no_grades_period">Brak ocen w tym okresie.</string>
     <string name="special_grades">Oceny proponowane i końcowe</string>

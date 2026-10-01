@@ -263,6 +263,10 @@
     <string name="important_empty_next">Nic nie wymaga uwagi. Najbliższy sprawdzian: %1$s, %2$s.</string>
     <string name="important_reasons">Powody</string>
     <string name="important_hints">Podpowiedzi</string>
+    <string name="important_hidden">Ukryte powody</string>
+    <string name="important_hidden_hint">Te powody ukryłeś. Przedmiot wraca na listę, gdy przywrócisz choć jeden.</string>
+    <string name="restore_reason">Przywróć</string>
+    <string name="important_restore_all">Przywróć wszystkie powody</string>
     <string name="hide_reason">Ukryj ten powód</string>
     <string name="unmark_difficult">Usuń oznaczenie</string>
     <string name="open_grades">Przejdź do ocen</string>

@@ -7,6 +7,7 @@ import pl.eclipse.app.data.SchoolSnapshot
 import pl.eclipse.app.data.UserData
 import pl.eclipse.app.ui.theme.subjectColors
 import pl.eclipse.core.calc.AverageMethod
+import pl.eclipse.core.calc.Reason
 import pl.eclipse.core.calc.SubjectStatus
 import pl.eclipse.core.calc.SubjectWarning
 import pl.eclipse.core.calc.importantWarnings
@@ -64,12 +65,27 @@ class Insights(val snapshot: SchoolSnapshot, val user: UserData, val settings: A
         )
     }
 
+    private val allWarnings: List<SubjectWarning> by lazy {
+        importantWarnings(statuses, today, settings.grading, settings.important)
+    }
+
     /** Ostrzeżenia Important bez powodów ukrytych przez użytkownika („Ukryj ten powód” — wraca, gdy dane się zmienią). */
     val warnings: List<SubjectWarning> by lazy {
         val hidden = user.keys(Flags.HIDDEN_REASON)
-        importantWarnings(statuses, today, settings.grading, settings.important).mapNotNull { w ->
+        allWarnings.mapNotNull { w ->
             val reasons = w.reasons.filter { reasonKey(w.subjectKey, it) !in hidden }
             if (reasons.isEmpty()) null else w.copy(reasons = reasons, level = reasons.maxOf { it.rule.level })
+        }
+    }
+
+    /**
+     * Ukryte powody, które nadal by się pokazały — żeby dało się je przywrócić (SPEC 8).
+     * Bez tego ukrycie ostatniego powodu usuwało całą kartę przedmiotu i nic nie dało się już cofnąć.
+     */
+    val hiddenReasons: List<Pair<String, Reason>> by lazy {
+        val hidden = user.keys(Flags.HIDDEN_REASON)
+        allWarnings.flatMap { w ->
+            w.reasons.filter { reasonKey(w.subjectKey, it) in hidden }.map { w.subjectKey to it }
         }
     }
 
@@ -108,6 +124,6 @@ fun defaultTypeColor(key: String): Color = when (key) {
 }
 
 /** Klucz powodu ostrzeżenia do „Ukryj ten powód”: zawiera wartość, więc powód wraca, gdy dane się zmienią. */
-fun reasonKey(subjectKey: String, reason: pl.eclipse.core.calc.Reason): String =
+fun reasonKey(subjectKey: String, reason: Reason): String =
     listOf(subjectKey, reason.rule.name, reason.value?.let { "%.1f".format(it) }, reason.grade?.sourceKey, reason.event?.sourceKey)
         .joinToString("|")

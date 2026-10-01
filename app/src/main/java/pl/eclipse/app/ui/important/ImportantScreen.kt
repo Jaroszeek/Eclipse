@@ -42,6 +42,7 @@ import pl.eclipse.app.ui.Insights
 import pl.eclipse.app.ui.components.EclipseCard
 import pl.eclipse.app.ui.components.EmptyState
 import pl.eclipse.app.ui.components.SecondaryButton
+import pl.eclipse.app.ui.components.SectionTitle
 import pl.eclipse.app.ui.components.Tag
 import pl.eclipse.app.ui.grades.formatPp
 import pl.eclipse.app.ui.home.word
@@ -68,7 +69,15 @@ data class WarningCard(
     val hintTarget: Double?,
 )
 
-data class ImportantState(val loading: Boolean = true, val cards: List<WarningCard> = emptyList(), val nextTest: Pair<String, SchoolEvent>? = null)
+/** Powód ukryty przez użytkownika — pokazujemy go osobno, żeby dało się go przywrócić. */
+data class HiddenRow(val subjectKey: String, val subject: String, val reason: Reason, val reserve: Int?)
+
+data class ImportantState(
+    val loading: Boolean = true,
+    val cards: List<WarningCard> = emptyList(),
+    val hidden: List<HiddenRow> = emptyList(),
+    val nextTest: Pair<String, SchoolEvent>? = null,
+)
 
 class ImportantViewModel(application: Application) : AndroidViewModel(application) {
     private val container = application.container
@@ -89,6 +98,9 @@ class ImportantViewModel(application: Application) : AndroidViewModel(applicatio
                     hintTarget = w.hintGrade?.let { settings.grading.thresholds[it] },
                 )
             },
+            hidden = i.hiddenReasons.map { (subjectKey, reason) ->
+                HiddenRow(subjectKey, i.name(subjectKey), reason, statuses[subjectKey]?.reserve?.reserve)
+            },
             nextTest = i.nextTest?.let { i.name(it.subjectKey).ifBlank { it.category } to it },
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), ImportantState())
@@ -100,9 +112,20 @@ class ImportantViewModel(application: Application) : AndroidViewModel(applicatio
         }
     }
 
-    /** „Ukryj ten powód” — wraca, gdy dane się zmienią (klucz zawiera wartość). */
+    /** „Ukryj ten powód” — wraca, gdy dane się zmienią (klucz zawiera wartość) albo po przywróceniu. */
     fun hide(subjectKey: String, reason: Reason) {
         viewModelScope.launch { container.database.user().setFlag(UserFlagEntity(Flags.HIDDEN_REASON, reasonKey(subjectKey, reason))) }
+    }
+
+    fun restore(subjectKey: String, reason: Reason) {
+        viewModelScope.launch { container.database.user().clearFlag(Flags.HIDDEN_REASON, reasonKey(subjectKey, reason)) }
+    }
+
+    fun restoreAll() {
+        val hidden = state.value.hidden
+        viewModelScope.launch {
+            hidden.forEach { container.database.user().clearFlag(Flags.HIDDEN_REASON, reasonKey(it.subjectKey, it.reason)) }
+        }
     }
 }
 
@@ -120,6 +143,41 @@ fun ImportantScreen(contentPadding: PaddingValues, onOpenSubject: (String) -> Un
         }
         items(state.cards, key = { it.warning.subjectKey }) { card ->
             WarningCardView(card, onOpenSubject, viewModel)
+        }
+        if (state.hidden.isNotEmpty()) {
+            item { SectionTitle(stringResource(R.string.important_hidden)) }
+            item {
+                Text(
+                    stringResource(R.string.important_hidden_hint),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Eclipse.colors.textSecondary,
+                )
+            }
+            items(state.hidden, key = { it.subjectKey + "|" + it.reason.rule.name }) { row ->
+                HiddenRowView(row, viewModel)
+            }
+            item {
+                TextButton(onClick = viewModel::restoreAll) {
+                    Text(stringResource(R.string.important_restore_all), color = Eclipse.colors.accentText)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun HiddenRowView(row: HiddenRow, viewModel: ImportantViewModel) {
+    val c = Eclipse.colors
+    EclipseCard {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Column(Modifier.weight(1f)) {
+                Text(row.subject, style = MaterialTheme.typography.titleSmall, color = c.text)
+                Text(reasonText(row.reason, row.reserve), style = MaterialTheme.typography.bodyMedium, color = c.textSecondary)
+            }
+            TextButton(onClick = { viewModel.restore(row.subjectKey, row.reason) }) {
+                Icon(painterResource(R.drawable.ic_visibility), null, Modifier.size(18.dp), tint = c.accentText)
+                Text(stringResource(R.string.restore_reason), color = c.accentText, modifier = Modifier.padding(start = 6.dp))
+            }
         }
     }
 }
@@ -145,7 +203,7 @@ private fun WarningCardView(card: WarningCard, onOpenSubject: (String) -> Unit, 
         Text(stringResource(R.string.important_reasons), style = MaterialTheme.typography.titleSmall, color = c.text, modifier = Modifier.padding(top = 10.dp))
         w.reasons.forEach { reason ->
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text("• " + reasonText(reason, card), style = MaterialTheme.typography.bodyMedium, color = c.text, modifier = Modifier.weight(1f))
+                Text("• " + reasonText(reason, card.reserve), style = MaterialTheme.typography.bodyMedium, color = c.text, modifier = Modifier.weight(1f))
                 IconButton(onClick = { viewModel.hide(w.subjectKey, reason) }) {
                     Icon(painterResource(R.drawable.ic_visibility_off), stringResource(R.string.hide_reason), Modifier.size(18.dp), tint = c.textSecondary)
                 }
@@ -174,12 +232,12 @@ private val WarningLevel.icon
     }
 
 @Composable
-private fun reasonText(reason: Reason, card: WarningCard): String {
+private fun reasonText(reason: Reason, reserve: Int?): String {
     val value = reason.value
     return when (reason.rule) {
         WarningRule.AVERAGE_BELOW_2 -> stringResource(R.string.reason_below_2, value?.let(::formatPercent).orEmpty())
         WarningRule.PROPOSED_ONE -> stringResource(R.string.reason_proposed_one, reason.grade?.date?.let(::formatDate).orEmpty())
-        WarningRule.ATTENDANCE_CRITICAL -> if (card.reserve != null && card.reserve <= 0) stringResource(R.string.reason_no_reserve)
+        WarningRule.ATTENDANCE_CRITICAL -> if (reserve != null && reserve <= 0) stringResource(R.string.reason_no_reserve)
         else stringResource(R.string.reason_attendance_critical, value?.let(::formatPercent).orEmpty())
         WarningRule.AVERAGE_IN_2 -> stringResource(R.string.reason_in_2, value?.let(::formatPercent).orEmpty())
         WarningRule.FRESH_LOW_GRADE -> reason.grade?.let { g ->
@@ -190,7 +248,8 @@ private fun reasonText(reason: Reason, card: WarningCard): String {
         WarningRule.JUST_ABOVE_3 -> stringResource(R.string.reason_above_3, value?.let(::formatPercent).orEmpty())
         WarningRule.MARKED_DIFFICULT -> stringResource(R.string.reason_difficult)
         WarningRule.UPCOMING_TEST -> reason.event?.let { e ->
-            val days = card.nextTest?.let { (it.date.toEpochDay() - pl.eclipse.app.ui.today().toEpochDay()).toInt() } ?: 0
+            // dni liczone ze sprawdzianu z tego powodu, nie z najbliższego w przedmiocie
+            val days = (e.date.toEpochDay() - pl.eclipse.app.ui.today().toEpochDay()).toInt()
             stringResource(
                 R.string.reason_upcoming,
                 stringResource(if (e.type == EventType.QUIZ) R.string.word_quiz_cap else R.string.word_test_cap),

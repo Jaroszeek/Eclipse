@@ -288,7 +288,7 @@
     <string name="hint_upcoming">%1$s za %3$d %4$s (%2$s), a to przedmiot z ostrzeżeniem.</string>
 
     <!-- Skrzynka i powiadomienia (SPEC 12.7, 9) -->
-    <string name="inbox_messages">Wiadomości</string>
+    <string name="inbox_messages">Odebrane</string>
     <string name="inbox_announcements">Ogłoszenia</string>
     <string name="inbox_notes">Uwagi</string>
     <string name="inbox_sent">Wysłane</string>

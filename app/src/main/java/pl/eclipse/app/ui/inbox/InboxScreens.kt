@@ -50,7 +50,7 @@ import pl.eclipse.app.data.NotificationEntity
 import pl.eclipse.app.data.UserFlagEntity
 import pl.eclipse.app.formatDate
 import pl.eclipse.app.ui.WARSAW
-import pl.eclipse.app.ui.components.CountBadge
+import pl.eclipse.app.ui.components.ChoiceChips
 import pl.eclipse.app.ui.components.EclipseCard
 import pl.eclipse.app.ui.components.EmptyState
 import pl.eclipse.app.ui.formatSyncTime
@@ -152,24 +152,22 @@ fun InboxScreen(contentPadding: PaddingValues, onCompose: () -> Unit = {}, viewM
     LaunchedEffect(tab) { if (tab == InboxTab.SENT) viewModel.loadSent() }
     LazyColumn(contentPadding = contentPadding, verticalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(horizontal = 16.dp)) {
         item {
-            val tabs = listOf(
-                InboxTab.MESSAGES to (R.string.inbox_messages to state.messages.count { it.unread }),
-                InboxTab.ANNOUNCEMENTS to (R.string.inbox_announcements to state.announcements.count { it.unread }),
-                InboxTab.NOTES to (R.string.inbox_notes to state.notes.count { it.unread }),
-                InboxTab.SENT to (R.string.inbox_sent to 0),
+            val unread = mapOf(
+                InboxTab.MESSAGES to state.messages.count { it.unread },
+                InboxTab.ANNOUNCEMENTS to state.announcements.count { it.unread },
+                InboxTab.NOTES to state.notes.count { it.unread },
             )
-            // chipy zamiast przycisków segmentowych — przy wąskim ekranie i dużej czcionce przenoszą się do nowej linii
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                tabs.forEach { (value, pair) ->
-                    val (label, unread) = pair
-                    FilterChip(
-                        selected = tab == value,
-                        onClick = { tab = value },
-                        label = { Text(stringResource(label)) },
-                        trailingIcon = if (unread > 0) ({ CountBadge(unread, color = Eclipse.colors.accent) }) else null,
-                    )
-                }
-            }
+            ChoiceChips(
+                listOf(
+                    InboxTab.MESSAGES to stringResource(R.string.inbox_messages),
+                    InboxTab.ANNOUNCEMENTS to stringResource(R.string.inbox_announcements),
+                    InboxTab.NOTES to stringResource(R.string.inbox_notes),
+                    InboxTab.SENT to stringResource(R.string.inbox_sent),
+                ),
+                tab,
+                { tab = it },
+                badges = unread,
+            )
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 if (tab == InboxTab.MESSAGES) {
                     TextButton(onClick = onCompose) {
@@ -183,7 +181,7 @@ fun InboxScreen(contentPadding: PaddingValues, onCompose: () -> Unit = {}, viewM
                         Text(stringResource(R.string.inbox_refresh), color = Eclipse.colors.accentText, modifier = Modifier.padding(start = 8.dp))
                     }
                 }
-                if (tab != InboxTab.SENT && tabs.any { it.second.second > 0 }) {
+                if (tab != InboxTab.SENT && unread.values.any { it > 0 }) {
                     TextButton(onClick = viewModel::markAllRead) {
                         Icon(painterResource(R.drawable.ic_check), null, Modifier.size(18.dp), tint = Eclipse.colors.accentText)
                         Text(stringResource(R.string.inbox_mark_all_read), color = Eclipse.colors.accentText, modifier = Modifier.padding(start = 8.dp))

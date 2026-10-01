@@ -2,9 +2,11 @@ package pl.eclipse.app.ui.transit
 
 import android.app.Application
 import android.util.Log
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -12,18 +14,29 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TimePicker
+import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
@@ -41,44 +54,82 @@ import kotlinx.coroutines.launch
 import pl.eclipse.app.R
 import pl.eclipse.app.container
 import pl.eclipse.app.data.TransitInfo
+import pl.eclipse.app.data.TransitJourney
 import pl.eclipse.app.data.TransitNode
 import pl.eclipse.app.data.TransitProgress
+import pl.eclipse.app.ui.WARSAW
 import pl.eclipse.app.ui.components.EclipseCard
 import pl.eclipse.app.ui.components.EmptyState
 import pl.eclipse.app.ui.components.PrimaryButton
 import pl.eclipse.app.ui.components.SecondaryButton
+import pl.eclipse.app.ui.components.Tag
 import pl.eclipse.app.ui.theme.Eclipse
 import pl.eclipse.app.ui.theme.Palette
+import pl.eclipse.app.ui.theme.TabularNumbers
 import pl.eclipse.core.transit.TransitFeed
+import java.time.LocalDate
+import java.time.LocalTime
+
+/** Które pole przystanku wybieramy. */
+enum class StopField { FROM, TO }
 
 data class TransitState(
     val loading: Boolean = true,
     val info: TransitInfo? = null,
     val progress: TransitProgress? = null,
     val failed: Boolean = false,
-    val nodes: List<TransitNode> = emptyList(),
+    val stops: List<TransitNode> = emptyList(),
+    val from: TransitNode? = null,
+    val to: TransitNode? = null,
+    /** null znaczy „teraz”. */
+    val time: LocalTime? = null,
+    val searching: Boolean = false,
+    val searched: Boolean = false,
+    val journeys: List<TransitJourney> = emptyList(),
 )
 
 class TransitViewModel(application: Application) : AndroidViewModel(application) {
     private val store = application.container.transit
     private val _state = MutableStateFlow(TransitState())
     val state: StateFlow<TransitState> = _state.asStateFlow()
-    private var searching: Job? = null
+    private var stopSearch: Job? = null
+    private var journeySearch: Job? = null
 
     init {
-        reload("")
+        viewModelScope.launch { _state.update { it.copy(loading = false, info = store.info()) } }
     }
 
-    private fun reload(query: String) {
-        viewModelScope.launch {
-            val info = store.info()
-            _state.update { it.copy(loading = false, info = info, nodes = store.nodes(query)) }
+    fun searchStops(query: String) {
+        stopSearch?.cancel()
+        stopSearch = viewModelScope.launch { _state.update { it.copy(stops = store.nodes(query)) } }
+    }
+
+    fun pick(field: StopField, node: TransitNode) {
+        _state.update { if (field == StopField.FROM) it.copy(from = node) else it.copy(to = node) }
+        search()
+    }
+
+    fun swap() {
+        _state.update { it.copy(from = it.to, to = it.from) }
+        search()
+    }
+
+    fun setTime(time: LocalTime?) {
+        _state.update { it.copy(time = time) }
+        search()
+    }
+
+    private fun search() {
+        val current = _state.value
+        val from = current.from ?: return
+        val to = current.to ?: return
+        journeySearch?.cancel()
+        journeySearch = viewModelScope.launch {
+            _state.update { it.copy(searching = true) }
+            val time = current.time ?: LocalTime.now(WARSAW)
+            val found = store.journeys(from.id, to.id, LocalDate.now(WARSAW), time.hour * 60 + time.minute)
+            _state.update { it.copy(searching = false, searched = true, journeys = found) }
         }
-    }
-
-    fun search(query: String) {
-        searching?.cancel()
-        searching = viewModelScope.launch { _state.update { it.copy(nodes = store.nodes(query)) } }
     }
 
     /** Pobiera rozkłady z ZTP i wgrywa je do bazy. Trwa długo, więc pokazujemy postęp. */
@@ -88,23 +139,36 @@ class TransitViewModel(application: Application) : AndroidViewModel(application)
             _state.update { it.copy(progress = TransitProgress(TransitFeed.TRAM, TransitProgress.Phase.DOWNLOAD), failed = false) }
             val result = runCatching { store.refresh { progress -> _state.update { it.copy(progress = progress) } } }
             result.exceptionOrNull()?.let { Log.w("Eclipse", "Rozklady ZTP: " + it.javaClass.simpleName + ": " + it.message) }
-            _state.update { it.copy(progress = null, failed = result.isFailure) }
-            reload("")
+            val info = store.info()
+            _state.update { it.copy(progress = null, failed = result.isFailure, info = info, journeys = emptyList(), searched = false) }
         }
     }
 }
 
-/** Dojazd (SPEC 17): rozkłady ZTP Kraków pobrane na telefon, wyszukiwanie liczone na miejscu. */
+/** Dojazd (SPEC 17): rozkłady ZTP Kraków pobrane na telefon, połączenia liczone na miejscu. */
 @Composable
 fun TransitScreen(contentPadding: PaddingValues, viewModel: TransitViewModel = viewModel()) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    var picking by remember { mutableStateOf<StopField?>(null) }
     val progress = state.progress
+    val picked = picking
     Column(Modifier.padding(horizontal = 16.dp)) {
         when {
             progress != null -> ProgressCard(progress, contentPadding)
             state.loading -> Unit
             state.info == null -> StartCard(state.failed, contentPadding, viewModel::refresh)
-            else -> StopList(state, contentPadding, viewModel::search, viewModel::refresh)
+            picked != null -> StopPicker(state.stops, contentPadding, viewModel::searchStops) {
+                viewModel.pick(picked, it)
+                picking = null
+            }
+            else -> SearchPane(
+                state,
+                contentPadding,
+                onPick = { picking = it; viewModel.searchStops("") },
+                onSwap = viewModel::swap,
+                onTime = viewModel::setTime,
+                onRefresh = viewModel::refresh,
+            )
         }
     }
 }
@@ -142,7 +206,11 @@ private fun StartCard(failed: Boolean, contentPadding: PaddingValues, onDownload
             Text(stringResource(R.string.transit_empty_body), style = MaterialTheme.typography.bodyMedium, color = Eclipse.colors.textSecondary)
             if (failed) {
                 Spacer(Modifier.height(8.dp))
-                Text(stringResource(R.string.transit_error), style = MaterialTheme.typography.bodyMedium, color = Eclipse.colors.readable(Palette.Critical))
+                Text(
+                    stringResource(R.string.transit_error),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Eclipse.colors.readable(Palette.Critical),
+                )
             }
             Spacer(Modifier.height(16.dp))
             PrimaryButton(stringResource(R.string.transit_download), onDownload)
@@ -150,9 +218,18 @@ private fun StartCard(failed: Boolean, contentPadding: PaddingValues, onDownload
     }
 }
 
+/** Wybór przystanku: szukanie po nazwie i lista wyników (SPEC 17.3). */
 @Composable
-private fun StopList(state: TransitState, contentPadding: PaddingValues, onSearch: (String) -> Unit, onRefresh: () -> Unit) {
-    var query by rememberSaveable { mutableStateOf("") }
+private fun StopPicker(
+    stops: List<TransitNode>,
+    contentPadding: PaddingValues,
+    onSearch: (String) -> Unit,
+    onPick: (TransitNode) -> Unit,
+) {
+    var query by remember { mutableStateOf("") }
+    // ekran otwiera się po to, żeby wpisać nazwę — klawiatura ma czekać gotowa
+    val focus = remember { FocusRequester() }
+    LaunchedEffect(Unit) { focus.requestFocus() }
     LazyColumn(contentPadding = contentPadding, verticalArrangement = Arrangement.spacedBy(8.dp)) {
         item {
             OutlinedTextField(
@@ -169,16 +246,72 @@ private fun StopList(state: TransitState, contentPadding: PaddingValues, onSearc
                         }
                     }
                 },
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth().focusRequester(focus),
             )
         }
-        if (state.nodes.isEmpty()) {
-            item { EmptyState(stringResource(R.string.transit_no_stops)) }
-        }
-        items(state.nodes, key = { it.id }) { node ->
-            EclipseCard(padding = PaddingValues(horizontal = 16.dp, vertical = 12.dp)) {
-                Text(node.name, style = MaterialTheme.typography.bodyLarge, color = Eclipse.colors.text)
+        if (stops.isEmpty()) item { EmptyState(stringResource(R.string.transit_no_stops)) }
+        items(stops, key = { it.id }) { stop ->
+            EclipseCard(onClick = { onPick(stop) }, padding = PaddingValues(horizontal = 16.dp, vertical = 12.dp)) {
+                Text(stop.name, style = MaterialTheme.typography.bodyLarge, color = Eclipse.colors.text)
             }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun SearchPane(
+    state: TransitState,
+    contentPadding: PaddingValues,
+    onPick: (StopField) -> Unit,
+    onSwap: () -> Unit,
+    onTime: (LocalTime?) -> Unit,
+    onRefresh: () -> Unit,
+) {
+    var clock by remember { mutableStateOf(false) }
+    LazyColumn(contentPadding = contentPadding, verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        item {
+            EclipseCard(padding = PaddingValues(start = 16.dp, end = 4.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Column(Modifier.weight(1f)) {
+                        StopRow(R.string.transit_from, state.from) { onPick(StopField.FROM) }
+                        HorizontalDivider(color = Eclipse.colors.border.copy(alpha = 0.3f))
+                        StopRow(R.string.transit_to, state.to) { onPick(StopField.TO) }
+                    }
+                    IconButton(onClick = onSwap, enabled = state.from != null || state.to != null) {
+                        Icon(painterResource(R.drawable.ic_swap_vert), stringResource(R.string.transit_swap), tint = Eclipse.colors.accentText)
+                    }
+                }
+            }
+        }
+        item {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                TextButton(onClick = { clock = true }) {
+                    Text(
+                        state.time?.let { stringResource(R.string.transit_at, clockText(it)) } ?: stringResource(R.string.transit_now),
+                        color = Eclipse.colors.accentText,
+                    )
+                }
+                if (state.time != null) {
+                    TextButton(onClick = { onTime(null) }) {
+                        Text(stringResource(R.string.transit_back_to_now), color = Eclipse.colors.textSecondary)
+                    }
+                }
+            }
+        }
+        if (state.searching) item { LinearProgressIndicator(Modifier.fillMaxWidth(), color = Eclipse.colors.accent) }
+        items(state.journeys) { JourneyCard(it) }
+        if (state.journeys.isNotEmpty()) {
+            item {
+                Text(
+                    stringResource(R.string.transit_schedule_only),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Eclipse.colors.textSecondary,
+                )
+            }
+        }
+        if (state.searched && !state.searching && state.journeys.isEmpty()) {
+            item { EmptyState(stringResource(R.string.transit_no_journeys)) }
         }
         item {
             val info = state.info ?: return@item
@@ -194,7 +327,90 @@ private fun StopList(state: TransitState, contentPadding: PaddingValues, onSearc
             Spacer(Modifier.height(16.dp))
         }
     }
+    if (clock) {
+        val current = state.time ?: LocalTime.now(WARSAW)
+        val picker = rememberTimePickerState(current.hour, current.minute, is24Hour = true)
+        AlertDialog(
+            onDismissRequest = { clock = false },
+            confirmButton = {
+                TextButton(onClick = {
+                    onTime(LocalTime.of(picker.hour, picker.minute))
+                    clock = false
+                }) { Text(stringResource(R.string.ok)) }
+            },
+            dismissButton = { TextButton(onClick = { clock = false }) { Text(stringResource(R.string.cancel)) } },
+            text = { TimePicker(picker) },
+        )
+    }
 }
+
+@Composable
+private fun StopRow(label: Int, stop: TransitNode?, onClick: () -> Unit) {
+    Column(
+        Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .padding(vertical = 12.dp),
+    ) {
+        Text(stringResource(label), style = MaterialTheme.typography.labelSmall, color = Eclipse.colors.textSecondary)
+        Text(
+            stop?.name ?: stringResource(R.string.transit_pick_stop),
+            style = MaterialTheme.typography.bodyLarge,
+            color = if (stop == null) Eclipse.colors.textSecondary else Eclipse.colors.text,
+            maxLines = 1,
+        )
+    }
+}
+
+@Composable
+private fun JourneyCard(item: TransitJourney) {
+    val journey = item.journey
+    EclipseCard(padding = PaddingValues(14.dp)) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                clockText(journey.departure) + " – " + clockText(journey.arrival),
+                style = MaterialTheme.typography.titleMedium.merge(TabularNumbers),
+                color = Eclipse.colors.text,
+            )
+            Spacer(Modifier.weight(1f))
+            Text(
+                stringResource(R.string.transit_minutes, journey.minutes),
+                style = MaterialTheme.typography.bodyMedium.merge(TabularNumbers),
+                color = Eclipse.colors.textSecondary,
+            )
+        }
+        Spacer(Modifier.height(8.dp))
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            val first = journey.legs.first()
+            Tag(first.line, lineColor(first.tram))
+            if (journey.legs.size == 1) {
+                Text(first.head, style = MaterialTheme.typography.bodySmall, color = Eclipse.colors.textSecondary, maxLines = 1)
+            } else {
+                Icon(painterResource(R.drawable.ic_chevron_right), null, Modifier.size(14.dp), tint = Eclipse.colors.textSecondary)
+                Tag(journey.legs[1].line, lineColor(journey.legs[1].tram))
+            }
+        }
+        journey.transferMinutes?.let { wait ->
+            Spacer(Modifier.height(6.dp))
+            Text(
+                stringResource(R.string.transit_transfer, item.transferName.orEmpty(), wait),
+                style = MaterialTheme.typography.bodySmall,
+                color = Eclipse.colors.textSecondary,
+            )
+        }
+    }
+}
+
+/** Tramwaj i autobus różnymi kolorami (SPEC 17.3). */
+private fun lineColor(tram: Boolean): Color = if (tram) Color(0xFF3FBF8F) else Color(0xFF5B8DEF)
+
+/** Minuty od północy na godzinę; kurs po północy ma w rozkładzie wartość powyżej 1440. */
+private fun clockText(minutes: Int): String {
+    val value = ((minutes % (24 * 60)) + 24 * 60) % (24 * 60)
+    return "%02d:%02d".format(value / 60, value % 60)
+}
+
+private fun clockText(time: LocalTime): String = "%02d:%02d".format(time.hour, time.minute)
 
 /** „20260930” na „30.09.2026”; gdy rozkład nie podaje wersji, zostaje myślnik. */
 private fun formatFeedVersion(version: String): String =

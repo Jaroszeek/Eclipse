@@ -7,7 +7,11 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import pl.eclipse.core.transit.GtfsArchive
 import pl.eclipse.core.transit.TransitFeed
+import pl.eclipse.core.transit.Journey
+import pl.eclipse.core.transit.TripRun
+import pl.eclipse.core.transit.TripStop
 import pl.eclipse.core.transit.downloadFeed
+import pl.eclipse.core.transit.findJourneys
 import pl.eclipse.core.transit.gtfsDate
 import pl.eclipse.core.transit.gtfsMinutes
 import java.io.File
@@ -23,6 +27,9 @@ import java.time.LocalDate
 
 /** Węzeł przystankowy: wszystkie perony o tej samej nazwie to jeden punkt (SPEC 17.1). */
 data class TransitNode(val id: Int, val name: String)
+
+/** Połączenie gotowe do pokazania: przystanek przesiadkowy z nazwą zamiast numeru. */
+data class TransitJourney(val journey: Journey, val transferName: String?)
 
 /** Co wiemy o wgranym rozkładzie. */
 data class TransitInfo(val version: String, val nodes: Int, val trips: Int, val importedAt: Long)
@@ -84,6 +91,51 @@ class TransitStore(private val context: Context) {
             )
         }
         cursor.use { buildList { while (it.moveToNext()) add(TransitNode(it.getInt(0), it.getString(1))) } }
+    }
+
+    /** Połączenia z [from] do [to] odjeżdżające nie wcześniej niż [minute] minut po północy dnia [date] (SPEC 17.2). */
+    suspend fun journeys(from: Int, to: Int, date: LocalDate, minute: Int): List<TransitJourney> = withContext(Dispatchers.IO) {
+        val db = open() ?: return@withContext emptyList()
+        // kursy po północy mają w rozkładzie godziny powyżej 24, więc dokładamy wczorajsze i przesuwamy je o dobę
+        val runs = loadRuns(db, from, to, date, minute, 0) + loadRuns(db, from, to, date.minusDays(1), minute, -DAY)
+        val found = findJourneys(from, to, minute, runs)
+        val names = nodeNames(db, found.mapNotNull { it.transfer }.toSet())
+        found.map { TransitJourney(it, it.transfer?.let(names::get)) }
+    }
+
+    /** Kursy, które danego dnia zatrzymują się na przystanku początkowym albo docelowym w oknie wyszukiwania. */
+    private fun loadRuns(db: SQLiteDatabase, from: Int, to: Int, date: LocalDate, minute: Int, offset: Int): List<TripRun> {
+        val start = minute - offset
+        val args = arrayOf(from, to, start, start + WINDOW, dayNumber(date)).map(Int::toString).toTypedArray()
+        val runs = mutableListOf<TripRun>()
+        db.rawQuery(RUNS, args).use { cursor ->
+            var trip = -1
+            var line = ""
+            var tram = false
+            var head = ""
+            var stops = mutableListOf<TripStop>()
+            while (cursor.moveToNext()) {
+                if (cursor.getInt(0) != trip) {
+                    if (trip != -1) runs += TripRun(trip, line, tram, head, stops)
+                    trip = cursor.getInt(0)
+                    stops = mutableListOf()
+                    line = cursor.getString(4)
+                    tram = cursor.getInt(5) == 1
+                    head = cursor.getString(6)
+                }
+                stops += TripStop(cursor.getInt(1), cursor.getInt(2) + offset, cursor.getInt(3) + offset)
+            }
+            if (trip != -1) runs += TripRun(trip, line, tram, head, stops)
+        }
+        return runs
+    }
+
+    /** Nazwy węzłów po numerach; numery pochodzą z bazy, więc można je wstawić wprost do zapytania. */
+    private fun nodeNames(db: SQLiteDatabase, ids: Set<Int>): Map<Int, String> {
+        if (ids.isEmpty()) return emptyMap()
+        return db.rawQuery("SELECT id, name FROM node WHERE id IN (${ids.joinToString(",")})", null).use { cursor ->
+            buildMap { while (cursor.moveToNext()) put(cursor.getInt(0), cursor.getString(1)) }
+        }
     }
 
     /** Pobiera oba rozkłady i wgrywa je do nowej bazy; stara zostaje do końca, więc nieudane pobieranie nic nie psuje. */
@@ -270,6 +322,27 @@ class TransitStore(private val context: Context) {
 
     private companion object {
         const val DB_NAME = "transit.db"
+
+        /** Ile minut rozkładu bierzemy pod uwagę przy jednym szukaniu. */
+        const val WINDOW = 180
+        const val DAY = 24 * 60
+
+        /** Kursy z pełną trasą — wybrane po tym, że dotykają przystanku początkowego albo docelowego w oknie. */
+        val RUNS = """
+            SELECT st.trip, s.node, st.arr, st.dep, r.name, r.tram, t.head
+            FROM stop_time st
+            JOIN stop s ON s.id = st.stop
+            JOIN trip t ON t.id = st.trip
+            JOIN route r ON r.id = t.route
+            WHERE st.trip IN (
+                SELECT st2.trip FROM stop_time st2
+                JOIN stop s2 ON s2.id = st2.stop
+                JOIN trip t2 ON t2.id = st2.trip
+                WHERE s2.node IN (?, ?) AND st2.dep BETWEEN ? AND ?
+                  AND EXISTS(SELECT 1 FROM service_day d WHERE d.service = t2.service AND d.day = ?)
+            )
+            ORDER BY st.trip, st.seq
+        """.trimIndent()
 
         /** Numer układu tabel — gdy go zmienimy, stara baza jest odrzucana i rozkłady pobierają się od nowa. */
         const val SCHEMA = 1

@@ -575,6 +575,17 @@
     <string name="transit_phase_index">Porządkuję dane</string>
     <string name="transit_wait">To potrwa kilka minut. Nie zamykaj aplikacji.</string>
     <string name="transit_version">Rozkład z %1$s</string>
+    <string name="transit_from">Skąd</string>
+    <string name="transit_to">Dokąd</string>
+    <string name="transit_pick_stop">Wybierz przystanek</string>
+    <string name="transit_swap">Zamień przystanki miejscami</string>
+    <string name="transit_now">Odjazd: teraz</string>
+    <string name="transit_at">Odjazd: %1$s</string>
+    <string name="transit_back_to_now">Wróć do „teraz”</string>
+    <string name="transit_minutes">%1$d min</string>
+    <string name="transit_transfer">Przesiadka: %1$s, %2$d min na przesiadkę</string>
+    <string name="transit_schedule_only">Godziny z rozkładu. Eclipse nie zna opóźnień na żywo.</string>
+    <string name="transit_no_journeys">Nie znaleziono połączenia w ciągu najbliższych trzech godzin. Spróbuj innej godziny albo innego przystanku.</string>
     <string name="transit_error">Nie udało się pobrać rozkładów. Sprawdź połączenie z internetem i spróbuj ponownie.</string>
     <plurals name="transit_stops">
         <item quantity="one">%1$d przystanek</item>

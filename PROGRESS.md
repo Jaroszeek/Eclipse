@@ -151,6 +151,13 @@ Aktualizowane po każdym kroku. Szczegóły etapów: `SPEC.md`, sekcja 14.
   - Sprawdzone na emulatorze: pobranie ok. 25 MB i wgranie trwa ok. 2,5 minuty, wychodzi 1462 przystanki, 185 linii (23 tramwajowe, 162 autobusowe), 101 579 kursów, 2 267 567 godzin odjazdu; baza 87 MB. Ekran „Dojazd” ma pasek postępu z nazwą rozkładu, szukanie przystanku, datę rozkładu i „Odśwież rozkłady”.
   - Pułapka: `PRAGMA journal_mode` zwraca wiersz, więc w Androidzie musi iść przez `rawQuery`, nie `execSQL` (inaczej: „Queries can be performed using SQLiteDatabase query or rawQuery methods only”).
   - Pomijamy `shapes.txt` (trasy na mapie) — SPEC 17.1. Następne kroki: odjazdy z przystanku, wyszukiwarka połączeń (bezpośrednie + 1 przesiadka), powiązanie z planem lekcji.
+- 2026-10-02: Dojazd, krok 2 — wyszukiwarka połączeń (SPEC 17.2 i 17.3). Pominięty został zapowiadany krok „odjazdy z przystanku”: miał tylko sprawdzić import, a ten sprawdziły już liczby z wgrywania, no i SPEC go nie przewiduje. Zamiast tego od razu to, co SPEC opisuje.
+  - `:core/transit/Journey.kt` — czysta funkcja `findJourneys()`: z kursów wyjeżdżających z przystanku początkowego zbiera, dokąd dowożą, z kursów dojeżdżających do docelowego — skąd wyruszają, i łączy je po wspólnym węźle. Zwraca tylko połączenia, których nic nie bije (przy danej godzinie odjazdu dowozi najwcześniej), więc lista nie puchnie od wariantów tej samej trasy. 9 testów.
+  - Baza podaje tylko kursy, które danego dnia dotykają jednego z dwóch przystanków w oknie **3 godzin**; przesiadka musi trwać od 2 do 45 minut. Te trzy liczby to decyzje własne — SPEC podaje tylko minimum 2 minuty.
+  - Kursy po północy: pytamy też o wczoraj i przesuwamy ich godziny o dobę, bo w GTFS kurs o 1:10 ma zapisane „25:10”.
+  - Ekran: dwa pola przystanku (osobny ekran z szukaniem, klawiatura od razu gotowa), przycisk zamiany miejscami, wybór godziny (domyślnie teraz), lista połączeń z godzinami, czasem podróży, żetonami linii (tramwaj zielony, autobus niebieski) i opisem przesiadki. Pod listą zdanie, że godziny są rozkładowe i aplikacja nie zna opóźnień na żywo.
+  - Sprawdzone na emulatorze na prawdziwym rozkładzie: Rondo Mogilskie → Czerwone Maki P+R o 8:06 daje tramwaj 12 bezpośrednio w 30 minut i wariant 22 → 18 przez Teatr Słowackiego w 32 minuty. Wyniki zgadzają się z tym, co dla tych samych danych wyliczył skrypt sprawdzający.
+  - Do rozważenia: 2 minuty na przesiadkę bywają nierealne, gdy perony pod jedną nazwą są po dwóch stronach ulicy (Teatr Słowackiego). Podniesienie minimum do 3–4 minut wymaga zmiany SPEC 17.2.
 - 2026-09-29: kod trafia do prywatnego repozytorium na GitHubie (konto Jaroszeek), autor commitów: Jaroszek.
 
 ## Otwarte kwestie

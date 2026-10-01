@@ -463,6 +463,7 @@ private fun DayColumn(state: CalendarState, date: LocalDate, actions: CalendarAc
                 typeColor = item.typeColor,
                 subjectColor = item.subjectColor,
                 subtitle = if (compact) null else subtitle(item),
+                time = if (compact) null else timeText(item),
                 status = item.status,
                 tag = tagFor(item, compact),
                 important = item.isImportant && item.kind == BlockKind.LESSON,
@@ -507,12 +508,14 @@ private fun lanes(items: List<CalendarItem>): Map<String, Pair<Int, Int>> {
     return result
 }
 
+/** Godziny bloku — pokazywane w rogu, nie w podtytule, bo długa nazwa przedmiotu wypychała je poza blok. */
+private fun timeText(item: CalendarItem): String? =
+    item.start?.let { s -> item.end?.let { e -> "%d:%02d–%d:%02d".format(s.hour, s.minute, e.hour, e.minute) } }
+
 @Composable
 private fun subtitle(item: CalendarItem): String? {
     val lesson = (item.ref as? CalendarRef.OfLesson)?.lesson
-    val time = item.start?.let { s -> item.end?.let { e -> "%d:%02d–%d:%02d".format(s.hour, s.minute, e.hour, e.minute) } }
     return listOfNotNull(
-        time,
         lesson?.room?.let { stringResource(R.string.room, it) },
         lesson?.teacher,
         item.labels.firstOrNull()?.let { l -> l.label.name + (l.assignment.note.takeIf { it.isNotBlank() }?.let { ": $it" } ?: "") },

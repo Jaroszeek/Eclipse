@@ -21,7 +21,7 @@ Eclipse to osobisty planer szkolny na danych z Librusa, w formie aplikacji na An
 - Powiadomienia: na telefonie, tworzone przez samą aplikację po synchronizacji.
 - Użytkownik: początkujący programista, pracuje w Android Studio.
 - Wygląd: glassmorphism, motyw jasny i ciemny z przełącznikiem, kolor akcentu do wyboru w ustawieniach.
-- Nawigacja: pasek boczny z zakładkami Pulpit (ekran startowy), Kalendarz, Sprawdziany, Oceny, Statystyki, Important, Skrzynka, Ustawienia.
+- Nawigacja: pasek boczny z zakładkami Pulpit (ekran startowy), Kalendarz, Sprawdziany, Oceny, Statystyki, Ważne, Skrzynka, Ustawienia.
 - Kalendarz: widoki miesiąc, tydzień, dzień, lista; domyślnie tydzień. Plan lekcji wbudowany jako bloki godzinowe. Kolor według typu wydarzenia — z lewej kolor typu, od prawej przejście w kolor przedmiotu (pomysł użytkownika). Ważne lekcje oznaczane automatycznie i ręcznie. Panel z prawej („Przybornik”) z etykietami i szablonami do przeciągania na kalendarz. Własne wydarzenia.
 - Sprawdziany: osobna zakładka z odliczaniem; w kalendarzu też wyraźnie wyróżnione.
 - Oceny: średnia zwykła, bez wag (szkoła nie używa wag; na części przedmiotów są oceny punktowe), wyrażona w %. Wartości od użytkownika: 6 = 100%, 5 = 90%, 4 = 75% (użytkownik nie jest pewien), 3 = 50%, 2 = 40%, 1 = poniżej 40%. Karty przedmiotów ze szczegółami. Kalkulator „co jeśli”.
@@ -196,7 +196,7 @@ Dla wybranego przedmiotu i okresu. Niczego nie zapisuje w danych.
 
 ## 8. Important — ostrzeżenia
 
-Nazwa zakładki: „Important”. Trzy poziomy: Krytyczne (czerwony), Uwaga (pomarańczowy), Do obserwacji (żółty). Poziom przedmiotu to najwyższy poziom spośród uruchomionych reguł; karta pokazuje wszystkie powody. Progi są edytowalne w ustawieniach.
+Nazwa zakładki w aplikacji: „Ważne” (zmiana 1.10.2026 na prośbę użytkownika). W kodzie, w `PROGRESS.md` i dalej w tej specyfikacji funkcja nazywa się Important. Trzy poziomy: Krytyczne (czerwony), Uwaga (pomarańczowy), Do obserwacji (żółty). Poziom przedmiotu to najwyższy poziom spośród uruchomionych reguł; karta pokazuje wszystkie powody. Progi są edytowalne w ustawieniach.
 
 | Reguła | Poziom | Domyślnie |
 |---|---|---|
@@ -226,7 +226,7 @@ Nazwa zakładki: „Important”. Trzy poziomy: Krytyczne (czerwony), Uwaga (pom
 ## 9. Powiadomienia
 
 - Lokalne: tworzy je sama aplikacja po synchronizacji w tle. Nie ma serwera push.
-- Kanały powiadomień Androida (użytkownik może je też wyłączać w ustawieniach systemu): Oceny, Sprawdziany i kartkówki, Przypomnienia, Zmiany w planie, Important, Szczęśliwy numerek, Skrzynka, Problemy z synchronizacją.
+- Kanały powiadomień Androida (użytkownik może je też wyłączać w ustawieniach systemu): Oceny, Sprawdziany i kartkówki, Przypomnienia, Zmiany w planie, Ważne, Szczęśliwy numerek, Skrzynka, Problemy z synchronizacją.
 - Typy, każdy z przełącznikiem w ustawieniach aplikacji:
   - nowa ocena — „Nowa ocena z matematyki: 4 (75%)”;
   - nowy albo przeniesiony sprawdzian lub kartkówka;
@@ -339,7 +339,7 @@ Oszczędnie. Jedna animacja wejścia: korona rozjaśnia się przy otwarciu Pulpi
 
 ### 12.0 Układ i nawigacja
 - Pasek boczny (wysuwany z lewej, szklany): otwiera go ikona menu w lewym górnym rogu (gest przeciągnięcia od krawędzi może kolidować z systemowym gestem „wstecz”). Zawiera logo z tarczą, zakładki z plakietkami, a na dole Ustawienia, przełącznik motywu i czas ostatniej synchronizacji.
-- Plakietki: liczba nowych ocen przy Oceny, nieprzeczytanych przy Skrzynce, ostrzeżeń krytycznych przy Important. Gdy są ostrzeżenia krytyczne, kropka pojawia się też na ikonie menu.
+- Plakietki: liczba nowych ocen przy Oceny, nieprzeczytanych przy Skrzynce, ostrzeżeń krytycznych przy Ważne. Gdy są ostrzeżenia krytyczne, kropka pojawia się też na ikonie menu.
 - Górny pasek: menu, tytuł ekranu, dzwonek, „Odśwież dane” ze stanem (animacja podczas synchronizacji, baner przy błędzie). W Kalendarzu dodatkowo przycisk Przybornika.
 - Przeciągnięcie w dół odświeża dane na Pulpicie, w Kalendarzu, Sprawdzianach i Ocenach.
 - Szeroki ekran (tablet, telefon poziomo): pasek boczny i Przybornik mogą być stale widoczne.
@@ -371,7 +371,7 @@ Pasek boczny otwarty (kalendarz przyciemniony):
 │ Sprawdziany        │░░░░░░░░░░░│
 │ Oceny              │░░░░░░░░░░░│
 │ Statystyki         │░░░░░░░░░░░│
-│ Important      2   │░░░░░░░░░░░│
+│ Ważne          2   │░░░░░░░░░░░│
 │ Skrzynka       3   │░░░░░░░░░░░│
 │ ────────────────   │░░░░░░░░░░░│
 │ Ustawienia         │░░░░░░░░░░░│

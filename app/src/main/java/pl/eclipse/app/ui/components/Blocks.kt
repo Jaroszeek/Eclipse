@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -28,6 +27,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathEffect
@@ -63,6 +63,8 @@ fun ScheduleBlock(
     subjectColor: Color,
     modifier: Modifier = Modifier,
     subtitle: String? = null,
+    /** Godziny lekcji — w prawym dolnym rogu, poza układem tekstu, żeby długa nazwa ich nie wypchnęła. */
+    time: String? = null,
     status: BlockStatus = BlockStatus.NORMAL,
     tag: String? = null,
     important: Boolean = false,
@@ -109,9 +111,19 @@ fun ScheduleBlock(
             )
             .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier),
     ) {
-        Box(Modifier.width(if (compact) 3.dp else 4.dp).fillMaxHeight().background(bar).align(Alignment.CenterStart))
+        // Pasek rodzaju rysujemy, zamiast układać jako element o pełnej wysokości — inaczej blok bez zadanej
+        // wysokości (np. całodniowy w widoku dnia) rozciągał się na cały ekran.
+        val barWidth = if (compact) 3.dp else 4.dp
+        Box(Modifier.matchParentSize().drawBehind { drawRect(bar, size = Size(barWidth.toPx(), size.height)) })
+        val showTime = time != null && !compact
         Column(
-            Modifier.padding(start = if (compact) 6.dp else 12.dp, end = if (compact) 3.dp else 10.dp, top = if (compact) 3.dp else 8.dp, bottom = if (compact) 3.dp else 8.dp),
+            Modifier.padding(
+                start = if (compact) 6.dp else 12.dp,
+                // miejsce na godziny zarezerwowane w całej kolumnie, żeby tekst nigdy pod nie nie wszedł
+                end = (if (compact) 3.dp else 10.dp) + if (showTime) TIME_RESERVE else 0.dp,
+                top = if (compact) 3.dp else 8.dp,
+                bottom = if (compact) 3.dp else 8.dp,
+            ),
             verticalArrangement = Arrangement.spacedBy(2.dp),
         ) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -132,8 +144,21 @@ fun ScheduleBlock(
             if (!compact) subtitle?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = c.textSecondary, maxLines = 2) }
             tag?.let { Tag(it, if (status == BlockStatus.NORMAL || status == BlockStatus.CHANGED) typeColor else c.text, compact = compact) }
         }
+        if (showTime) {
+            Text(
+                time.orEmpty(),
+                style = MaterialTheme.typography.labelSmall.merge(TabularNumbers),
+                color = c.textSecondary,
+                maxLines = 1,
+                softWrap = false,
+                modifier = Modifier.align(Alignment.BottomEnd).padding(end = 8.dp, bottom = 6.dp),
+            )
+        }
     }
 }
+
+/** Szerokość zarezerwowana na godziny („10:15–11:00”). */
+private val TIME_RESERVE = 62.dp
 
 /** Mały znacznik słowny, np. „za 3 dni”, „zastępstwo”, „odwołana”. */
 @Composable

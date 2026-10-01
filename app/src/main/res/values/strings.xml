@@ -19,7 +19,7 @@
     <string name="nav_tests">Sprawdziany</string>
     <string name="nav_grades">Oceny</string>
     <string name="nav_stats">Statystyki</string>
-    <string name="nav_important">Important</string>
+    <string name="nav_important">Ważne</string>
     <string name="nav_inbox">Skrzynka</string>
     <string name="nav_settings">Ustawienia</string>
     <string name="nav_notifications">Powiadomienia</string>
@@ -183,7 +183,7 @@
     <string name="sort_recent">Ostatnia zmiana</string>
     <string name="overall_average">Średnia ogólna</string>
     <string name="grades_empty">Brak przedmiotów. Zsynchronizuj dane z Librusem.</string>
-    <string name="in_important">Przedmiot jest w zakładce Important</string>
+    <string name="in_important">Przedmiot jest w zakładce Ważne</string>
     <string name="prediction">prognoza %1$d</string>
     <string name="distance_to_next">do %1$d brakuje %2$s pp</string>
     <string name="distance_margin">zapas %1$s pp</string>
@@ -498,7 +498,7 @@
     <string name="channel_tests">Sprawdziany i kartkówki</string>
     <string name="channel_reminders">Przypomnienia</string>
     <string name="channel_plan">Zmiany w planie</string>
-    <string name="channel_important">Important</string>
+    <string name="channel_important">Ważne</string>
     <string name="channel_lucky">Szczęśliwy numerek</string>
     <string name="channel_inbox">Skrzynka</string>
     <string name="channel_sync">Problemy z synchronizacją</string>

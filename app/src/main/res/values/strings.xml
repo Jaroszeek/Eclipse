@@ -21,6 +21,7 @@
     <string name="nav_stats">Statystyki</string>
     <string name="nav_important">Ważne</string>
     <string name="nav_inbox">Skrzynka</string>
+    <string name="nav_transit">Dojazd</string>
     <string name="nav_settings">Ustawienia</string>
     <string name="nav_notifications">Powiadomienia</string>
     <string name="nav_style">Próbnik stylu</string>
@@ -560,4 +561,25 @@
     <string name="notif_digest">Nowe od wieczora: %1$d</string>
     <string name="notif_test_title">Testowe powiadomienie</string>
     <string name="notif_test_body">Powiadomienia Eclipse działają.</string>
+    <!-- Dojazd (SPEC 17) -->
+    <string name="transit_empty_title">Rozkłady jazdy nie są jeszcze pobrane</string>
+    <string name="transit_empty_body">Eclipse pobierze rozkłady tramwajów i autobusów ZTP Kraków (około 25 MB). Potem wyszukiwanie połączeń działa bez internetu.</string>
+    <string name="transit_download">Pobierz rozkłady</string>
+    <string name="transit_refresh">Odśwież rozkłady</string>
+    <string name="transit_search">Szukaj przystanku</string>
+    <string name="transit_no_stops">Nie ma takiego przystanku.</string>
+    <string name="transit_feed_tram">tramwaje</string>
+    <string name="transit_feed_bus">autobusy</string>
+    <string name="transit_phase_download">Pobieram rozkład: %1$s</string>
+    <string name="transit_phase_import">Wczytuję rozkład: %1$s</string>
+    <string name="transit_phase_index">Porządkuję dane</string>
+    <string name="transit_wait">To potrwa kilka minut. Nie zamykaj aplikacji.</string>
+    <string name="transit_version">Rozkład z %1$s</string>
+    <string name="transit_error">Nie udało się pobrać rozkładów. Sprawdź połączenie z internetem i spróbuj ponownie.</string>
+    <plurals name="transit_stops">
+        <item quantity="one">%1$d przystanek</item>
+        <item quantity="few">%1$d przystanki</item>
+        <item quantity="many">%1$d przystanków</item>
+        <item quantity="other">%1$d przystanku</item>
+    </plurals>
 </resources>

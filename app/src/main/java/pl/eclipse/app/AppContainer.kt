@@ -9,6 +9,7 @@ import pl.eclipse.app.data.Messaging
 import pl.eclipse.app.data.SyncStatus
 import pl.eclipse.app.data.SchoolRepository
 import pl.eclipse.app.data.SettingsStore
+import pl.eclipse.app.data.TransitStore
 import pl.eclipse.app.data.VisitStore
 import pl.eclipse.app.data.ensureUserDefaults
 import pl.eclipse.app.data.snapshot
@@ -44,6 +45,9 @@ class AppContainer(context: Context) {
     val account = Account(context, database, settings, credentials)
     val sync = SyncStatus(context)
     val messaging = Messaging(settings, credentials, ::dataSource)
+
+    /** Rozkłady jazdy ZTP (SPEC 17) — osobna baza, żeby dało się je skasować bez ruszania danych szkolnych. */
+    val transit = TransitStore(context)
 
     fun dataSource(demo: Boolean): DataSource = if (demo) DemoSource() else LibrusSource()
 }

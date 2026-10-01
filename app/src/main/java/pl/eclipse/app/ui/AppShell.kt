@@ -106,6 +106,7 @@ import pl.eclipse.app.ui.login.FirstSyncScreen
 import pl.eclipse.app.ui.login.LoginScreen
 import pl.eclipse.app.ui.login.NotificationPermissionScreen
 import pl.eclipse.app.ui.stats.StatsScreen
+import pl.eclipse.app.ui.transit.TransitScreen
 import pl.eclipse.app.ui.settings.SettingsScreen
 import pl.eclipse.app.ui.style.StyleScreen
 import pl.eclipse.app.ui.tests.TestsScreen
@@ -125,6 +126,7 @@ class RouteRequest(val route: String)
 @Serializable data object StatsRoute
 @Serializable data object ImportantRoute
 @Serializable data object InboxRoute
+@Serializable data object TransitRoute
 @Serializable data object SettingsRoute
 @Serializable data object NotificationsRoute
 @Serializable data object StyleRoute
@@ -141,6 +143,7 @@ enum class TopLevel(val route: Any, @param:StringRes val title: Int, @param:Draw
     STATS(StatsRoute, R.string.nav_stats, R.drawable.ic_bar_chart),
     IMPORTANT(ImportantRoute, R.string.nav_important, R.drawable.ic_warning),
     INBOX(InboxRoute, R.string.nav_inbox, R.drawable.ic_inbox),
+    TRANSIT(TransitRoute, R.string.nav_transit, R.drawable.ic_tram),
 }
 
 private val TIME: DateTimeFormatter = DateTimeFormatter.ofPattern("HH:mm").withZone(WARSAW)
@@ -295,6 +298,7 @@ private fun MainShell(state: ShellState, viewModel: ShellViewModel, initialRoute
                     screen<StatsRoute> { StatsScreen(contentPadding) }
                     screen<ImportantRoute> { ImportantScreen(contentPadding, onOpenSubject = { nav.navigate(SubjectRoute(it)) }) }
                     screen<InboxRoute> { InboxScreen(contentPadding, onCompose = { nav.navigate(ComposeRoute) }) }
+                    screen<TransitRoute> { TransitScreen(contentPadding) }
                     screen<ComposeRoute> {
                         ComposeScreen(
                             contentPadding,

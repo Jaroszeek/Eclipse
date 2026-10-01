@@ -68,7 +68,7 @@ Aktualizowane po każdym kroku. Szczegóły etapów: `SPEC.md`, sekcja 14.
 - [x] Wydanie v2.2: ekran pisania w układzie pocztowym (wiersz „Do” otwiera osobny ekran odbiorców)
 - [x] Wydanie v2.3: zakładka „Wysłane” w Skrzynce
 - [ ] Potwierdzenie na telefonie: czy lista odbiorców się wczytuje, czy wysyłanie działa i czy „Wysłane” pokazuje odbiorcę
-- [ ] Wiadomości krok 2: wysyłanie z ekranem potwierdzenia (wymaga zmiany SPEC 12.7 „tylko odczyt” — za zgodą użytkownika)
+- [x] Wiadomości krok 2: wysyłanie z ekranem potwierdzenia (v2.1; SPEC 12.7 zmieniona za zgodą użytkownika)
 - [ ] Instalacja na telefonie przez USB (instrukcja w README; czeka na użytkownika)
 - [ ] Całodniowy test synchronizacji w tle i powiadomień z godzinami ciszy (czeka na użytkownika)
 - [ ] Kryteria akceptacji Etapu 3

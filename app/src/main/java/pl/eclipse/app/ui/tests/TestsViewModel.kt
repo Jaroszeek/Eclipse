@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import pl.eclipse.app.container
+import pl.eclipse.app.data.CustomKind
 import pl.eclipse.app.ui.Insights
 import pl.eclipse.app.ui.mondayOf
 import pl.eclipse.core.calc.GoalResult
@@ -19,6 +20,7 @@ import pl.eclipse.core.calc.predictedGrade
 import pl.eclipse.core.calc.subjectAverage
 import pl.eclipse.core.model.EventType
 import java.time.LocalDate
+import java.time.LocalDateTime
 
 enum class TestFilter { TESTS, QUIZZES, HOMEWORK }
 
@@ -117,14 +119,32 @@ class TestsViewModel(application: Application) : AndroidViewModel(application) {
                     group = group(e.date),
                 )
             }
-        val homework = if (TestFilter.HOMEWORK !in ui.filters) emptyList() else snapshot.homework.filter { it.removedAt == null }.map { stored ->
-            val h = stored.value
-            TestEntry(
-                key = h.sourceKey, type = null, isHomework = true, subjectKey = h.subjectKey, subject = i.name(h.subjectKey),
-                subjectColor = i.color(h.subjectKey), typeColor = i.typeColor("HOMEWORK"), description = h.title, date = h.dueDate, lessonNo = null,
-                daysUntil = h.dueDate.toEpochDay() - today.toEpochDay(), hoursUntil = null, average = null, hint = null,
-                movedFrom = null, removed = false, grades = emptyList(), group = group(h.dueDate),
-            )
+        val homework = if (TestFilter.HOMEWORK !in ui.filters) {
+            emptyList()
+        } else {
+            val fromLibrus = snapshot.homework.filter { it.removedAt == null }.map { stored ->
+                val h = stored.value
+                TestEntry(
+                    key = h.sourceKey, type = null, isHomework = true, subjectKey = h.subjectKey, subject = i.name(h.subjectKey),
+                    subjectColor = i.color(h.subjectKey), typeColor = i.typeColor("HOMEWORK"), description = h.title, date = h.dueDate, lessonNo = null,
+                    daysUntil = h.dueDate.toEpochDay() - today.toEpochDay(), hoursUntil = null, average = null, hint = null,
+                    movedFrom = null, removed = false, grades = emptyList(), group = group(h.dueDate),
+                )
+            }
+            // własne zadania domowe z kalendarza — też są zadaniami, choć nie ma ich w Librusie
+            val own = user.customEvents.filter { it.kind == CustomKind.HOMEWORK }.mapNotNull { e ->
+                val due = runCatching { LocalDateTime.parse(e.start).toLocalDate() }.getOrNull() ?: return@mapNotNull null
+                val name = i.name(e.subjectKey)
+                TestEntry(
+                    key = "own-" + e.id, type = null, isHomework = true, subjectKey = e.subjectKey,
+                    // bez przedmiotu tytuł staje się nagłówkiem karty, żeby nie było pustego miejsca
+                    subject = name.ifBlank { e.title }, subjectColor = i.color(e.subjectKey), typeColor = i.typeColor("HOMEWORK"),
+                    description = if (name.isBlank()) "" else e.title, date = due, lessonNo = null,
+                    daysUntil = due.toEpochDay() - today.toEpochDay(), hoursUntil = null, average = null, hint = null,
+                    movedFrom = null, removed = false, grades = emptyList(), group = group(due),
+                )
+            }
+            fromLibrus + own
         }
         val all = (events + homework).sortedWith(compareBy({ it.date }, { it.lessonNo ?: 0 }))
         TestsState(

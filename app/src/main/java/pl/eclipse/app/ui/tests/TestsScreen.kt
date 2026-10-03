@@ -124,7 +124,10 @@ private fun TestCard(entry: TestEntry, onOpenCalculator: (String) -> Unit) {
                         color = c.text, modifier = Modifier.padding(start = 8.dp),
                     )
                 }
-                Text(entry.description, style = MaterialTheme.typography.bodyMedium, color = c.text, maxLines = 3)
+                // bez opisu (np. własne zadanie bez przedmiotu — tytuł jest wtedy nagłówkiem) nie zostawiamy pustego wiersza
+                if (entry.description.isNotBlank()) {
+                    Text(entry.description, style = MaterialTheme.typography.bodyMedium, color = c.text, maxLines = 3)
+                }
                 Text(
                     listOfNotNull(formatDate(entry.date), entry.lessonNo?.let { stringResource(R.string.lesson_no, it) }).joinToString(" · "),
                     style = MaterialTheme.typography.bodySmall, color = c.textSecondary,

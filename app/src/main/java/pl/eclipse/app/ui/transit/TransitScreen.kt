@@ -748,7 +748,11 @@ private fun JourneyCard(item: TransitJourney) {
         journey.transferMinutes?.let { wait ->
             Spacer(Modifier.height(6.dp))
             Text(
-                stringResource(R.string.transit_transfer, item.transferName.orEmpty(), wait),
+                stringResource(
+                    if (journey.changesPlatform) R.string.transit_transfer_walk else R.string.transit_transfer_same,
+                    item.transferName.orEmpty(),
+                    wait,
+                ),
                 style = MaterialTheme.typography.bodySmall,
                 color = Eclipse.colors.textSecondary,
             )

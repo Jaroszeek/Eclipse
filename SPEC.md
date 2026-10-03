@@ -548,11 +548,15 @@ Dodane 1.10.2026 na prośbę użytkownika. Jedyna część aplikacji, która ł�
 ### 17.2 Wyszukiwanie połączeń
 - Użytkownik podaje skąd, dokąd i godzinę. Godzina znaczy albo **wyjazd** (domyślnie teraz), albo **„chcę być na miejscu”** — wtedy szukamy wstecz i pokazujemy najpóźniejszy kurs, który zdąży, na początku listy.
 - Szukamy połączeń **bezpośrednich i z jedną przesiadką** — w Krakowie to pokrywa prawie wszystkie trasy.
-- Sposób: z przystanku początkowego zbieramy kursy odjeżdżające w oknie czasowym i stacje, do których dowożą; z przystanku docelowego zbieramy kursy, które do niego dojeżdżają, i stacje, z których wyruszają. Połączenie z przesiadką to wspólna stacja, gdzie odjazd jest co najmniej 2 minuty po przyjeździe.
+- Sposób: z przystanku początkowego zbieramy kursy odjeżdżające w oknie czasowym i stacje, do których dowożą; z przystanku docelowego zbieramy kursy, które do niego dojeżdżają, i stacje, z których wyruszają. Połączenie z przesiadką to wspólna stacja, gdzie odjazd jest wystarczająco długo po przyjeździe.
 - Wynik: godzina odjazdu, godzina przyjazdu, czas podróży, numery linii, przystanek przesiadkowy i czas na przesiadkę.
 - Godziny są rozkładowe. Opóźnień na żywo nie pokazujemy (wymagałyby GTFS-RT) — mówimy o tym wprost w interfejsie.
 - Obowiązujący rozkład na dany dzień wynika z `calendar.txt` i `calendar_dates.txt` (dni robocze, soboty, niedziele, święta).
 - Pod uwagę bierzemy kursy z okna **3 godzin** od podanej godziny (a przy „chcę być na miejscu” — 3 godzin przed nią). Przesiadka musi trwać od 2 do 45 minut.
+- **Przesiadka bez przechodzenia jest lepsza.** Węzeł łączy wszystkie perony o tej samej nazwie, ale wyjście z pojazdu i wejście do następnego na tym samym peronie to co innego niż przejście na drugą stronę ulicy. Dlatego:
+  - przesiadka na **tym samym peronie** wymaga 2 minut, a **na inny peron** — 4 minut;
+  - gdy dwa połączenia mają tę samą godzinę odjazdu i przyjazdu, zostaje to bez przechodzenia;
+  - przy wyniku piszemy wprost, czy to „ten sam peron”, czy „przejście na inny peron”.
 
 ### 17.3 Ekran
 - Nowa zakładka **Dojazd** w pasku bocznym.

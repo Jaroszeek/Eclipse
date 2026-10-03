@@ -619,7 +619,8 @@
     <string name="transit_arrive_at">Na miejscu o %1$s</string>
     <string name="transit_back_to_now">Wróć do „teraz”</string>
     <string name="transit_minutes">%1$d min</string>
-    <string name="transit_transfer">Przesiadka: %1$s, %2$d min na przesiadkę</string>
+    <string name="transit_transfer_same">Przesiadka: %1$s, %2$d min — ten sam peron</string>
+    <string name="transit_transfer_walk">Przesiadka: %1$s, %2$d min — przejście na inny peron</string>
     <string name="transit_schedule_only">Godziny z rozkładu. Eclipse nie zna opóźnień na żywo.</string>
     <string name="transit_no_journeys">Nie znaleziono połączenia w ciągu najbliższych trzech godzin. Spróbuj innej godziny albo innego przystanku.</string>
     <string name="transit_error">Nie udało się pobrać rozkładów. Sprawdź połączenie z internetem i spróbuj ponownie.</string>

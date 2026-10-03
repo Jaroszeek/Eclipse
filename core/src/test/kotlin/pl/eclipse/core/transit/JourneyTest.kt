@@ -2,13 +2,22 @@ package pl.eclipse.core.transit
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class JourneyTest {
     // węzły: 1 = start, 2 = przesiadka, 3 = cel, 4 = przystanek po drodze
+    // domyślnie każdy węzeł ma jeden peron o tym samym numerze, czyli przesiadka jest bez przechodzenia
     private fun run(id: Int, line: String, vararg stops: Triple<Int, Int, Int>) =
-        TripRun(id, line, true, "kierunek", stops.map { (node, arrival, departure) -> TripStop(node, arrival, departure) })
+        TripRun(id, line, true, "kierunek", stops.map { (node, arrival, departure) -> TripStop(node, node, arrival, departure) })
+
+    /** Kurs, w którym węzeł [at] obsługuje peron [platform] — do sprawdzania przesiadek z przejściem. */
+    private fun runFrom(id: Int, line: String, at: Int, platform: Int, vararg stops: Triple<Int, Int, Int>) =
+        TripRun(
+            id, line, true, "kierunek",
+            stops.map { (node, arrival, departure) -> TripStop(node, if (node == at) platform else node, arrival, departure) },
+        )
 
     private val direct = run(1, "52", Triple(1, 100, 100), Triple(4, 110, 110), Triple(3, 125, 125))
     private val toTransfer = run(2, "8", Triple(1, 100, 100), Triple(2, 110, 110))
@@ -70,6 +79,26 @@ class JourneyTest {
         val early = run(1, "52", Triple(1, 60, 60), Triple(3, 80, 80))
         val found = findJourneys(from = 1, to = 3, after = 0, runs = listOf(early, toTransfer, fromTransfer))
         assertEquals(listOf(60, 100), found.map { it.departure })
+    }
+
+    @Test
+    fun transferWithWalkNeedsMoreTime() {
+        // ten sam peron: trzy minuty wystarczą
+        val same = run(3, "20", Triple(2, 112, 113), Triple(3, 130, 130))
+        assertEquals(1, findJourneys(from = 1, to = 3, after = 0, runs = listOf(toTransfer, same)).size)
+        // inny peron tego samego węzła: trzy minuty to za mało na przejście
+        val other = runFrom(3, "20", at = 2, platform = 99, Triple(2, 112, 113), Triple(3, 130, 130))
+        assertTrue(findJourneys(from = 1, to = 3, after = 0, runs = listOf(toTransfer, other)).isEmpty())
+    }
+
+    @Test
+    fun transferWithoutWalkWinsOverOneWithWalk() {
+        // dwa warianty o tych samych godzinach: jeden z przejściem na inny peron, drugi bez
+        val walk = runFrom(4, "9", at = 2, platform = 99, Triple(2, 116, 116), Triple(3, 130, 130))
+        val found = findJourneys(from = 1, to = 3, after = 0, runs = listOf(toTransfer, fromTransfer, walk))
+        assertEquals(1, found.size)
+        assertEquals(listOf("8", "20"), found[0].legs.map { it.line })
+        assertFalse(found[0].changesPlatform)
     }
 
     @Test

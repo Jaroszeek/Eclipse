@@ -185,6 +185,12 @@ Aktualizowane po każdym kroku. Szczegóły etapów: `SPEC.md`, sekcja 14.
   - Sprawdzone na emulatorze: zapis „Dom” = Rondo Mogilskie, wybór go z listy, dodanie panelu, panel na Pulpicie z „za 5 min / za 9 min”, odliczanie zmieniło się na „za 4 min / za 8 min” po minucie.
   - SPEC 17.4 i 17.5 dopisane.
 - 2026-10-03: poprawka zgłoszona przez użytkownika — dwa panele dojazdu stały na Pulpicie bez odstępu, przyklejone do siebie. Wszystkie panele są jednym `item` listy Pulpitu, więc `Arrangement.spacedBy(10.dp)` tej listy ich nie dotyczyło; `TransitTiles` ustawia teraz ten sam odstęp u siebie.
+- 2026-10-03: Dojazd — przesiadki bez przechodzenia na inny peron (zgłoszenie użytkownika nr 19). Wyszukiwarka traktowała wszystkie perony pod jedną nazwą jak jeden punkt, więc proponowała dwuminutową przesiadkę wymagającą przejścia na drugą stronę ulicy, zamiast równie szybkiej przesiadki na tym samym peronie kawałek dalej.
+  - Rozwiązanie nie wymagało nowych danych: tabela `stop` od początku trzyma osobny numer każdego peronu, tylko `TripStop` go nie przenosił. Teraz niesie i węzeł, i peron.
+  - Przesiadka na **tym samym peronie** wymaga 2 minut, na **inny peron** — 4 minut (`platformChange`). Przy równej godzinie odjazdu i przyjazdu wygrywa wariant bez przechodzenia (nowy klucz sortowania przed liczbą odcinków). Przy wyniku piszemy, który to przypadek.
+  - Celowo rozróżniamy tylko „ten sam peron / inny peron”, bez liczenia metrów: wymagałoby to współrzędnych peronów, czyli kolejnego układu tabel i ponownego pobrania rozkładów, a sam fakt przechodzenia rozstrzyga sprawę. Do dołożenia, gdyby 4 minuty okazały się złym przybliżeniem.
+  - Sprawdzone na prawdziwym rozkładzie (Bronowice Małe → Szwedzka, 8:00): stary algorytm dawał 08:07→08:31 z dwuminutowym przejściem na Rondzie Grunwaldzkim, nowy daje 08:07→08:33 z czterema minutami, a pozostałe wyniki to w większości przesiadki na tym samym peronie. 2 nowe testy (11 łącznie).
+  - SPEC 17.2 uzupełniona.
 - 2026-09-29: kod trafia do prywatnego repozytorium na GitHubie (konto Jaroszeek), autor commitów: Jaroszek.
 
 ## Otwarte kwestie

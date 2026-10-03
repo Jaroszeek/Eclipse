@@ -152,7 +152,7 @@ class TransitStore(private val context: Context) {
                     tram = cursor.getInt(5) == 1
                     head = cursor.getString(6)
                 }
-                stops += TripStop(cursor.getInt(1), cursor.getInt(2) + offset, cursor.getInt(3) + offset)
+                stops += TripStop(cursor.getInt(1), cursor.getInt(7), cursor.getInt(2) + offset, cursor.getInt(3) + offset)
             }
             if (trip != -1) runs += TripRun(trip, line, tram, head, stops)
         }
@@ -369,7 +369,7 @@ class TransitStore(private val context: Context) {
 
         /** Kursy z pełną trasą — wybrane po tym, że dotykają przystanku początkowego albo docelowego w oknie. */
         val RUNS = """
-            SELECT st.trip, s.node, st.arr, st.dep, r.name, r.tram, t.head
+            SELECT st.trip, s.node, st.arr, st.dep, r.name, r.tram, t.head, st.stop
             FROM stop_time st
             JOIN stop s ON s.id = st.stop
             JOIN trip t ON t.id = st.trip

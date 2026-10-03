@@ -280,6 +280,7 @@ private fun MainShell(state: ShellState, viewModel: ShellViewModel, initialRoute
                             onOpenTests = { nav.navigateTop(TestsRoute) },
                             onOpenImportant = { nav.navigateTop(ImportantRoute) },
                             onOpenGrades = { nav.navigateTop(GradesRoute) },
+                            onOpenTransit = { nav.navigateTop(TransitRoute) },
                         )
                     }
                     screen<CalendarRoute> {

@@ -72,9 +72,12 @@ fun HomeScreen(
     onOpenTests: () -> Unit,
     onOpenImportant: () -> Unit,
     onOpenGrades: () -> Unit,
+    onOpenTransit: () -> Unit = {},
     viewModel: HomeViewModel = viewModel(),
+    transitViewModel: TransitTilesViewModel = viewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val routeTiles by transitViewModel.state.collectAsStateWithLifecycle()
     val c = Eclipse.colors
     var reordering by rememberSaveable { mutableStateOf(false) }
     LazyColumn(
@@ -166,6 +169,11 @@ fun HomeScreen(
                         }
                     }
                 }
+
+                HomeTile.TRANSIT -> if (routeTiles.isNotEmpty()) {
+                    item { SectionTitle(stringResource(R.string.nav_transit)) }
+                    item { TransitTiles(routeTiles, onOpenTransit, transitViewModel::refresh) }
+                }
             }
         }
 
@@ -228,6 +236,7 @@ private val HomeTile.label
         HomeTile.IMPORTANT -> R.string.nav_important
         HomeTile.LUCKY -> R.string.home_lucky
         HomeTile.HOMEWORK -> R.string.home_tile_homework
+        HomeTile.TRANSIT -> R.string.nav_transit
     }
 
 @Composable

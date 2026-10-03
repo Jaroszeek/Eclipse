@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -53,6 +54,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import pl.eclipse.app.R
@@ -62,6 +64,8 @@ import pl.eclipse.app.data.TransitJourney
 import pl.eclipse.app.data.TransitNode
 import pl.eclipse.app.data.TransitPlace
 import pl.eclipse.app.data.LOCATION_PERMISSION
+import pl.eclipse.app.data.RouteTileEntity
+import pl.eclipse.app.data.SavedPlaceEntity
 import pl.eclipse.app.data.TransitProgress
 import pl.eclipse.app.data.currentLocation
 import pl.eclipse.app.data.hasLocationPermission
@@ -82,6 +86,9 @@ import java.time.LocalTime
 /** Które pole przystanku wybieramy. */
 enum class StopField { FROM, TO }
 
+/** Zapisane miejsce z odnalezionym przystankiem; [node] jest puste, gdy rozkład go już nie zna. */
+data class SavedStop(val id: Long, val label: String, val stopName: String, val node: TransitNode?)
+
 data class TransitState(
     val loading: Boolean = true,
     val info: TransitInfo? = null,
@@ -101,6 +108,8 @@ data class TransitState(
     val nearbyPlace: String? = null,
     val locating: Boolean = false,
     val locationFailed: Boolean = false,
+    val saved: List<SavedStop> = emptyList(),
+    val tiles: List<RouteTileEntity> = emptyList(),
     val searching: Boolean = false,
     val searched: Boolean = false,
     val journeys: List<TransitJourney> = emptyList(),
@@ -114,8 +123,38 @@ class TransitViewModel(application: Application) : AndroidViewModel(application)
     private var stopSearch: Job? = null
     private var journeySearch: Job? = null
 
+    private val user = application.container.database.user()
+
     init {
         viewModelScope.launch { _state.update { it.copy(loading = false, info = store.info()) } }
+        // zapisane miejsca odnajdujemy po nazwie, bo numery przystanków powstają od nowa przy każdym wgraniu rozkładu
+        viewModelScope.launch {
+            combine(user.savedPlaces(), user.routeTiles()) { places, tiles -> places to tiles }.collect { (places, tiles) ->
+                val resolved = places.map { SavedStop(it.id, it.label, it.stopName, store.nodeByName(it.stopName)) }
+                _state.update { it.copy(saved = resolved, tiles = tiles) }
+            }
+        }
+    }
+
+    fun savePlace(label: String, stopName: String) {
+        viewModelScope.launch { user.upsertSavedPlace(SavedPlaceEntity(label = label.trim(), stopName = stopName)) }
+    }
+
+    fun deleteSavedPlace(saved: SavedStop) {
+        viewModelScope.launch { user.deleteSavedPlace(SavedPlaceEntity(saved.id, saved.label, saved.stopName)) }
+    }
+
+    /** Zapisuje obecną trasę jako panel na Pulpicie. */
+    fun addTile() {
+        val from = _state.value.from ?: return
+        val to = _state.value.to ?: return
+        viewModelScope.launch {
+            user.upsertRouteTile(RouteTileEntity(fromName = from.name, toName = to.name, position = user.nextTilePosition()))
+        }
+    }
+
+    fun deleteTile(tile: RouteTileEntity) {
+        viewModelScope.launch { user.deleteRouteTile(tile) }
     }
 
     fun searchStops(query: String) {
@@ -223,6 +262,8 @@ fun TransitScreen(contentPadding: PaddingValues, viewModel: TransitViewModel = v
                 viewModel::searchStops,
                 viewModel::useLocation,
                 viewModel::pickPlace,
+                viewModel::savePlace,
+                viewModel::deleteSavedPlace,
             ) {
                 viewModel.pick(picked, it)
                 picking = null
@@ -234,6 +275,8 @@ fun TransitScreen(contentPadding: PaddingValues, viewModel: TransitViewModel = v
                 onSwap = viewModel::swap,
                 onTime = viewModel::setTime,
                 onArriveBy = viewModel::setArriveBy,
+                onAddTile = viewModel::addTile,
+                onDeleteTile = viewModel::deleteTile,
                 onRefresh = viewModel::refresh,
             )
         }
@@ -293,9 +336,12 @@ private fun StopPicker(
     onSearch: (String) -> Unit,
     onLocation: (Context) -> Unit,
     onPlace: (TransitPlace) -> Unit,
+    onSave: (String, String) -> Unit,
+    onForget: (SavedStop) -> Unit,
     onPick: (TransitNode) -> Unit,
 ) {
     var query by remember { mutableStateOf("") }
+    var saving by remember { mutableStateOf<TransitNode?>(null) }
     val context = LocalContext.current
     val askLocation = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
         if (granted) onLocation(context)
@@ -355,12 +401,69 @@ private fun StopPicker(
                 )
             }
         }
+        if (state.saved.isNotEmpty() && query.isBlank() && !state.nearby) {
+            item {
+                Text(
+                    stringResource(R.string.transit_saved_title),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = Eclipse.colors.textSecondary,
+                )
+            }
+            items(state.saved, key = { "saved-" + it.id }) { saved ->
+                EclipseCard(
+                    onClick = { saved.node?.let(onPick) },
+                    padding = PaddingValues(start = 16.dp, end = 4.dp, top = 4.dp, bottom = 4.dp),
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Column(Modifier.weight(1f).padding(vertical = 8.dp)) {
+                            Text(saved.label, style = MaterialTheme.typography.bodyLarge, color = Eclipse.colors.text)
+                            Text(
+                                saved.node?.name ?: stringResource(R.string.transit_saved_missing, saved.stopName),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = Eclipse.colors.textSecondary,
+                            )
+                        }
+                        IconButton(onClick = { onForget(saved) }) {
+                            Icon(
+                                painterResource(R.drawable.ic_delete),
+                                stringResource(R.string.transit_forget),
+                                Modifier.size(18.dp),
+                                tint = Eclipse.colors.textSecondary,
+                            )
+                        }
+                    }
+                }
+            }
+            item {
+                Text(
+                    stringResource(R.string.transit_stops_title),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = Eclipse.colors.textSecondary,
+                    modifier = Modifier.padding(top = 8.dp),
+                )
+            }
+        }
         if (state.stops.isEmpty() && state.places.isEmpty() && !state.locating) {
             item { EmptyState(stringResource(R.string.transit_no_stops)) }
         }
         items(state.stops, key = { it.id }) { stop ->
-            EclipseCard(onClick = { onPick(stop) }, padding = PaddingValues(horizontal = 16.dp, vertical = 12.dp)) {
-                Text(stop.name, style = MaterialTheme.typography.bodyLarge, color = Eclipse.colors.text)
+            EclipseCard(onClick = { onPick(stop) }, padding = PaddingValues(start = 16.dp, end = 4.dp, top = 4.dp, bottom = 4.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        stop.name,
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = Eclipse.colors.text,
+                        modifier = Modifier.weight(1f).padding(vertical = 10.dp),
+                    )
+                    IconButton(onClick = { saving = stop }) {
+                        Icon(
+                            painterResource(R.drawable.ic_star),
+                            stringResource(R.string.transit_save_place),
+                            Modifier.size(18.dp),
+                            tint = Eclipse.colors.accentText,
+                        )
+                    }
+                }
             }
         }
         if (state.places.isNotEmpty()) {
@@ -382,7 +485,47 @@ private fun StopPicker(
             }
         }
     }
+    saving?.let { stop ->
+        SavePlaceDialog(stop, onSave = { onSave(it, stop.name); saving = null }, onDismiss = { saving = null })
+    }
 }
+
+/** Nadanie nazwy zapisanemu miejscu: „Dom”, „Szkoła”. */  
+@Composable
+private fun SavePlaceDialog(stop: TransitNode, onSave: (String) -> Unit, onDismiss: () -> Unit) {
+    var label by remember { mutableStateOf("") }
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.transit_save_title), color = Eclipse.colors.text) },
+        text = {
+            Column {
+                Text(stop.name, style = MaterialTheme.typography.bodyMedium, color = Eclipse.colors.textSecondary)
+                Spacer(Modifier.height(12.dp))
+                OutlinedTextField(
+                    value = label,
+                    onValueChange = { label = it },
+                    label = { Text(stringResource(R.string.transit_save_label)) },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                Spacer(Modifier.height(8.dp))
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    SUGGESTED.forEach { suggestion ->
+                        TextButton(onClick = { label = suggestion }) {
+                            Text(suggestion, color = Eclipse.colors.accentText)
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(enabled = label.isNotBlank(), onClick = { onSave(label) }) { Text(stringResource(R.string.save)) }
+        },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) } },
+    )
+}
+
+private val SUGGESTED = listOf("Dom", "Szkoła", "Praca")
 
 /** Najczęstsze rodzaje miejsc po polsku; reszta zostaje bez podpisu. */
 private fun placeKind(kind: String): Int? = when (kind) {
@@ -407,6 +550,8 @@ private fun SearchPane(
     onSwap: () -> Unit,
     onTime: (LocalTime?) -> Unit,
     onArriveBy: (Boolean) -> Unit,
+    onAddTile: () -> Unit,
+    onDeleteTile: (RouteTileEntity) -> Unit,
     onRefresh: () -> Unit,
 ) {
     var clock by remember { mutableStateOf(false) }
@@ -469,6 +614,59 @@ private fun SearchPane(
         }
         if (state.searched && !state.searching && state.journeys.isEmpty()) {
             item { EmptyState(stringResource(R.string.transit_no_journeys)) }
+        }
+        if (state.from != null && state.to != null) {
+            item {
+                val exists = state.tiles.any { it.fromName == state.from.name && it.toName == state.to.name }
+                Button(
+                    onClick = onAddTile,
+                    enabled = !exists,
+                    colors = androidx.compose.material3.ButtonDefaults.buttonColors(
+                        containerColor = Eclipse.colors.accent,
+                        contentColor = Eclipse.colors.onAccent,
+                        disabledContainerColor = Eclipse.colors.textSecondary.copy(alpha = 0.18f),
+                        disabledContentColor = Eclipse.colors.textSecondary,
+                    ),
+                ) {
+                    Icon(painterResource(R.drawable.ic_add), null, Modifier.size(18.dp))
+                    Text(
+                        stringResource(if (exists) R.string.transit_tile_exists else R.string.transit_add_tile),
+                        style = MaterialTheme.typography.labelLarge,
+                        modifier = Modifier.padding(start = 8.dp),
+                    )
+                }
+            }
+        }
+        if (state.tiles.isNotEmpty()) {
+            item {
+                Text(
+                    stringResource(R.string.transit_tiles_title),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = Eclipse.colors.textSecondary,
+                    modifier = Modifier.padding(top = 8.dp),
+                )
+            }
+            items(state.tiles, key = { "tile-" + it.id }) { tile ->
+                EclipseCard(padding = PaddingValues(start = 16.dp, end = 4.dp, top = 4.dp, bottom = 4.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        val labels = state.saved.associate { it.stopName to it.label }
+                        Text(
+                            (labels[tile.fromName] ?: tile.fromName) + " → " + (labels[tile.toName] ?: tile.toName),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = Eclipse.colors.text,
+                            modifier = Modifier.weight(1f).padding(vertical = 10.dp),
+                        )
+                        IconButton(onClick = { onDeleteTile(tile) }) {
+                            Icon(
+                                painterResource(R.drawable.ic_delete),
+                                stringResource(R.string.transit_delete_tile),
+                                Modifier.size(18.dp),
+                                tint = Eclipse.colors.textSecondary,
+                            )
+                        }
+                    }
+                }
+            }
         }
         item {
             val info = state.info ?: return@item
@@ -559,7 +757,7 @@ private fun JourneyCard(item: TransitJourney) {
 }
 
 /** Tramwaj i autobus różnymi kolorami (SPEC 17.3). */
-private fun lineColor(tram: Boolean): Color = if (tram) Color(0xFF3FBF8F) else Color(0xFF5B8DEF)
+internal fun lineColor(tram: Boolean): Color = if (tram) Color(0xFF3FBF8F) else Color(0xFF5B8DEF)
 
 /** Minuty od północy na godzinę; kurs po północy ma w rozkładzie wartość powyżej 1440. */
 private fun clockText(minutes: Int): String {

@@ -167,6 +167,14 @@ class TransitStore(private val context: Context) {
         }
     }
 
+    /** Przystanek o dokładnie tej nazwie — po tym odnajdujemy zapisane miejsca po ponownym wgraniu rozkładu. */
+    suspend fun nodeByName(name: String): TransitNode? = withContext(Dispatchers.IO) {
+        val db = open() ?: return@withContext null
+        db.rawQuery("SELECT id, name, lat, lon FROM node WHERE norm = ? LIMIT 1", arrayOf(normalizeName(name))).use {
+            if (it.moveToFirst()) it.node() else null
+        }
+    }
+
     /** Pobiera oba rozkłady i wgrywa je do nowej bazy; stara zostaje do końca, więc nieudane pobieranie nic nie psuje. */
     suspend fun refresh(onProgress: (TransitProgress) -> Unit) = withContext(Dispatchers.IO) {
         val downloads = File(context.cacheDir, "gtfs").apply { mkdirs() }

@@ -75,6 +75,26 @@ data class CustomEventEntity(
 /** Rodzaj własnego wpisu w kalendarzu: zwykłe wydarzenie, zadanie domowe (na dzień, bez godziny) albo korepetycje. */
 enum class CustomKind { EVENT, HOMEWORK, TUTORING }
 
+/**
+ * Zapisane miejsce w zakładce Dojazd: „Dom”, „Szkoła” (SPEC 17.4).
+ * Zapisujemy nazwę przystanku, a nie jego numer — numery powstają przy każdym wgraniu rozkładu od nowa.
+ */
+@Entity(tableName = "saved_places")
+data class SavedPlaceEntity(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val label: String,
+    val stopName: String,
+)
+
+/** Panel dojazdu na Pulpicie: stała trasa skąd–dokąd (SPEC 17.5). */
+@Entity(tableName = "route_tiles")
+data class RouteTileEntity(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val fromName: String,
+    val toName: String,
+    val position: Int = 0,
+)
+
 @Entity(tableName = "labels")
 data class LabelEntity(@PrimaryKey(autoGenerate = true) val id: Long = 0, val name: String, val color: Int)
 
@@ -239,16 +259,43 @@ interface UserDao {
 
     @Query("DELETE FROM user_flags WHERE kind = :kind AND `key` = :key")
     suspend fun clearFlag(kind: String, key: String)
+
+    @Query("SELECT * FROM saved_places ORDER BY label")
+    fun savedPlaces(): Flow<List<SavedPlaceEntity>>
+
+    @Query("SELECT * FROM saved_places ORDER BY label")
+    suspend fun savedPlacesOnce(): List<SavedPlaceEntity>
+
+    @Upsert
+    suspend fun upsertSavedPlace(place: SavedPlaceEntity)
+
+    @Delete
+    suspend fun deleteSavedPlace(place: SavedPlaceEntity)
+
+    @Query("SELECT * FROM route_tiles ORDER BY position, id")
+    fun routeTiles(): Flow<List<RouteTileEntity>>
+
+    @Query("SELECT * FROM route_tiles ORDER BY position, id")
+    suspend fun routeTilesOnce(): List<RouteTileEntity>
+
+    @Upsert
+    suspend fun upsertRouteTile(tile: RouteTileEntity)
+
+    @Delete
+    suspend fun deleteRouteTile(tile: RouteTileEntity)
+
+    @Query("SELECT COALESCE(MAX(position), -1) + 1 FROM route_tiles")
+    suspend fun nextTilePosition(): Int
 }
 
 @Database(
     entities = [
         RecordEntity::class, SyncRunEntity::class, SubjectPrefsEntity::class, CustomEventEntity::class,
         LabelEntity::class, LabelAssignmentEntity::class, EventTemplateEntity::class, NotificationEntity::class,
-        UserFlagEntity::class,
+        UserFlagEntity::class, SavedPlaceEntity::class, RouteTileEntity::class,
     ],
-    version = 3,
-    autoMigrations = [AutoMigration(from = 1, to = 2), AutoMigration(from = 2, to = 3)],
+    version = 4,
+    autoMigrations = [AutoMigration(from = 1, to = 2), AutoMigration(from = 2, to = 3), AutoMigration(from = 3, to = 4)],
 )
 abstract class EclipseDatabase : RoomDatabase() {
     abstract fun records(): RecordDao

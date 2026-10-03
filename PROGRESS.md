@@ -176,6 +176,14 @@ Aktualizowane po każdym kroku. Szczegóły etapów: `SPEC.md`, sekcja 14.
   - Pułapka AGP: plik `*.gz` w `assets/` zostaje przy budowaniu **rozpakowany, a rozszerzenie ucięte** (`places.tsv.gz` → `places.tsv`), więc `GZIPInputStream` dostawał zwykły tekst i lista wychodziła pusta. Trzymamy plik nieskompresowany — pakiet .apk i tak go kompresuje, więc rozmiar wychodzi ten sam.
   - Sprawdzone na emulatorze: „Galeria Krakowska” → Dworzec Główny Zachód / Tunel / Wschód, Teatr Słowackiego.
   - SPEC 17.3 uzupełniona.
+- 2026-10-03: Dojazd — zapisane miejsca i panele na Pulpicie (prośba użytkownika). Baza `eclipse.db` v4 (automatyczna migracja z v3), dwie nowe tabele: `saved_places` i `route_tiles`.
+  - Zapisujemy **nazwę przystanku, nie jego numer**: numery powstają od nowa przy każdym wgraniu rozkładu, więc po odświeżeniu rozkładów zapisane miejsce odnajdujemy po nazwie (`TransitStore.nodeByName`). Gdy przystanek zniknie z rozkładu, wpis zostaje widoczny z informacją o tym — zamiast po cichu przestać działać.
+  - Zapisanie miejsca: gwiazdka przy przystanku na liście wyboru, potem nazwa (podpowiedzi: Dom, Szkoła, Praca). Zapisane miejsca wchodzą na górę tej listy.
+  - Panel na Pulpicie dodaje się przyciskiem w zakładce Dojazd, gdy wybrane są oba przystanki; usuwa się go tam samo. Na Pulpicie wszystkie panele są jednym kafelkiem `HomeTile.TRANSIT`, więc istniejący mechanizm zmiany kolejności kafelków działa bez zmian (`homeTiles()` dokłada nową pozycję automatycznie).
+  - Panel podpisuje się nazwami zapisanych miejsc, gdy pasują („Dom → Czerwone Maki P+R”).
+  - Minuty odliczamy w interfejsie co 30 sekund, a rozkład przeszukujemy tylko przy otwarciu Pulpitu i gdy pokazany odjazd minie. Jedno przeszukanie to ok. 18 tysięcy wierszy, więc powtarzanie go co minutę zjadałoby baterię.
+  - Sprawdzone na emulatorze: zapis „Dom” = Rondo Mogilskie, wybór go z listy, dodanie panelu, panel na Pulpicie z „za 5 min / za 9 min”, odliczanie zmieniło się na „za 4 min / za 8 min” po minucie.
+  - SPEC 17.4 i 17.5 dopisane.
 - 2026-09-29: kod trafia do prywatnego repozytorium na GitHubie (konto Jaroszeek), autor commitów: Jaroszek.
 
 ## Otwarte kwestie

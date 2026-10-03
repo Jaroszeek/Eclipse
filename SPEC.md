@@ -562,3 +562,14 @@ Dodane 1.10.2026 na prośbę użytkownika. Jedyna część aplikacji, która ł�
 - Lista połączeń: godziny, czas podróży, linie jako kolorowe żetony (tramwaj i autobus różnymi kolorami), przesiadka opisana wprost.
 - Gdy rozkładów jeszcze nie ma: ekran z przyciskiem „Pobierz rozkłady” i informacją, ile to zajmie.
 
+### 17.4 Zapisane miejsca
+- Przystanek można zapisać pod własną nazwą („Dom”, „Szkoła”, „Praca”) gwiazdką przy nim na liście wyboru.
+- Zapisane miejsca są na górze listy wyboru przystanku; jedno dotknięcie wstawia je w pole „Skąd” albo „Dokąd”.
+- Zapisujemy **nazwę przystanku**, nie jego numer — numery powstają od nowa przy każdym wgraniu rozkładu. Gdy przystanek zniknie z rozkładu, miejsce zostaje na liście z informacją o tym.
+
+### 17.5 Panele dojazdu na Pulpicie
+- Stałą trasę („Skąd” i „Dokąd” z zakładki Dojazd) można zapisać jako **panel na Pulpicie**. Paneli może być dowolnie wiele.
+- Panel pokazuje podpis trasy i dwa najbliższe połączenia: za ile minut odjazd, godziny, czas podróży, linie i przesiadkę. Podpis używa nazw zapisanych miejsc, jeśli są („Dom → Szkoła”).
+- Minuty odliczamy w interfejsie; rozkład przeszukujemy przy otwarciu Pulpitu i ponownie, gdy pokazany odjazd minie — przeszukanie jest za kosztowne, żeby powtarzać je co minutę.
+- Panele są jednym kafelkiem Pulpitu („Dojazd”), więc biorą udział w zmianie kolejności kafelków jak pozostałe. Dodaje się je i usuwa w zakładce Dojazd.
+

@@ -46,7 +46,7 @@ fun AppSettings.homeTiles(): List<HomeTile> = (homeOrder + HomeTile.entries).dis
 
 enum class ThemeMode { SYSTEM, LIGHT, DARK }
 
-enum class HomeTile { COUNTDOWN, LESSONS, NEW, IMPORTANT, LUCKY, HOMEWORK }
+enum class HomeTile { COUNTDOWN, LESSONS, NEW, IMPORTANT, LUCKY, HOMEWORK, TRANSIT }
 
 enum class NotificationType { GRADE, TEST, REMINDER, PLAN_CHANGE, IMPORTANT, LUCKY_NUMBER, INBOX, SYNC_PROBLEM }
 

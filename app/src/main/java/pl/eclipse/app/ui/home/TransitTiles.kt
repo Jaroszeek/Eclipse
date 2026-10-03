@@ -104,7 +104,10 @@ fun TransitTiles(tiles: List<RouteTileState>, onOpen: () -> Unit, onTick: () -> 
         val first = tiles.flatMap { it.journeys }.minOfOrNull { it.journey.departure }
         if (first != null && first < now) onTick()
     }
-    tiles.forEach { tile -> RouteTile(tile, now, onOpen) }
+    // panele są jednym kafelkiem Pulpitu, więc odstęp między nimi musimy dać sami
+    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        tiles.forEach { tile -> RouteTile(tile, now, onOpen) }
+    }
 }
 
 @Composable

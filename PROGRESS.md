@@ -184,6 +184,7 @@ Aktualizowane po każdym kroku. Szczegóły etapów: `SPEC.md`, sekcja 14.
   - Minuty odliczamy w interfejsie co 30 sekund, a rozkład przeszukujemy tylko przy otwarciu Pulpitu i gdy pokazany odjazd minie. Jedno przeszukanie to ok. 18 tysięcy wierszy, więc powtarzanie go co minutę zjadałoby baterię.
   - Sprawdzone na emulatorze: zapis „Dom” = Rondo Mogilskie, wybór go z listy, dodanie panelu, panel na Pulpicie z „za 5 min / za 9 min”, odliczanie zmieniło się na „za 4 min / za 8 min” po minucie.
   - SPEC 17.4 i 17.5 dopisane.
+- 2026-10-03: poprawka zgłoszona przez użytkownika — dwa panele dojazdu stały na Pulpicie bez odstępu, przyklejone do siebie. Wszystkie panele są jednym `item` listy Pulpitu, więc `Arrangement.spacedBy(10.dp)` tej listy ich nie dotyczyło; `TransitTiles` ustawia teraz ten sam odstęp u siebie.
 - 2026-09-29: kod trafia do prywatnego repozytorium na GitHubie (konto Jaroszeek), autor commitów: Jaroszek.
 
 ## Otwarte kwestie

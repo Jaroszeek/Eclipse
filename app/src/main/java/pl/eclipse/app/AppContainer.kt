@@ -9,6 +9,7 @@ import pl.eclipse.app.data.Messaging
 import pl.eclipse.app.data.SyncStatus
 import pl.eclipse.app.data.SchoolRepository
 import pl.eclipse.app.data.SettingsStore
+import pl.eclipse.app.data.PlaceIndex
 import pl.eclipse.app.data.TransitStore
 import pl.eclipse.app.data.VisitStore
 import pl.eclipse.app.data.ensureUserDefaults
@@ -48,6 +49,9 @@ class AppContainer(context: Context) {
 
     /** Rozkłady jazdy ZTP (SPEC 17) — osobna baza, żeby dało się je skasować bez ruszania danych szkolnych. */
     val transit = TransitStore(context)
+
+    /** Nazwy miejsc i ulic Krakowa do szukania w zakładce Dojazd (SPEC 17.3). */
+    val places = PlaceIndex(context)
 
     fun dataSource(demo: Boolean): DataSource = if (demo) DemoSource() else LibrusSource()
 }

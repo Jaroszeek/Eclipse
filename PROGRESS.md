@@ -168,6 +168,14 @@ Aktualizowane po każdym kroku. Szczegóły etapów: `SPEC.md`, sekcja 14.
   - **Niesprawdzone na emulatorze:** sam odczyt GPS — `adb emu geo fix` na tym obrazie nie ustawia położenia (wszyscy dostawcy mają `last location=null`). Zweryfikowana jest ścieżka błędu (komunikat „Nie udało się ustalić położenia…”) i liczenie odległości. Do potwierdzenia na telefonie.
   - SPEC 17.1, 17.2 i 17.3 uzupełnione o te dwie funkcje.
   - Otwarte: szukanie po adresie albo nazwie miejsca (np. OpenStreetMap) wymagałoby wysyłania wyszukiwania na zewnętrzny serwer — to zmiana zasady z CLAUDE.md, czeka na decyzję użytkownika.
+- 2026-10-03: Dojazd — szukanie po nazwie miejsca i ulicy. Użytkownik wybrał wersję **offline** (z trzech: offline / pytanie OpenStreetMap na żywo / nic), więc zasada „tylko pobieranie” z CLAUDE.md zostaje bez zmian i żadne wyszukiwanie nie opuszcza telefonu.
+  - Dane leżą **w pliku w aplikacji** (`app/src/main/assets/places.tsv`), nie są pobierane. 26 439 punktów, 15 373 nazwy: miejsca (amenity, shop, tourism, leisure, historic, office), dzielnice, dworce i nazwane ulice Krakowa. Plik waży 1,14 MB tekstem i ok. 0,35 MB w gotowym .apk, bo pakiet sam go kompresuje. Powstaje skryptem `tools/osm_places.py` (Overpass API) i odświeża się razem z wydaniem.
+  - **Bez numerów domów.** Zapytanie o nie kończyło się na Overpass błędem 504, a przy szukaniu dojazdu różnica między Długą 15 a Długą 40 to zwykle ten sam przystanek. Do dodania, gdyby okazało się potrzebne.
+  - Ulica jest w OpenStreetMap pocięta na odcinki, więc nazwa ma wiele punktów; przystanku szukamy od **najbliższego z nich**, nie od środka ulicy. Sprawdzone: „Karmelicka” → Stefana Batorego, Plac Inwalidów, Garbarska, Czarnowiejska, Radio Kraków, AGH/UR — wszystkie leżą wzdłuż tej ulicy.
+  - Zbiór trzymamy w pamięci (lista 26 tysięcy wpisów, ok. 5 MB) zamiast w kolejnej bazie: przy tej wielkości przejrzenie wszystkiego jest szybsze niż utrzymywanie tabeli, a przede wszystkim **nie podnosi układu tabel**, więc rozkładów nie trzeba pobierać od nowa.
+  - Pułapka AGP: plik `*.gz` w `assets/` zostaje przy budowaniu **rozpakowany, a rozszerzenie ucięte** (`places.tsv.gz` → `places.tsv`), więc `GZIPInputStream` dostawał zwykły tekst i lista wychodziła pusta. Trzymamy plik nieskompresowany — pakiet .apk i tak go kompresuje, więc rozmiar wychodzi ten sam.
+  - Sprawdzone na emulatorze: „Galeria Krakowska” → Dworzec Główny Zachód / Tunel / Wschód, Teatr Słowackiego.
+  - SPEC 17.3 uzupełniona.
 - 2026-09-29: kod trafia do prywatnego repozytorium na GitHubie (konto Jaroszeek), autor commitów: Jaroszek.
 
 ## Otwarte kwestie

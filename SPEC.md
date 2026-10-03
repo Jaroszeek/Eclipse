@@ -557,6 +557,7 @@ Dodane 1.10.2026 na prośbę użytkownika. Jedyna część aplikacji, która ł�
 ### 17.3 Ekran
 - Nowa zakładka **Dojazd** w pasku bocznym.
 - Dwa pola wyboru przystanku z szukaniem po nazwie, przycisk zamiany miejscami, przełącznik „Wyjeżdżam / Chcę być na miejscu” i wybór godziny.
+- W wyborze przystanku można też wpisać **nazwę miejsca lub ulicy** (np. „Galeria Krakowska”, „Karmelicka”). Po wybraniu miejsca pokazujemy przystanki najbliżej niego — ulica liczy się od najbliższego ze swoich odcinków, nie od środka. Lista nazw (miejsca, ulice, dzielnice Krakowa z OpenStreetMap) leży **w aplikacji**, nie jest pobierana i nie ma w niej numerów domów.
 - W wyborze przystanku przycisk **„Blisko mnie”**: za zgodą na przybliżoną lokalizację pokazuje przystanki najbliżej telefonu. Współrzędne zostają w telefonie — służą tylko do ustawienia listy po odległości i nigdzie nie są wysyłane.
 - Lista połączeń: godziny, czas podróży, linie jako kolorowe żetony (tramwaj i autobus różnymi kolorami), przesiadka opisana wprost.
 - Gdy rozkładów jeszcze nie ma: ekran z przyciskiem „Pobierz rozkłady” i informacją, ile to zajmie.

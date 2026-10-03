@@ -60,6 +60,7 @@ import pl.eclipse.app.container
 import pl.eclipse.app.data.TransitInfo
 import pl.eclipse.app.data.TransitJourney
 import pl.eclipse.app.data.TransitNode
+import pl.eclipse.app.data.TransitPlace
 import pl.eclipse.app.data.LOCATION_PERMISSION
 import pl.eclipse.app.data.TransitProgress
 import pl.eclipse.app.data.currentLocation
@@ -93,8 +94,11 @@ data class TransitState(
     val time: LocalTime? = null,
     /** Czy wpisana godzina to godzina przyjazdu, a nie odjazdu. */
     val arriveBy: Boolean = false,
+    val places: List<TransitPlace> = emptyList(),
     /** Lista przystanków pokazuje teraz najbliższe, nie wyniki szukania. */
     val nearby: Boolean = false,
+    /** Miejsce, wokół którego pokazujemy przystanki; null, gdy to po prostu okolica telefonu. */
+    val nearbyPlace: String? = null,
     val locating: Boolean = false,
     val locationFailed: Boolean = false,
     val searching: Boolean = false,
@@ -104,6 +108,7 @@ data class TransitState(
 
 class TransitViewModel(application: Application) : AndroidViewModel(application) {
     private val store = application.container.transit
+    private val places = application.container.places
     private val _state = MutableStateFlow(TransitState())
     val state: StateFlow<TransitState> = _state.asStateFlow()
     private var stopSearch: Job? = null
@@ -116,7 +121,21 @@ class TransitViewModel(application: Application) : AndroidViewModel(application)
     fun searchStops(query: String) {
         stopSearch?.cancel()
         stopSearch = viewModelScope.launch {
-            _state.update { it.copy(stops = store.nodes(query), nearby = false, locationFailed = false) }
+            val stops = store.nodes(query)
+            // miejsc szukamy tylko wtedy, gdy coś wpisano — pusta lista przystanków to po prostu spis wszystkich
+            val found = if (query.isBlank()) emptyList() else places.search(query)
+            _state.update {
+                it.copy(stops = stops, places = found, nearby = false, nearbyPlace = null, locationFailed = false)
+            }
+        }
+    }
+
+    /** Po wybraniu miejsca pokazujemy przystanki najbliżej niego — to z nich trzeba wsiąść. */
+    fun pickPlace(place: TransitPlace) {
+        stopSearch?.cancel()
+        stopSearch = viewModelScope.launch {
+            val near = store.nearest(places.points(place.name).ifEmpty { listOf(place.lat to place.lon) })
+            _state.update { it.copy(stops = near, places = emptyList(), nearby = true, nearbyPlace = place.name) }
         }
     }
 
@@ -128,7 +147,14 @@ class TransitViewModel(application: Application) : AndroidViewModel(application)
             val here = currentLocation(context)
             val found = here?.let { (lat, lon) -> store.nearest(lat, lon) }.orEmpty()
             _state.update {
-                it.copy(locating = false, nearby = found.isNotEmpty(), locationFailed = found.isEmpty(), stops = found.ifEmpty { it.stops })
+                it.copy(
+                    locating = false,
+                    nearby = found.isNotEmpty(),
+                    nearbyPlace = null,
+                    locationFailed = found.isEmpty(),
+                    stops = found.ifEmpty { it.stops },
+                    places = if (found.isEmpty()) it.places else emptyList(),
+                )
             }
         }
     }
@@ -191,7 +217,13 @@ fun TransitScreen(contentPadding: PaddingValues, viewModel: TransitViewModel = v
             progress != null -> ProgressCard(progress, contentPadding)
             state.loading -> Unit
             state.info == null -> StartCard(state.failed, contentPadding, viewModel::refresh)
-            picked != null -> StopPicker(state, contentPadding, viewModel::searchStops, viewModel::useLocation) {
+            picked != null -> StopPicker(
+                state,
+                contentPadding,
+                viewModel::searchStops,
+                viewModel::useLocation,
+                viewModel::pickPlace,
+            ) {
                 viewModel.pick(picked, it)
                 picking = null
             }
@@ -260,6 +292,7 @@ private fun StopPicker(
     contentPadding: PaddingValues,
     onSearch: (String) -> Unit,
     onLocation: (Context) -> Unit,
+    onPlace: (TransitPlace) -> Unit,
     onPick: (TransitNode) -> Unit,
 ) {
     var query by remember { mutableStateOf("") }
@@ -307,7 +340,12 @@ private fun StopPicker(
                 }
             }
             if (state.nearby) {
-                Text(stringResource(R.string.transit_nearby_title), style = MaterialTheme.typography.labelSmall, color = Eclipse.colors.textSecondary)
+                Text(
+                    state.nearbyPlace?.let { stringResource(R.string.transit_near_place, it) }
+                        ?: stringResource(R.string.transit_nearby_title),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = Eclipse.colors.textSecondary,
+                )
             }
             if (state.locationFailed) {
                 Text(
@@ -317,13 +355,47 @@ private fun StopPicker(
                 )
             }
         }
-        if (state.stops.isEmpty() && !state.locating) item { EmptyState(stringResource(R.string.transit_no_stops)) }
+        if (state.stops.isEmpty() && state.places.isEmpty() && !state.locating) {
+            item { EmptyState(stringResource(R.string.transit_no_stops)) }
+        }
         items(state.stops, key = { it.id }) { stop ->
             EclipseCard(onClick = { onPick(stop) }, padding = PaddingValues(horizontal = 16.dp, vertical = 12.dp)) {
                 Text(stop.name, style = MaterialTheme.typography.bodyLarge, color = Eclipse.colors.text)
             }
         }
+        if (state.places.isNotEmpty()) {
+            item {
+                Text(
+                    stringResource(R.string.transit_places_title),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = Eclipse.colors.textSecondary,
+                    modifier = Modifier.padding(top = 8.dp),
+                )
+            }
+        }
+        items(state.places, key = { it.name + it.lat }) { place ->
+            EclipseCard(onClick = { onPlace(place) }, padding = PaddingValues(horizontal = 16.dp, vertical = 12.dp)) {
+                Text(place.name, style = MaterialTheme.typography.bodyLarge, color = Eclipse.colors.text, maxLines = 2)
+                placeKind(place.kind)?.let {
+                    Text(stringResource(it), style = MaterialTheme.typography.bodySmall, color = Eclipse.colors.textSecondary)
+                }
+            }
+        }
     }
+}
+
+/** Najczęstsze rodzaje miejsc po polsku; reszta zostaje bez podpisu. */
+private fun placeKind(kind: String): Int? = when (kind) {
+    "street", "residential", "living_street", "pedestrian", "primary", "secondary", "tertiary", "unclassified" -> R.string.place_street
+    "school", "college", "university", "kindergarten" -> R.string.place_school
+    "hospital", "clinic", "doctors", "pharmacy" -> R.string.place_health
+    "mall", "supermarket", "marketplace" -> R.string.place_shop
+    "museum", "attraction", "artwork", "castle", "monument", "memorial" -> R.string.place_sight
+    "park", "garden", "pitch", "sports_centre", "stadium", "swimming_pool" -> R.string.place_sport
+    "restaurant", "cafe", "bar", "fast_food", "pub" -> R.string.place_food
+    "suburb", "neighbourhood", "quarter", "city_block" -> R.string.place_area
+    "station", "halt" -> R.string.place_station
+    else -> null
 }
 
 @OptIn(ExperimentalMaterial3Api::class)

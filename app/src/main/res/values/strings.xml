@@ -581,6 +581,17 @@
     <string name="transit_nearby">Blisko mnie</string>
     <string name="transit_locating">Szukam położenia…</string>
     <string name="transit_nearby_title">Najbliżej Ciebie</string>
+    <string name="transit_near_place">Przystanki przy: %1$s</string>
+    <string name="transit_places_title">Miejsca i ulice</string>
+    <string name="place_street">ulica</string>
+    <string name="place_school">szkoła</string>
+    <string name="place_health">zdrowie</string>
+    <string name="place_shop">sklep</string>
+    <string name="place_sight">zabytek</string>
+    <string name="place_sport">sport i wypoczynek</string>
+    <string name="place_food">jedzenie</string>
+    <string name="place_area">dzielnica</string>
+    <string name="place_station">dworzec</string>
     <string name="transit_location_failed">Nie udało się ustalić położenia. Włącz lokalizację w ustawieniach telefonu albo wpisz nazwę przystanku.</string>
     <string name="transit_depart_at">Wyjeżdżam</string>
     <string name="transit_arrive_by">Chcę być na miejscu</string>

@@ -83,7 +83,7 @@ class TransitStore(private val context: Context) {
     /** Przystanki pasujące do wpisanego tekstu; bez ogonków i wielkości liter (wpisane „swietokrzyska” znajdzie „Świętokrzyska”). */
     suspend fun nodes(query: String, limit: Int = 40): List<TransitNode> = withContext(Dispatchers.IO) {
         val db = open() ?: return@withContext emptyList()
-        val needle = normalize(query.trim())
+        val needle = normalizeName(query.trim())
         val cursor = if (needle.isEmpty()) {
             db.rawQuery("SELECT id, name, lat, lon FROM node ORDER BY name LIMIT ?", arrayOf(limit.toString()))
         } else {
@@ -100,11 +100,18 @@ class TransitStore(private val context: Context) {
      * Przystanki najbliżej podanego punktu. Współrzędne nigdzie nie wychodzą — odległość liczymy na miejscu,
      * a przystanków jest tylko półtora tysiąca, więc przeglądamy wszystkie.
      */
-    suspend fun nearest(lat: Double, lon: Double, limit: Int = 8): List<TransitNode> = withContext(Dispatchers.IO) {
+    suspend fun nearest(lat: Double, lon: Double, limit: Int = 8): List<TransitNode> = nearest(listOf(lat to lon), limit)
+
+    /**
+     * Przystanki najbliżej któregokolwiek z [points]. Ulica jest w danych pocięta na odcinki,
+     * więc liczymy odległość do najbliższego z nich.
+     */
+    suspend fun nearest(points: List<Pair<Double, Double>>, limit: Int = 8): List<TransitNode> = withContext(Dispatchers.IO) {
+        if (points.isEmpty()) return@withContext emptyList()
         val db = open() ?: return@withContext emptyList()
         db.rawQuery("SELECT id, name, lat, lon FROM node WHERE lat != 0", null).use { cursor ->
             buildList { while (cursor.moveToNext()) add(cursor.node()) }
-        }.sortedBy { distance(lat, lon, it.lat, it.lon) }.take(limit)
+        }.sortedBy { node -> points.minOf { (lat, lon) -> distance(lat, lon, node.lat, node.lon) } }.take(limit)
     }
 
     /**
@@ -225,7 +232,7 @@ class TransitStore(private val context: Context) {
             gtfs.rows("stops.txt") { row ->
                 val id = row.str("stop_id") ?: return@rows
                 val name = row.str("stop_name")?.trim() ?: return@rows
-                val norm = normalize(name)
+                val norm = normalizeName(name)
                 val nodeId = catalog.nodes.id(norm)
                 node.bindLong(1, nodeId.toLong())
                 node.bindString(2, name)
@@ -422,7 +429,7 @@ private fun SQLiteDatabase.meta(key: String): String? =
 private val COMBINING = Regex("\\p{Mn}+")
 
 /** Nazwa przystanku bez ogonków i wielkich liter — po tym szukamy i po tym scalamy perony w jeden węzeł. */
-private fun normalize(name: String): String =
+internal fun normalizeName(name: String): String =
     Normalizer.normalize(name.lowercase(), Normalizer.Form.NFD).replace(COMBINING, "").replace('ł', 'l')
 
 private fun Cursor.node() = TransitNode(getInt(0), getString(1), getDouble(2), getDouble(3))

@@ -28,7 +28,7 @@ import kotlin.math.sqrt
 // Zwykłe SQLite zamiast Room: bazę wgrywamy zawsze w całości od nowa, więc migracje są niepotrzebne,
 // a wstawianie kilkuset tysięcy wierszy gotowym zapytaniem jest dużo szybsze niż przez Room.
 
-/** Węzeł przystankowy: wszystkie perony o tej samej nazwie to jeden punkt (SPEC 17.1). */
+/** Węzeł: wszystkie przystanki o tej samej nazwie to jeden punkt (SPEC 17.1). */
 data class TransitNode(val id: Int, val name: String, val lat: Double = 0.0, val lon: Double = 0.0)
 
 /** Połączenie gotowe do pokazania: przystanek przesiadkowy z nazwą zamiast numeru. */
@@ -245,7 +245,7 @@ class TransitStore(private val context: Context) {
                 node.bindLong(1, nodeId.toLong())
                 node.bindString(2, name)
                 node.bindString(3, norm)
-                // współrzędne pierwszego peronu wystarczą — perony jednego węzła dzielą kilkadziesiąt metrów
+                // współrzędne pierwszego przystanku wystarczą — przystanki jednego węzła dzielą kilkadziesiąt metrów
                 node.bindDouble(4, row.num("stop_lat") ?: 0.0)
                 node.bindDouble(5, row.num("stop_lon") ?: 0.0)
                 node.executeInsert()
@@ -436,7 +436,7 @@ private fun SQLiteDatabase.meta(key: String): String? =
 
 private val COMBINING = Regex("\\p{Mn}+")
 
-/** Nazwa przystanku bez ogonków i wielkich liter — po tym szukamy i po tym scalamy perony w jeden węzeł. */
+/** Nazwa przystanku bez ogonków i wielkich liter — po tym szukamy i po tym scalamy przystanki w jeden węzeł. */
 internal fun normalizeName(name: String): String =
     Normalizer.normalize(name.lowercase(), Normalizer.Form.NFD).replace(COMBINING, "").replace('ł', 'l')
 

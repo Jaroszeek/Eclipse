@@ -542,7 +542,8 @@ Dodane 1.10.2026 na prośbę użytkownika. Jedyna część aplikacji, która ł�
 - Pobieranie wyłącznie na żądanie użytkownika i przy odświeżaniu rozkładów. Nigdy nie wysyłamy tam lokalizacji, wyszukiwań ani niczego z Librusa.
 - Rozkłady leżą w **osobnej bazie** (`transit.db`), żeby dało się je skasować i pobrać od nowa bez ruszania danych szkolnych i własnych.
 - Pomijamy `shapes.txt` (potrzebny tylko do rysowania tras na mapie). Identyfikatory tekstowe z GTFS zamieniamy przy imporcie na liczby — bez tego baza byłaby kilka razy większa.
-- Przystanki o tej samej nazwie (perony, np. „Rondo Mogilskie 01” i „02”) łączymy w jeden **węzeł**; użytkownik wybiera węzeł, nie peron. Węzeł ma współrzędne pierwszego ze swoich peronów — po to, żeby dało się wskazać przystanek najbliżej telefonu.
+- Przystanki o tej samej nazwie (osobne słupki, np. „Rondo Mogilskie 01” i „02”) łączymy w jeden **węzeł**; użytkownik wybiera węzeł, nie pojedynczy przystanek. Węzeł ma współrzędne pierwszego ze swoich przystanków — po to, żeby dało się wskazać ten najbliżej telefonu.
+- W tekstach w aplikacji mówimy zawsze „przystanek”, nigdy „peron” — tak się o tym mówi na co dzień.
 - Po imporcie wszystko działa bez internetu. Pokazujemy datę rozkładu i przycisk „Odśwież rozkłady”.
 
 ### 17.2 Wyszukiwanie połączeń
@@ -553,10 +554,10 @@ Dodane 1.10.2026 na prośbę użytkownika. Jedyna część aplikacji, która ł�
 - Godziny są rozkładowe. Opóźnień na żywo nie pokazujemy (wymagałyby GTFS-RT) — mówimy o tym wprost w interfejsie.
 - Obowiązujący rozkład na dany dzień wynika z `calendar.txt` i `calendar_dates.txt` (dni robocze, soboty, niedziele, święta).
 - Pod uwagę bierzemy kursy z okna **3 godzin** od podanej godziny (a przy „chcę być na miejscu” — 3 godzin przed nią). Przesiadka musi trwać od 2 do 45 minut.
-- **Przesiadka bez przechodzenia jest lepsza.** Węzeł łączy wszystkie perony o tej samej nazwie, ale wyjście z pojazdu i wejście do następnego na tym samym peronie to co innego niż przejście na drugą stronę ulicy. Dlatego:
-  - przesiadka na **tym samym peronie** wymaga 2 minut, a **na inny peron** — 4 minut;
+- **Przesiadka bez przechodzenia jest lepsza.** Węzeł łączy wszystkie przystanki o tej samej nazwie, ale wyjście z pojazdu i wejście do następnego w tym samym miejscu to co innego niż przejście na drugą stronę ulicy. Dlatego:
+  - przesiadka na **tym samym przystanku** wymaga 2 minut, a **na inny przystanek** — 4 minut;
   - gdy dwa połączenia mają tę samą godzinę odjazdu i przyjazdu, zostaje to bez przechodzenia;
-  - przy wyniku piszemy wprost, czy to „ten sam peron”, czy „przejście na inny peron”.
+  - przy wyniku piszemy wprost, czy to „ten sam przystanek”, czy „przejście na inny przystanek”.
 
 ### 17.3 Ekran
 - Nowa zakładka **Dojazd** w pasku bocznym.

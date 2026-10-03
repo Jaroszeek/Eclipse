@@ -191,6 +191,7 @@ Aktualizowane po każdym kroku. Szczegóły etapów: `SPEC.md`, sekcja 14.
   - Celowo rozróżniamy tylko „ten sam peron / inny peron”, bez liczenia metrów: wymagałoby to współrzędnych peronów, czyli kolejnego układu tabel i ponownego pobrania rozkładów, a sam fakt przechodzenia rozstrzyga sprawę. Do dołożenia, gdyby 4 minuty okazały się złym przybliżeniem.
   - Sprawdzone na prawdziwym rozkładzie (Bronowice Małe → Szwedzka, 8:00): stary algorytm dawał 08:07→08:31 z dwuminutowym przejściem na Rondzie Grunwaldzkim, nowy daje 08:07→08:33 z czterema minutami, a pozostałe wyniki to w większości przesiadki na tym samym peronie. 2 nowe testy (11 łącznie).
   - SPEC 17.2 uzupełniona.
+- 2026-10-03: nazewnictwo — użytkownik poprawił „peron” na „przystanek”. W aplikacji, SPEC i komentarzach mówimy teraz zawsze „przystanek”; „peron” kojarzy się z koleją. Grupa przystanków o jednej nazwie to dalej **węzeł** (tylko w dokumentacji, w interfejsie się nie pojawia). Zasada dopisana do SPEC 17.1.
 - 2026-09-29: kod trafia do prywatnego repozytorium na GitHubie (konto Jaroszeek), autor commitów: Jaroszek.
 
 ## Otwarte kwestie

@@ -5,7 +5,7 @@ package pl.eclipse.core.transit
 // albo docelowego, a cała reszta liczy się tutaj.
 
 /**
- * Przystanek na trasie kursu. [node] to węzeł (wszystkie perony pod jedną nazwą), [stop] — konkretny peron.
+ * Przystanek na trasie kursu. [node] to węzeł (wszystkie przystanki pod jedną nazwą), [stop] — ten jeden przystanek.
  * Godziny w minutach od północy; kursy po północy mają wartości powyżej 1440.
  */
 data class TripStop(val node: Int, val stop: Int, val arrival: Int, val departure: Int)
@@ -41,7 +41,7 @@ data class Journey(val legs: List<Leg>) {
     /** Ile minut na przesiadkę; null przy połączeniu bezpośrednim. */
     val transferMinutes: Int? get() = if (legs.size > 1) legs[1].departure - legs[0].arrival else null
 
-    /** Czy przesiadka wymaga przejścia na inny peron (np. na drugą stronę ulicy). */
+    /** Czy przesiadka wymaga przejścia na inny przystanek (np. na drugą stronę ulicy). */
     val changesPlatform: Boolean get() = legs.size > 1 && legs[0].toStop != legs[1].fromStop
 }
 
@@ -95,7 +95,7 @@ fun findJourneys(
     first.forEach { leg ->
         byTransfer[leg.to]?.forEach { next ->
             val wait = next.departure - leg.arrival
-            // przesiadka z peronu na peron (np. na drugą stronę ulicy) wymaga przejścia, więc i więcej czasu
+            // przesiadka na inny przystanek (np. na drugą stronę ulicy) wymaga przejścia, więc i więcej czasu
             val needed = if (leg.toStop == next.fromStop) minTransfer else minTransfer + platformChange
             if (wait in needed..maxTransfer) journeys += Journey(listOf(leg, next))
         }
@@ -105,7 +105,7 @@ fun findJourneys(
     val best = mutableListOf<Journey>()
     var earliest = Int.MAX_VALUE
     journeys
-        // przy tej samej godzinie odjazdu i przyjazdu wygrywa przesiadka bez przechodzenia na inny peron
+        // przy tej samej godzinie odjazdu i przyjazdu wygrywa przesiadka bez przechodzenia na inny przystanek
         .sortedWith(
             compareByDescending<Journey> { it.departure }
                 .thenBy { it.arrival }

@@ -578,9 +578,17 @@
     <string name="transit_from">Skąd</string>
     <string name="transit_to">Dokąd</string>
     <string name="transit_pick_stop">Wybierz przystanek</string>
+    <string name="transit_nearby">Blisko mnie</string>
+    <string name="transit_locating">Szukam położenia…</string>
+    <string name="transit_nearby_title">Najbliżej Ciebie</string>
+    <string name="transit_location_failed">Nie udało się ustalić położenia. Włącz lokalizację w ustawieniach telefonu albo wpisz nazwę przystanku.</string>
+    <string name="transit_depart_at">Wyjeżdżam</string>
+    <string name="transit_arrive_by">Chcę być na miejscu</string>
+    <string name="transit_arrive_pick">Wybierz godzinę</string>
     <string name="transit_swap">Zamień przystanki miejscami</string>
     <string name="transit_now">Odjazd: teraz</string>
     <string name="transit_at">Odjazd: %1$s</string>
+    <string name="transit_arrive_at">Na miejscu o %1$s</string>
     <string name="transit_back_to_now">Wróć do „teraz”</string>
     <string name="transit_minutes">%1$d min</string>
     <string name="transit_transfer">Przesiadka: %1$s, %2$d min na przesiadkę</string>

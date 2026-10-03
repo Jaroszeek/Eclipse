@@ -77,6 +77,7 @@ internal class CsvReader(private val input: Reader) {
 class GtfsRow internal constructor(private val columns: Map<String, Int>, private val values: List<String>) {
     fun str(name: String): String? = columns[name]?.let { values.getOrNull(it) }?.takeIf { it.isNotEmpty() }
     fun int(name: String): Int? = str(name)?.toIntOrNull()
+    fun num(name: String): Double? = str(name)?.toDoubleOrNull()
 }
 
 /** Archiwum .zip z rozkładem GTFS; czyta wskazane pliki wiersz po wierszu. */

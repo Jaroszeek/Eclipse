@@ -542,20 +542,22 @@ Dodane 1.10.2026 na prośbę użytkownika. Jedyna część aplikacji, która ł�
 - Pobieranie wyłącznie na żądanie użytkownika i przy odświeżaniu rozkładów. Nigdy nie wysyłamy tam lokalizacji, wyszukiwań ani niczego z Librusa.
 - Rozkłady leżą w **osobnej bazie** (`transit.db`), żeby dało się je skasować i pobrać od nowa bez ruszania danych szkolnych i własnych.
 - Pomijamy `shapes.txt` (potrzebny tylko do rysowania tras na mapie). Identyfikatory tekstowe z GTFS zamieniamy przy imporcie na liczby — bez tego baza byłaby kilka razy większa.
-- Przystanki o tej samej nazwie (perony, np. „Rondo Mogilskie 01” i „02”) łączymy w jeden **węzeł**; użytkownik wybiera węzeł, nie peron.
+- Przystanki o tej samej nazwie (perony, np. „Rondo Mogilskie 01” i „02”) łączymy w jeden **węzeł**; użytkownik wybiera węzeł, nie peron. Węzeł ma współrzędne pierwszego ze swoich peronów — po to, żeby dało się wskazać przystanek najbliżej telefonu.
 - Po imporcie wszystko działa bez internetu. Pokazujemy datę rozkładu i przycisk „Odśwież rozkłady”.
 
 ### 17.2 Wyszukiwanie połączeń
-- Użytkownik podaje skąd, dokąd i czas wyjazdu (domyślnie teraz).
+- Użytkownik podaje skąd, dokąd i godzinę. Godzina znaczy albo **wyjazd** (domyślnie teraz), albo **„chcę być na miejscu”** — wtedy szukamy wstecz i pokazujemy najpóźniejszy kurs, który zdąży, na początku listy.
 - Szukamy połączeń **bezpośrednich i z jedną przesiadką** — w Krakowie to pokrywa prawie wszystkie trasy.
 - Sposób: z przystanku początkowego zbieramy kursy odjeżdżające w oknie czasowym i stacje, do których dowożą; z przystanku docelowego zbieramy kursy, które do niego dojeżdżają, i stacje, z których wyruszają. Połączenie z przesiadką to wspólna stacja, gdzie odjazd jest co najmniej 2 minuty po przyjeździe.
 - Wynik: godzina odjazdu, godzina przyjazdu, czas podróży, numery linii, przystanek przesiadkowy i czas na przesiadkę.
 - Godziny są rozkładowe. Opóźnień na żywo nie pokazujemy (wymagałyby GTFS-RT) — mówimy o tym wprost w interfejsie.
 - Obowiązujący rozkład na dany dzień wynika z `calendar.txt` i `calendar_dates.txt` (dni robocze, soboty, niedziele, święta).
+- Pod uwagę bierzemy kursy z okna **3 godzin** od podanej godziny (a przy „chcę być na miejscu” — 3 godzin przed nią). Przesiadka musi trwać od 2 do 45 minut.
 
 ### 17.3 Ekran
 - Nowa zakładka **Dojazd** w pasku bocznym.
-- Dwa pola wyboru przystanku z szukaniem po nazwie, przycisk zamiany miejscami, wybór godziny.
+- Dwa pola wyboru przystanku z szukaniem po nazwie, przycisk zamiany miejscami, przełącznik „Wyjeżdżam / Chcę być na miejscu” i wybór godziny.
+- W wyborze przystanku przycisk **„Blisko mnie”**: za zgodą na przybliżoną lokalizację pokazuje przystanki najbliżej telefonu. Współrzędne zostają w telefonie — służą tylko do ustawienia listy po odległości i nigdzie nie są wysyłane.
 - Lista połączeń: godziny, czas podróży, linie jako kolorowe żetony (tramwaj i autobus różnymi kolorami), przesiadka opisana wprost.
 - Gdy rozkładów jeszcze nie ma: ekran z przyciskiem „Pobierz rozkłady” i informacją, ile to zajmie.
 

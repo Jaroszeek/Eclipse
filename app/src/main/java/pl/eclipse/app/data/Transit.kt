@@ -1,6 +1,7 @@
 package pl.eclipse.app.data
 
 import android.content.Context
+import android.database.Cursor
 import android.database.sqlite.SQLiteDatabase
 import androidx.core.database.sqlite.transaction
 import kotlinx.coroutines.Dispatchers
@@ -18,6 +19,8 @@ import java.io.File
 import java.io.IOException
 import java.text.Normalizer
 import java.time.LocalDate
+import kotlin.math.cos
+import kotlin.math.sqrt
 
 // SPEC 17.1. Rozkłady trzymamy w osobnej bazie `transit.db`, żeby dało się je skasować i pobrać
 // od nowa bez ruszania danych szkolnych i własnych.
@@ -26,7 +29,7 @@ import java.time.LocalDate
 // a wstawianie kilkuset tysięcy wierszy gotowym zapytaniem jest dużo szybsze niż przez Room.
 
 /** Węzeł przystankowy: wszystkie perony o tej samej nazwie to jeden punkt (SPEC 17.1). */
-data class TransitNode(val id: Int, val name: String)
+data class TransitNode(val id: Int, val name: String, val lat: Double = 0.0, val lon: Double = 0.0)
 
 /** Połączenie gotowe do pokazania: przystanek przesiadkowy z nazwą zamiast numeru. */
 data class TransitJourney(val journey: Journey, val transferName: String?)
@@ -82,26 +85,45 @@ class TransitStore(private val context: Context) {
         val db = open() ?: return@withContext emptyList()
         val needle = normalize(query.trim())
         val cursor = if (needle.isEmpty()) {
-            db.rawQuery("SELECT id, name FROM node ORDER BY name LIMIT ?", arrayOf(limit.toString()))
+            db.rawQuery("SELECT id, name, lat, lon FROM node ORDER BY name LIMIT ?", arrayOf(limit.toString()))
         } else {
             // najpierw przystanki zaczynające się od wpisanego tekstu, potem reszta
             db.rawQuery(
-                "SELECT id, name FROM node WHERE norm LIKE ? ORDER BY (norm LIKE ?) DESC, name LIMIT ?",
+                "SELECT id, name, lat, lon FROM node WHERE norm LIKE ? ORDER BY (norm LIKE ?) DESC, name LIMIT ?",
                 arrayOf("%$needle%", "$needle%", limit.toString()),
             )
         }
-        cursor.use { buildList { while (it.moveToNext()) add(TransitNode(it.getInt(0), it.getString(1))) } }
+        cursor.use { buildList { while (it.moveToNext()) add(it.node()) } }
     }
 
-    /** Połączenia z [from] do [to] odjeżdżające nie wcześniej niż [minute] minut po północy dnia [date] (SPEC 17.2). */
-    suspend fun journeys(from: Int, to: Int, date: LocalDate, minute: Int): List<TransitJourney> = withContext(Dispatchers.IO) {
+    /**
+     * Przystanki najbliżej podanego punktu. Współrzędne nigdzie nie wychodzą — odległość liczymy na miejscu,
+     * a przystanków jest tylko półtora tysiąca, więc przeglądamy wszystkie.
+     */
+    suspend fun nearest(lat: Double, lon: Double, limit: Int = 8): List<TransitNode> = withContext(Dispatchers.IO) {
         val db = open() ?: return@withContext emptyList()
-        // kursy po północy mają w rozkładzie godziny powyżej 24, więc dokładamy wczorajsze i przesuwamy je o dobę
-        val runs = loadRuns(db, from, to, date, minute, 0) + loadRuns(db, from, to, date.minusDays(1), minute, -DAY)
-        val found = findJourneys(from, to, minute, runs)
-        val names = nodeNames(db, found.mapNotNull { it.transfer }.toSet())
-        found.map { TransitJourney(it, it.transfer?.let(names::get)) }
+        db.rawQuery("SELECT id, name, lat, lon FROM node WHERE lat != 0", null).use { cursor ->
+            buildList { while (cursor.moveToNext()) add(cursor.node()) }
+        }.sortedBy { distance(lat, lon, it.lat, it.lon) }.take(limit)
     }
+
+    /**
+     * Połączenia z [from] do [to] (SPEC 17.2). [minute] to minuty od północy dnia [date]: godzina odjazdu,
+     * a przy [arriveBy] — godzina, na którą trzeba być na miejscu.
+     */
+    suspend fun journeys(from: Int, to: Int, date: LocalDate, minute: Int, arriveBy: Boolean = false): List<TransitJourney> =
+        withContext(Dispatchers.IO) {
+            val db = open() ?: return@withContext emptyList()
+            // szukając na godzinę przyjazdu, cofamy się o okno wyszukiwania i zostawiamy to, co zdąży
+            val start = if (arriveBy) minute - WINDOW else minute
+            // kursy po północy mają w rozkładzie godziny powyżej 24, więc dokładamy wczorajsze i przesuwamy je o dobę
+            val runs = loadRuns(db, from, to, date, start, 0) + loadRuns(db, from, to, date.minusDays(1), start, -DAY)
+            val found = findJourneys(from, to, start, runs, limit = if (arriveBy) Int.MAX_VALUE else 8)
+            // przy godzinie przyjazdu najciekawszy jest ostatni kurs, który zdąży — więc idzie na początek listy
+            val chosen = if (arriveBy) found.filter { it.arrival <= minute }.takeLast(8).asReversed() else found
+            val names = nodeNames(db, chosen.mapNotNull { it.transfer }.toSet())
+            chosen.map { TransitJourney(it, it.transfer?.let(names::get)) }
+        }
 
     /** Kursy, które danego dnia zatrzymują się na przystanku początkowym albo docelowym w oknie wyszukiwania. */
     private fun loadRuns(db: SQLiteDatabase, from: Int, to: Int, date: LocalDate, minute: Int, offset: Int): List<TripRun> {
@@ -198,7 +220,7 @@ class TransitStore(private val context: Context) {
         gtfs.rows("feed_info.txt") { row -> version = row.str("feed_version").orEmpty() }
 
         db.transaction {
-            val node = compileStatement("INSERT OR IGNORE INTO node(id, name, norm) VALUES(?, ?, ?)")
+            val node = compileStatement("INSERT OR IGNORE INTO node(id, name, norm, lat, lon) VALUES(?, ?, ?, ?, ?)")
             val stop = compileStatement("INSERT OR REPLACE INTO stop(id, node) VALUES(?, ?)")
             gtfs.rows("stops.txt") { row ->
                 val id = row.str("stop_id") ?: return@rows
@@ -208,6 +230,9 @@ class TransitStore(private val context: Context) {
                 node.bindLong(1, nodeId.toLong())
                 node.bindString(2, name)
                 node.bindString(3, norm)
+                // współrzędne pierwszego peronu wystarczą — perony jednego węzła dzielą kilkadziesiąt metrów
+                node.bindDouble(4, row.num("stop_lat") ?: 0.0)
+                node.bindDouble(5, row.num("stop_lon") ?: 0.0)
                 node.executeInsert()
                 stop.bindLong(1, catalog.stops.id(feed.key(id)).toLong())
                 stop.bindLong(2, nodeId.toLong())
@@ -345,12 +370,12 @@ class TransitStore(private val context: Context) {
         """.trimIndent()
 
         /** Numer układu tabel — gdy go zmienimy, stara baza jest odrzucana i rozkłady pobierają się od nowa. */
-        const val SCHEMA = 1
+        const val SCHEMA = 2
 
         val WEEKDAYS = listOf("monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday")
 
         val CREATE = listOf(
-            "CREATE TABLE node(id INTEGER PRIMARY KEY, name TEXT NOT NULL, norm TEXT NOT NULL)",
+            "CREATE TABLE node(id INTEGER PRIMARY KEY, name TEXT NOT NULL, norm TEXT NOT NULL, lat REAL NOT NULL, lon REAL NOT NULL)",
             "CREATE TABLE stop(id INTEGER PRIMARY KEY, node INTEGER NOT NULL)",
             "CREATE TABLE route(id INTEGER PRIMARY KEY, name TEXT NOT NULL, tram INTEGER NOT NULL)",
             "CREATE TABLE trip(id INTEGER PRIMARY KEY, route INTEGER NOT NULL, service INTEGER NOT NULL, head TEXT NOT NULL)",
@@ -399,6 +424,17 @@ private val COMBINING = Regex("\\p{Mn}+")
 /** Nazwa przystanku bez ogonków i wielkich liter — po tym szukamy i po tym scalamy perony w jeden węzeł. */
 private fun normalize(name: String): String =
     Normalizer.normalize(name.lowercase(), Normalizer.Form.NFD).replace(COMBINING, "").replace('ł', 'l')
+
+private fun Cursor.node() = TransitNode(getInt(0), getString(1), getDouble(2), getDouble(3))
+
+/** Przybliżona odległość w kilometrach — w skali miasta płaska Ziemia wystarczy, żeby ustawić przystanki po kolei. */
+private fun distance(lat1: Double, lon1: Double, lat2: Double, lon2: Double): Double {
+    val x = (lon2 - lon1) * cos(Math.toRadians((lat1 + lat2) / 2)) * KM_PER_DEGREE
+    val y = (lat2 - lat1) * KM_PER_DEGREE
+    return sqrt(x * x + y * y)
+}
+
+private const val KM_PER_DEGREE = 111.32
 
 private fun localDate(number: Int): LocalDate = LocalDate.of(number / 10000, number / 100 % 100, number % 100)
 

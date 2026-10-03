@@ -1,7 +1,10 @@
 package pl.eclipse.app.ui.transit
 
 import android.app.Application
+import android.content.Context
 import android.util.Log
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -40,6 +43,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -56,8 +60,12 @@ import pl.eclipse.app.container
 import pl.eclipse.app.data.TransitInfo
 import pl.eclipse.app.data.TransitJourney
 import pl.eclipse.app.data.TransitNode
+import pl.eclipse.app.data.LOCATION_PERMISSION
 import pl.eclipse.app.data.TransitProgress
+import pl.eclipse.app.data.currentLocation
+import pl.eclipse.app.data.hasLocationPermission
 import pl.eclipse.app.ui.WARSAW
+import pl.eclipse.app.ui.components.ChoiceChips
 import pl.eclipse.app.ui.components.EclipseCard
 import pl.eclipse.app.ui.components.EmptyState
 import pl.eclipse.app.ui.components.PrimaryButton
@@ -83,6 +91,12 @@ data class TransitState(
     val to: TransitNode? = null,
     /** null znaczy „teraz”. */
     val time: LocalTime? = null,
+    /** Czy wpisana godzina to godzina przyjazdu, a nie odjazdu. */
+    val arriveBy: Boolean = false,
+    /** Lista przystanków pokazuje teraz najbliższe, nie wyniki szukania. */
+    val nearby: Boolean = false,
+    val locating: Boolean = false,
+    val locationFailed: Boolean = false,
     val searching: Boolean = false,
     val searched: Boolean = false,
     val journeys: List<TransitJourney> = emptyList(),
@@ -101,7 +115,22 @@ class TransitViewModel(application: Application) : AndroidViewModel(application)
 
     fun searchStops(query: String) {
         stopSearch?.cancel()
-        stopSearch = viewModelScope.launch { _state.update { it.copy(stops = store.nodes(query)) } }
+        stopSearch = viewModelScope.launch {
+            _state.update { it.copy(stops = store.nodes(query), nearby = false, locationFailed = false) }
+        }
+    }
+
+    /** Przystanki najbliżej telefonu. Położenie zostaje w telefonie — służy tylko do ustawienia listy. */
+    fun useLocation(context: Context) {
+        stopSearch?.cancel()
+        stopSearch = viewModelScope.launch {
+            _state.update { it.copy(locating = true, locationFailed = false) }
+            val here = currentLocation(context)
+            val found = here?.let { (lat, lon) -> store.nearest(lat, lon) }.orEmpty()
+            _state.update {
+                it.copy(locating = false, nearby = found.isNotEmpty(), locationFailed = found.isEmpty(), stops = found.ifEmpty { it.stops })
+            }
+        }
     }
 
     fun pick(field: StopField, node: TransitNode) {
@@ -119,6 +148,11 @@ class TransitViewModel(application: Application) : AndroidViewModel(application)
         search()
     }
 
+    fun setArriveBy(arriveBy: Boolean) {
+        _state.update { it.copy(arriveBy = arriveBy) }
+        search()
+    }
+
     private fun search() {
         val current = _state.value
         val from = current.from ?: return
@@ -127,7 +161,7 @@ class TransitViewModel(application: Application) : AndroidViewModel(application)
         journeySearch = viewModelScope.launch {
             _state.update { it.copy(searching = true) }
             val time = current.time ?: LocalTime.now(WARSAW)
-            val found = store.journeys(from.id, to.id, LocalDate.now(WARSAW), time.hour * 60 + time.minute)
+            val found = store.journeys(from.id, to.id, LocalDate.now(WARSAW), time.hour * 60 + time.minute, current.arriveBy)
             _state.update { it.copy(searching = false, searched = true, journeys = found) }
         }
     }
@@ -157,7 +191,7 @@ fun TransitScreen(contentPadding: PaddingValues, viewModel: TransitViewModel = v
             progress != null -> ProgressCard(progress, contentPadding)
             state.loading -> Unit
             state.info == null -> StartCard(state.failed, contentPadding, viewModel::refresh)
-            picked != null -> StopPicker(state.stops, contentPadding, viewModel::searchStops) {
+            picked != null -> StopPicker(state, contentPadding, viewModel::searchStops, viewModel::useLocation) {
                 viewModel.pick(picked, it)
                 picking = null
             }
@@ -167,6 +201,7 @@ fun TransitScreen(contentPadding: PaddingValues, viewModel: TransitViewModel = v
                 onPick = { picking = it; viewModel.searchStops("") },
                 onSwap = viewModel::swap,
                 onTime = viewModel::setTime,
+                onArriveBy = viewModel::setArriveBy,
                 onRefresh = viewModel::refresh,
             )
         }
@@ -221,12 +256,17 @@ private fun StartCard(failed: Boolean, contentPadding: PaddingValues, onDownload
 /** Wybór przystanku: szukanie po nazwie i lista wyników (SPEC 17.3). */
 @Composable
 private fun StopPicker(
-    stops: List<TransitNode>,
+    state: TransitState,
     contentPadding: PaddingValues,
     onSearch: (String) -> Unit,
+    onLocation: (Context) -> Unit,
     onPick: (TransitNode) -> Unit,
 ) {
     var query by remember { mutableStateOf("") }
+    val context = LocalContext.current
+    val askLocation = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+        if (granted) onLocation(context)
+    }
     // ekran otwiera się po to, żeby wpisać nazwę — klawiatura ma czekać gotowa
     val focus = remember { FocusRequester() }
     LaunchedEffect(Unit) { focus.requestFocus() }
@@ -249,8 +289,36 @@ private fun StopPicker(
                 modifier = Modifier.fillMaxWidth().focusRequester(focus),
             )
         }
-        if (stops.isEmpty()) item { EmptyState(stringResource(R.string.transit_no_stops)) }
-        items(stops, key = { it.id }) { stop ->
+        item {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                TextButton(
+                    enabled = !state.locating,
+                    onClick = {
+                        query = ""
+                        if (hasLocationPermission(context)) onLocation(context) else askLocation.launch(LOCATION_PERMISSION)
+                    },
+                ) {
+                    Icon(painterResource(R.drawable.ic_my_location), null, Modifier.size(18.dp), tint = Eclipse.colors.accentText)
+                    Text(
+                        stringResource(if (state.locating) R.string.transit_locating else R.string.transit_nearby),
+                        color = Eclipse.colors.accentText,
+                        modifier = Modifier.padding(start = 8.dp),
+                    )
+                }
+            }
+            if (state.nearby) {
+                Text(stringResource(R.string.transit_nearby_title), style = MaterialTheme.typography.labelSmall, color = Eclipse.colors.textSecondary)
+            }
+            if (state.locationFailed) {
+                Text(
+                    stringResource(R.string.transit_location_failed),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Eclipse.colors.readable(Palette.Critical),
+                )
+            }
+        }
+        if (state.stops.isEmpty() && !state.locating) item { EmptyState(stringResource(R.string.transit_no_stops)) }
+        items(state.stops, key = { it.id }) { stop ->
             EclipseCard(onClick = { onPick(stop) }, padding = PaddingValues(horizontal = 16.dp, vertical = 12.dp)) {
                 Text(stop.name, style = MaterialTheme.typography.bodyLarge, color = Eclipse.colors.text)
             }
@@ -266,6 +334,7 @@ private fun SearchPane(
     onPick: (StopField) -> Unit,
     onSwap: () -> Unit,
     onTime: (LocalTime?) -> Unit,
+    onArriveBy: (Boolean) -> Unit,
     onRefresh: () -> Unit,
 ) {
     var clock by remember { mutableStateOf(false) }
@@ -285,10 +354,26 @@ private fun SearchPane(
             }
         }
         item {
+            ChoiceChips(
+                listOf(false to stringResource(R.string.transit_depart_at), true to stringResource(R.string.transit_arrive_by)),
+                state.arriveBy,
+                { arriveBy ->
+                    onArriveBy(arriveBy)
+                    // bez godziny pytanie „chcę być na miejscu” nie ma sensu, więc od razu pokazujemy zegar
+                    if (arriveBy && state.time == null) clock = true
+                },
+            )
+        }
+        item {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 TextButton(onClick = { clock = true }) {
                     Text(
-                        state.time?.let { stringResource(R.string.transit_at, clockText(it)) } ?: stringResource(R.string.transit_now),
+                        when {
+                            state.time == null && !state.arriveBy -> stringResource(R.string.transit_now)
+                            state.time == null -> stringResource(R.string.transit_arrive_pick)
+                            state.arriveBy -> stringResource(R.string.transit_arrive_at, clockText(state.time))
+                            else -> stringResource(R.string.transit_at, clockText(state.time))
+                        },
                         color = Eclipse.colors.accentText,
                     )
                 }
